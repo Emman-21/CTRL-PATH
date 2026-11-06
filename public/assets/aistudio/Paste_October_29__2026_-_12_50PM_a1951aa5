@@ -1,0 +1,967 @@
+# CTRL+PATH — STAGE 7 MASTER PROMPT
+## Achievement Vault — The Crystal Collection
+
+Act as a senior React frontend engineer, game-inspired UI/UX designer, pixel-art animation specialist, and frontend state management architect.
+
+You are continuing development of an existing React + Vite application called **CTRL+PATH**.
+
+The previous stages are:
+
+- Stage 1 — Frontend Foundation
+- Stage 2 — Dashboard / Luminary Hub
+- Stage 3 — Track Explorer / The Three Pathways
+- Stage 4 — Luni AI: Animated Moonstone Companion
+- Stage 5 — CTRL Quiz: Five-Level Learning Adventure
+- Stage 6 — Smart Results & Path Comparison
+
+Your task is to implement **Stage 7 — Achievement Vault: The Crystal Collection**, a fully functional collectible gemstone achievement system.
+
+**CRITICAL: Work inside the existing Google AI Studio Build project. Do not regenerate the application, replace working components, reset student progress, or overwrite earlier stages. Preserve all existing functionality.**
+
+---
+
+## 1. PROJECT OVERVIEW
+
+CTRL+PATH is an academic guidance platform for first-year BSIT students at Batangas State University – Alangilan.
+
+It helps students explore three academic tracks:
+
+- **NT — Networking Technology:** Blue `#2563EB`
+- **BA — Business Analytics:** Violet `#8B5CF6`
+- **SM — Service Management:** Green `#10B981`
+
+Always use **Service Management**, never System Management.
+
+The platform provides educational guidance, self-reflection, and learning experiences without automatically choosing an academic track for students.
+
+Our design principle is:
+
+**Magical while exploring, peaceful while studying, and rewarding after completing.**
+
+## 2. FIRST — INSPECT THE EXISTING PROJECT
+
+Before editing any code:
+
+1. Inspect the existing application architecture and routes.
+2. Locate the current Achievements or Achievement Vault page.
+3. Review the existing Dashboard achievement previews.
+4. Review the Stage 3 Mark as Explored system.
+5. Review the Stage 5 quiz completion and attempt system.
+6. Review the Stage 6 track comparison and result history.
+7. Identify any existing achievement definitions or unlock utilities.
+8. Inspect the existing Luni assistant and celebration system.
+9. Locate the Phase 1 Kit gemstone images and Crystal Garden background.
+10. Identify existing persistence keys and migration requirements.
+
+**Do not create a second achievement engine if one already exists.** Extend, refactor, or reuse the established system.
+
+Preserve existing unlock timestamps and achievements earned in previous stages.
+
+## 3. ACHIEVEMENT VAULT DESIGN
+
+Use the approved CTRL+PATH Achievement Vault UI references as the visual authority.
+
+The screen should look like a magical crystal collection inside a fantasy academy.
+
+Use:
+
+- Crystal Garden pixel-art background
+- Light pastel lavender and blue surroundings
+- White translucent or opaque collection panels
+- Rounded cards
+- Soft shadows
+- Navy headings
+- Original pixel-art gemstone artwork
+- Subtle glowing crystals
+- Magical pixel sparkles
+- Gentle reveal animations
+- Original Luni character
+- Consistent sidebar and navigation
+
+Do not replace the approved gemstones with emoji, Lucide diamonds, generic icons, or unrelated images.
+
+Do not use the entire UI reference screenshot as a background.
+
+Build the design using functional React components.
+
+The page must remain easy to read and navigate on desktop and mobile.
+
+## 4. ACHIEVEMENT VAULT MAIN PAGE
+
+Create a complete Achievement Vault page.
+
+### Main Header
+
+Title:
+
+**Achievement Vault**
+
+Subtitle:
+
+"Every gemstone tells a story of your progress. Explore your collection and celebrate what you've discovered!"
+
+Display Luni in an excited or encouraging pose.
+
+Use the original Crystal Garden background as decorative scenery.
+
+### Collection Summary
+
+Display:
+
+- Total achievements unlocked
+- Total available achievements: 20
+- Overall collection completion percentage
+- Blue NT gemstones earned
+- Violet BA gemstones earned
+- Green SM gemstones earned
+- Special achievements earned
+
+Compute these values dynamically.
+
+Do not hardcode completed achievements or claim students unlocked items they have not earned.
+
+### Collection Progress
+
+Create an attractive overall progress bar:
+
+**Your Crystal Collection — X / 20**
+
+Calculate percentage accurately:
+
+`Collection Progress = (Unique Unlocked Achievements / 20) × 100`
+
+Count distinct achievement IDs, not the number of unlock notifications.
+
+## 5. TWENTY ACHIEVEMENTS — EXACT DEFINITIONS
+
+Implement exactly 20 achievements in four categories.
+
+All achievements need stable IDs, descriptions, rarity, unlock requirements, artwork, and status.
+
+### A. NETWORKING TECHNOLOGY — BLUE
+
+**1. Peridot's Protocol**
+
+- ID: `nt-peridots-protocol`
+- Rarity: Common
+- Requirement: Mark Networking Technology as explored.
+- Artwork: Supplied blue NT gemstone.
+
+**2. Packet Pathfinder**
+
+- ID: `nt-packet-pathfinder`
+- Rarity: Common
+- Requirement: Successfully complete the designated NT fundamentals activity or quiz.
+
+**3. Signal Keeper**
+
+- ID: `nt-signal-keeper`
+- Rarity: Uncommon
+- Requirement: Successfully complete the designated NT troubleshooting challenge.
+
+**4. Guardian of the Grid**
+
+- ID: `nt-guardian-grid`
+- Rarity: Rare
+- Requirement: Successfully complete the designated NT security challenge.
+
+**5. Techno-Gem**
+
+- ID: `nt-techno-gem`
+- Rarity: Epic
+- Requirement: Unlock the previous four NT achievements.
+
+### B. BUSINESS ANALYTICS — VIOLET
+
+**6. Garnet's Foresight**
+
+- ID: `ba-garnets-foresight`
+- Rarity: Common
+- Requirement: Mark Business Analytics as explored.
+- Artwork: Supplied violet BA gemstone.
+
+**7. Pattern Seeker**
+
+- ID: `ba-pattern-seeker`
+- Rarity: Common
+- Requirement: Successfully complete the designated BA pattern activity.
+
+**8. Data Detective**
+
+- ID: `ba-data-detective`
+- Rarity: Uncommon
+- Requirement: Successfully complete the designated BA data interpretation challenge.
+
+**9. Oracle of Numbers**
+
+- ID: `ba-oracle-numbers`
+- Rarity: Rare
+- Requirement: Successfully complete the designated BA business problem-solving challenge.
+
+**10. Crystal Vision**
+
+- ID: `ba-crystal-vision`
+- Rarity: Epic
+- Requirement: Unlock the previous four BA achievements.
+
+### C. SERVICE MANAGEMENT — GREEN
+
+**11. Pearl's Precision**
+
+- ID: `sm-pearls-precision`
+- Rarity: Common
+- Requirement: Mark Service Management as explored.
+- Artwork: Supplied green SM gemstone.
+
+**12. Customer Champion**
+
+- ID: `sm-customer-champion`
+- Rarity: Common
+- Requirement: Successfully complete the designated SM customer support scenario.
+
+**13. Workflow Weaver**
+
+- ID: `sm-workflow-weaver`
+- Rarity: Uncommon
+- Requirement: Successfully complete the designated SM workflow optimization challenge.
+
+**14. Keeper of Standards**
+
+- ID: `sm-keeper-standards`
+- Rarity: Rare
+- Requirement: Successfully complete the designated SM IT service management knowledge activity.
+
+**15. Perfect Coordination**
+
+- ID: `sm-perfect-coordination`
+- Rarity: Epic
+- Requirement: Unlock the previous four SM achievements.
+
+### D. SPECIAL ACHIEVEMENTS
+
+**16. First Spark**
+
+- ID: `special-first-spark`
+- Rarity: Common
+- Requirement: Complete and submit the first valid CTRL Quiz assessment attempt.
+
+**17. Crystal Collector**
+
+- ID: `special-crystal-collector`
+- Rarity: Rare
+- Requirement: Unlock at least 10 distinct achievements.
+
+**18. Fusion Theory**
+
+- ID: `special-fusion-theory`
+- Rarity: Uncommon
+- Requirement: Meaningfully complete a comparison of at least two academic tracks.
+
+**19. Beyond the Surface**
+
+- ID: `special-beyond-surface`
+- Rarity: Epic
+- Requirement: Complete an eligible assessment retake and compare its results with a previous completed attempt.
+
+**20. Your Own Universe**
+
+- ID: `special-your-own-universe`
+- Rarity: Legendary
+- Requirement: Unlock all 15 track-specific achievements.
+
+Use visually distinct supplied artwork for the five special achievements.
+
+Do not assign the special achievements to NT, BA, or SM categories unless the official assets specify their own visual treatment.
+
+## 6. IMPORTANT ACTIVITY REQUIREMENT
+
+Several achievements reference learning activities that may not yet be implemented.
+
+Examples:
+
+- NT fundamentals activity
+- NT troubleshooting challenge
+- NT security challenge
+- BA pattern activity
+- BA data interpretation challenge
+- BA business problem-solving challenge
+- SM customer support scenario
+- SM workflow optimization challenge
+- SM service management knowledge activity
+
+Do not fabricate completion events for these activities.
+
+If an activity does not yet exist:
+
+- Keep the associated achievement locked.
+- Display the requirement accurately.
+- Mark the activity as not yet available when appropriate.
+- Prepare an integration hook for a future verified completion event.
+- Do not create fake success buttons to award achievements.
+
+Only real, completed, approved activities can unlock the corresponding gemstones.
+
+## 7. ACHIEVEMENT CARD DESIGN
+
+Each achievement card must display:
+
+- Original pixel-art gemstone
+- Achievement name
+- Category
+- Rarity
+- Short description
+- Unlock requirement
+- Achievement status
+- Progress indicator when supported
+- Unlock date when earned
+
+Use consistent card dimensions.
+
+### Locked State
+
+- Muted or grayscale gemstone
+- Lock icon
+- Clear requirement text
+- No false unlock date
+
+### In Progress State
+
+- Partially emphasized gemstone
+- Accurate progress indicator
+- Remaining requirements
+
+### Unlocked State
+
+- Full-color gemstone
+- Soft glow
+- Unlocked indicator
+- Earned date
+- Optional subtle shimmer
+
+### Newly Unlocked State
+
+- Short celebration animation
+- Gemstone reveal
+- Luni congratulations
+- Dismissible notification
+
+Do not use color as the only status indicator.
+
+## 8. RARITY SYSTEM
+
+Use five rarity levels:
+
+- Common
+- Uncommon
+- Rare
+- Epic
+- Legendary
+
+Rarity should be based on the explicit achievement definitions.
+
+Use visually distinguishable borders, labels, and subtle effects.
+
+Do not make rarity depend on how many users have unlocked an achievement, because no verified global statistics are available.
+
+Suggested presentation:
+
+- Common: Neutral soft border
+- Uncommon: Gentle accent glow
+- Rare: Richer decorative border
+- Epic: Magical gradient border
+- Legendary: Distinctive golden or celestial border
+
+Keep the UI elegant and readable.
+
+## 9. FILTERING AND SEARCH
+
+Implement working achievement filters.
+
+Categories:
+
+- All
+- Networking Technology
+- Business Analytics
+- Service Management
+- Special
+
+Status filters:
+
+- All
+- Locked
+- In Progress
+- Unlocked
+
+Rarity filters:
+
+- All
+- Common
+- Uncommon
+- Rare
+- Epic
+- Legendary
+
+Also implement achievement search by name.
+
+Filters should work together correctly.
+
+Show a meaningful empty state when no achievements match.
+
+Provide a Reset Filters control.
+
+## 10. ACHIEVEMENT DETAIL VIEW
+
+Clicking an achievement should open a detailed view.
+
+Include:
+
+- Enlarged original gemstone image
+- Achievement name
+- Category
+- Rarity
+- Description
+- Exact unlock requirement
+- Current status
+- Progress when available
+- Unlock date when earned
+- Related learning activity when available
+
+Use an accessible modal or detail panel.
+
+Requirements:
+
+- Keyboard support
+- Escape-key dismissal
+- Close button
+- Appropriate focus management
+- Responsive layout
+- Screen-reader labels
+
+Do not navigate students away from their current collection position unnecessarily.
+
+## 11. SINGLE SOURCE OF TRUTH
+
+Implement or extend a centralized achievement system.
+
+Each achievement definition should contain:
+
+- Stable ID
+- Name
+- Description
+- Category
+- Rarity
+- Asset reference
+- Unlock predicate or event requirement
+- Progress calculation when possible
+- Related route when available
+
+Maintain a distinction between:
+
+1. Achievement definitions
+2. Student progress events
+3. Earned achievement records
+4. UI notifications
+
+Do not use UI component rendering as an unlock trigger.
+
+Do not use arbitrary local booleans scattered across pages as independent achievement records.
+
+Use existing established architecture when available.
+
+## 12. ACHIEVEMENT UNLOCK ENGINE
+
+Build reliable, deterministic unlock processing.
+
+Required behavior:
+
+1. Receive a verified completion event or updated student progress state.
+2. Evaluate relevant achievement requirements.
+3. Check whether the achievement is already unlocked.
+4. Unlock it only when the condition is satisfied.
+5. Store the achievement ID and timestamp.
+6. Update collection progress.
+7. Trigger a celebration notification when appropriate.
+8. Prevent duplicate unlock records.
+9. Evaluate dependent achievements after prerequisite unlocks.
+
+Examples:
+
+Mark NT as Explored → Peridot's Protocol
+
+Complete first valid CTRL Quiz → First Spark
+
+Complete a comparison of two tracks → Fusion Theory
+
+Unlock four prerequisite NT achievements → Techno-Gem
+
+Unlock 10 distinct achievements → Crystal Collector
+
+Unlock all 15 track achievements → Your Own Universe
+
+Ensure dependent achievements can unlock correctly when multiple conditions become true during one update.
+
+Prevent infinite achievement evaluation loops.
+
+## 13. DATA MIGRATION AND EXISTING ACHIEVEMENTS
+
+Stages 3, 5, and 6 may already have persisted achievements.
+
+Do not reset or overwrite them.
+
+Before implementing the new centralized system:
+
+1. Inspect existing achievement IDs and storage schema.
+2. Identify equivalent achievements.
+3. Create a safe mapping from old IDs to canonical IDs if needed.
+4. Deduplicate unlock records.
+5. Preserve legitimate unlock timestamps.
+6. Preserve unrelated application data.
+7. Make migration idempotent.
+8. Handle malformed storage gracefully.
+
+Never award an achievement simply because a migration runs.
+
+Do not treat an unverified legacy flag as proof of completion without a legitimate existing completion record or reliable source of truth.
+
+## 14. CELEBRATION EXPERIENCE
+
+Make newly unlocked gemstones feel rewarding.
+
+When a student earns an achievement:
+
+- Display the original gemstone prominently.
+- Animate a short reveal.
+- Add pixel sparkles.
+- Display the achievement name.
+- Display the rarity.
+- Show Luni in a celebration pose.
+- Provide a Continue button.
+
+Example dialogue:
+
+"Another gemstone unlocked, Luminary! Your journey is becoming brighter!"
+
+For an Epic achievement:
+
+"Wow! You've completed an incredible milestone!"
+
+For Your Own Universe:
+
+"You've explored every track achievement! What an amazing journey of discovery!"
+
+Requirements:
+
+- Do not block important learning interactions.
+- Queue simultaneous achievement notifications.
+- Avoid stacking multiple full-screen dialogs.
+- Allow dismissal.
+- Respect reduced motion.
+- Prevent repeated celebrations on refresh.
+
+Persist the unlock itself immediately.
+
+The notification may be queued separately from the achievement record.
+
+## 15. CRYSTAL COLLECTION PROGRESS
+
+Display category progress:
+
+- NT: X / 5
+- BA: X / 5
+- SM: X / 5
+- Special: X / 5
+- Total: X / 20
+
+Progress must update when legitimate achievements unlock.
+
+Do not count locked achievements.
+
+Do not double-count migrated records.
+
+Do not substitute decorative gemstone counts for actual achievements.
+
+Use readable category labels and a visual progress indicator.
+
+## 16. DASHBOARD INTEGRATION
+
+Update the existing Dashboard achievement preview without redesigning or breaking the page.
+
+Display:
+
+- Total achievements unlocked
+- Recent unlocked gemstones
+- Most recent unlock date when available
+- View Achievement Vault button
+
+Use the centralized achievement data.
+
+If the student has no achievements, show a helpful empty state.
+
+Do not show fabricated recently earned achievements.
+
+Ensure the Dashboard progress updates after an achievement unlock.
+
+## 17. TRACK EXPLORER INTEGRATION
+
+Connect the existing Mark as Explored feature to the canonical achievement engine.
+
+Requirements:
+
+- NT explored → Peridot's Protocol
+- BA explored → Garnet's Foresight
+- SM explored → Pearl's Precision
+
+Do not change the existing track exploration functionality unnecessarily.
+
+Keep exploration progress synchronized.
+
+Repeated visits must not unlock duplicate records.
+
+## 18. CTRL QUIZ INTEGRATION
+
+Connect the existing Stage 5 quiz submission system.
+
+Unlock First Spark only after the first valid completed assessment submission.
+
+Do not unlock it when:
+
+- The student opens the quiz.
+- The student starts an attempt.
+- The student answers only some questions.
+- The student refreshes the assessment.
+- A submission is incomplete.
+
+Use actual immutable completed-attempt records as evidence.
+
+## 19. PATH COMPARISON INTEGRATION
+
+Connect Stage 6 comparison functionality.
+
+Fusion Theory:
+
+- Unlock only when at least two tracks have been meaningfully compared.
+- Use the existing defined comparison completion event if available.
+- Do not unlock from simply selecting two track cards without completing the comparison.
+
+Beyond the Surface:
+
+- Require a valid eligible retake.
+- Require comparison between the retake and a previous submitted assessment result.
+- Verify the events through actual saved attempt history.
+- Do not unlock on simple Results page navigation.
+
+## 20. LUNI ASSISTANT INTEGRATION
+
+Reuse the existing global Luni assistant and celebration engine.
+
+Do not create a duplicate floating character.
+
+Achievement Vault default dialogue:
+
+"Welcome to your Crystal Collection! Every gemstone represents a special milestone in your journey!"
+
+When opening a locked achievement:
+
+"Not unlocked yet, Luminary! You can check the requirement to see what to explore next."
+
+When opening an unlocked achievement:
+
+"You earned this gemstone through your progress. Wonderful work!"
+
+When the student unlocks a new achievement:
+
+"Shining brighter than ever! Congratulations on your new gemstone!"
+
+Keep messages supportive and noncompetitive.
+
+Avoid implying that unlocking more NT, BA, or SM achievements means the student must choose that academic track.
+
+## 21. GEMSTONE ART AND ANIMATIONS
+
+Use the exact supplied gemstone artwork whenever available.
+
+Requirements:
+
+- Maintain pixel-art sharpness.
+- Preserve transparent backgrounds.
+- Do not stretch or distort the image.
+- Keep proportions consistent.
+- Use dedicated images for all 20 achievements.
+- Provide fallback illustrations only when an actual asset is missing, with a clearly labeled placeholder.
+
+Animations:
+
+- Idle shimmer for unlocked rare items
+- Brief reveal animation on unlock
+- Soft glow for Epic and Legendary items
+- Gentle hover movement
+- Reduced-motion alternatives
+
+Avoid excessive flashing, strong strobing, or continuous visual effects.
+
+## 22. STORAGE AND PERSISTENCE
+
+Reuse the existing frontend persistence system.
+
+Persist:
+
+- Unlocked achievement IDs
+- Unlock timestamps
+- Processed completion events where needed
+- Celebration notification status
+- Achievement schema version
+
+Avoid saving derived values such as collection percentage independently when they can be recalculated.
+
+Requirements:
+
+- Preserve existing data.
+- Prevent duplicates.
+- Restore progress after refresh.
+- Handle corrupted data safely.
+- Keep unlock logic independent from the Vault page.
+- Avoid storage key conflicts.
+
+Remember that local storage is browser/device-specific until an authenticated backend is implemented.
+
+Do not claim achievements synchronize across devices unless that capability actually exists.
+
+## 23. ACCESSIBILITY AND RESPONSIVENESS
+
+Test the Achievement Vault at approximately:
+
+- 360px mobile
+- 768px tablet
+- 1440px desktop
+
+Desktop:
+
+- Multi-column gemstone collection grid
+- Wide decorative hero
+- Category progress overview
+- Accessible filter controls
+
+Tablet:
+
+- Responsive card grid
+- Compact filters
+- Properly scaled gemstones
+
+Mobile:
+
+- Single- or two-column collection grid as appropriate
+- Readable names and requirement descriptions
+- Touch-friendly controls
+- Accessible achievement detail dialog
+- No unintentional horizontal overflow
+- No decorative elements covering buttons
+
+Support:
+
+- Keyboard navigation
+- Visible focus outlines
+- Semantic headings
+- Image alt text
+- Reduced motion
+- Accessible modal behavior
+- Clear status labels
+- Proper color contrast
+
+## 24. PERFORMANCE
+
+Optimize the Achievement Vault.
+
+- Use actual existing assets efficiently.
+- Avoid rendering unnecessary particle systems.
+- Avoid animation timers for every card.
+- Memoize expensive derived progress calculations where useful.
+- Clean up event listeners.
+- Prevent duplicated achievement subscriptions.
+- Minimize unnecessary React re-renders.
+- Use CSS transitions for simple effects.
+- Use Motion only where its capabilities are genuinely needed.
+
+The Vault must remain responsive even when all 20 gemstones are visible.
+
+## 25. RECOMMENDED IMPLEMENTATION STRUCTURE
+
+Adapt these names to the existing project architecture.
+
+Suggested components:
+
+- `AchievementVaultPage`
+- `AchievementHero`
+- `CollectionProgress`
+- `AchievementCategorySection`
+- `AchievementCard`
+- `AchievementFilters`
+- `AchievementDetailModal`
+- `AchievementUnlockCelebration`
+- `AchievementEmptyState`
+
+Suggested logic:
+
+- `achievementDefinitions`
+- `achievementRules`
+- `achievementEngine`
+- `achievementStorage`
+- `achievementMigration`
+- `useAchievements`
+
+Keep rule evaluation separate from display components.
+
+Do not create redundant files when suitable existing components already exist.
+
+## 26. VALIDATION AND TESTING
+
+Test these scenarios:
+
+1. New student opens the Achievement Vault with zero achievements.
+2. NT is marked as explored.
+3. Peridot's Protocol unlocks once.
+4. Student refreshes the page.
+5. Peridot's Protocol remains unlocked.
+6. BA is marked as explored.
+7. Garnet's Foresight unlocks.
+8. SM is marked as explored.
+9. Pearl's Precision unlocks.
+10. Student completes their first valid CTRL Quiz.
+11. First Spark unlocks.
+12. Student visits the Vault repeatedly.
+13. No duplicate unlocks occur.
+14. Student completes a valid track comparison.
+15. Fusion Theory unlocks.
+16. Student merely visits Path Compare without completing a comparison.
+17. Fusion Theory remains locked.
+18. An unavailable learning activity does not unlock its achievement.
+19. Four prerequisite track achievements unlock the corresponding Epic achievement.
+20. Ten distinct achievements unlock Crystal Collector.
+21. Fifteen track achievements unlock Your Own Universe.
+22. A valid eligible retake comparison unlocks Beyond the Surface.
+23. An invalid retake does not unlock Beyond the Surface.
+24. Search and filters work together.
+25. Achievement modal works with keyboard navigation.
+26. Reduced-motion preferences are respected.
+27. Dashboard preview updates correctly.
+28. Migrated legitimate achievements remain preserved.
+29. Mobile layout is usable.
+30. Production build succeeds without errors.
+
+If tests need seeded fixtures, create development-only test data isolated from real student progress.
+
+Never permanently unlock achievements by running tests.
+
+## 27. IMPLEMENTATION ORDER
+
+Implement Stage 7 in the following sequence.
+
+**Part A — Foundation**
+
+- Inspect existing achievement functionality.
+- Normalize the 20 achievement definitions.
+- Map all supplied gemstones.
+- Consolidate unlock records.
+- Implement safe migration if required.
+
+**Part B — Achievement Engine**
+
+- Implement unlock predicates.
+- Handle dependency chains.
+- Add event integration.
+- Preserve state.
+- Prevent duplicates.
+
+**Part C — Vault Interface**
+
+- Crystal Garden background
+- Hero section
+- Collection progress
+- Category filters
+- Achievement cards
+- Detail modal
+
+**Part D — Celebrations**
+
+- Gemstone reveal
+- Luni celebration
+- Notification queue
+- Reduced-motion alternatives
+
+**Part E — Feature Integration**
+
+- Dashboard
+- Track Explorer
+- CTRL Quiz
+- Path Compare
+- Attempt history
+
+**Part F — Testing and Refinement**
+
+- Validate rules.
+- Test persistence.
+- Test migrations.
+- Test mobile layouts.
+- Run the production build.
+- Fix identified issues.
+
+Complete a coherent working portion if the environment cannot implement everything at once.
+
+Do not discard existing functionality to simplify the implementation.
+
+## 28. ACCEPTANCE CRITERIA
+
+Stage 7 is complete when:
+
+- Exactly 20 achievements are defined.
+- All achievements have stable IDs and clear requirements.
+- All available gemstone images are integrated.
+- NT gemstones use blue themes.
+- BA gemstones use violet themes.
+- SM gemstones use green themes.
+- Special achievements are visually distinct.
+- Locked, In Progress, Unlocked, and Newly Unlocked states work.
+- Rarity labels are displayed correctly.
+- Search and filters work.
+- Achievement details open correctly.
+- Collection progress is dynamically calculated.
+- Unlock events come from legitimate activity completion.
+- Dependent achievements unlock correctly.
+- Duplicate achievements are prevented.
+- Existing unlock records are preserved.
+- Luni celebrations work.
+- Dashboard achievement previews update.
+- Unavailable activities do not falsely award achievements.
+- Reduced-motion support works.
+- Mobile and desktop interfaces are responsive.
+- The existing application remains functional.
+- The production build succeeds where testing is available.
+
+## 29. FINAL IMPLEMENTATION REPORT
+
+After implementation, provide:
+
+1. Summary of completed features
+2. Files created
+3. Files modified
+4. List of integrated gemstone assets
+5. Achievement rule implementation
+6. Unlock event integrations
+7. Migration and persistence behavior
+8. Dashboard synchronization
+9. Luni animation integration
+10. Remaining unavailable activity requirements
+11. Test and build results
+12. Known limitations
+13. Next implementation steps
+
+Do not proceed to Stage 8 automatically.
+
+## FINAL OBJECTIVE
+
+Create an extraordinary **Achievement Vault — The Crystal Collection** for CTRL+PATH.
+
+The experience should make students feel that every completed educational activity contributes to a meaningful journey of discovery.
+
+Make the gemstone collection visually magical, responsive, accessible, technically reliable, and consistent with the original pixel-art UI references.
+
+**Every gem represents progress. Every pathway deserves exploration. The student decides their future.**

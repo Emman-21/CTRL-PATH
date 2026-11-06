@@ -1,0 +1,6 @@
+{
+  "name": "CTRL+PATH — Academic Guidance Platform",
+  "description": "Magical academic guidance platform for first-year BSIT students at Batangas State University – Alangilan to explore Networking Technology, Business Analytics, and Service Management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
