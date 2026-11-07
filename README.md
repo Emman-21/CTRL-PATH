@@ -1,4 +1,3 @@
-::: {align="center"}
 # `CTRL-PATH`
 
 **Clone. Install. Navigate.**
@@ -39,7 +38,7 @@ npm --version
 
 If each command returns a version number, you're ready to continue.
 
-## `02` --- Clone CTRL-PATH
+## `02` --- Clone CTRL-PATH in IDE (e.g VS Code, Cursor etc.)
 
 Open your terminal and clone the repository:
 
@@ -69,32 +68,7 @@ directory.
 > **Tip:** If the repository includes a `package-lock.json`,
 > `npm install` will use it to help keep dependency versions consistent.
 
-## `04` --- Configure Environment Variables (If Required)
-
-Some projects need environment variables to run.
-
-Check the project root for an `.env.example` file. If one exists, create
-your local `.env` file and fill in the required values.
-
-**Windows PowerShell:**
-
-``` powershell
-Copy-Item .env.example .env
-```
-
-**macOS / Linux:**
-
-``` bash
-cp .env.example .env
-```
-
-If no `.env.example` file is provided, or the project does not require
-environment variables, skip this step.
-
-> Keep your `.env` file private. Do not commit API keys, passwords, or
-> other secrets to GitHub.
-
-## `05` --- Run CTRL-PATH
+## `04` --- Run CTRL-PATH
 
 First, check which scripts are available in the project:
 
@@ -119,7 +93,7 @@ Use only a command that is actually defined by the project.
 
 ------------------------------------------------------------------------
 
-::: {align="center"}
+
 ``` text
 ┌──────────────────────────────────────────────┐
 │                                              │
@@ -135,4 +109,4 @@ Use only a command that is actually defined by the project.
 **CTRL-PATH --- Your local setup starts here.**
 
 [GitHub Repository](https://github.com/Emman-21/CTRL-PATH)
-:::
+
