@@ -1,112 +1,95 @@
-# `CTRL-PATH`
+# CTRL-PATH
 
-**Clone. Install. Navigate.**
+> **Terminal-Based Installation Guide**
 
-*A quick-start guide for setting up CTRL-PATH on your local machine.*
+Follow the commands below using your IDE's integrated terminal.
 
-![Setup](https://img.shields.io/badge/SETUP-LOCAL-00D9A6?style=for-the-badge&labelColor=101820)
-![Runtime](https://img.shields.io/badge/NODE.JS-REQUIRED-78CFF5?style=for-the-badge&labelColor=101820)
-![Package
-Manager](https://img.shields.io/badge/NPM-DEPENDENCIES-F4B860?style=for-the-badge&labelColor=101820)
-:::
+## 1. Open the Terminal
 
-------------------------------------------------------------------------
+Open your IDE (e.g., Visual Studio Code), then open its integrated terminal.
 
-## `01` --- Prerequisites
+In VS Code, press:
 
-Before setting up CTRL-PATH, make sure these tools are installed:
+`Ctrl + ``
 
-  --------------------------------------------------------------------------
-  Tool                                   Purpose
-  -------------------------------------- -----------------------------------
-  [Git](https://git-scm.com/downloads)   Clone the project repository
+## 2. Clone the Repository
 
-  [Node.js](https://nodejs.org/) (LTS    Run the project and its JavaScript
-  recommended)                           tooling
-
-  npm                                    Install the project's Node.js
-                                         dependencies; included with Node.js
-  --------------------------------------------------------------------------
-
-Verify your installations in a terminal:
-
-``` bash
-git --version
-node --version
-npm --version
-```
-
-If each command returns a version number, you're ready to continue.
-
-## `02` --- Clone CTRL-PATH in IDE (e.g VS Code, Cursor etc.)
-
-Open your terminal and clone the repository:
-
-``` bash
+```bash
 git clone https://github.com/Emman-21/CTRL-PATH.git
 ```
 
-Move into the project directory:
+## 3. Navigate to the Project
 
-``` bash
+```bash
 cd CTRL-PATH
 ```
 
-You now have a local copy of CTRL-PATH.
+## 4. Install Dependencies
 
-## `03` --- Install Node Modules
-
-Install the dependencies listed in the project's `package.json`:
-
-``` bash
+```bash
 npm install
 ```
 
-npm will download the required packages and create the `node_modules`
-directory.
+Wait until the installation is complete.
 
-> **Tip:** If the repository includes a `package-lock.json`,
-> `npm install` will use it to help keep dependency versions consistent.
+## 5. Configure Environment Variables
 
-## `04` --- Run CTRL-PATH
+If the project provides an `.env.example` file, create your local environment file.
 
-First, check which scripts are available in the project:
+**Windows PowerShell:**
+```powershell
+Copy-Item .env.example .env
+```
 
-``` bash
+**macOS / Linux:**
+```bash
+cp .env.example .env
+```
+
+Configure the required environment variables if needed.
+
+## 6. Run the Project
+
+Check the available scripts:
+
+```bash
 npm run
 ```
 
-Then run the appropriate development or start command listed in
-`package.json`. For example, if the project defines a `dev` script:
+Run the development command if available:
 
-``` bash
+```bash
 npm run dev
 ```
 
-Or, if it defines a `start` script:
+If the project uses a different start command, follow the scripts defined in `package.json`.
 
-``` bash
-npm start
-```
+---
 
-Use only a command that is actually defined by the project.
+## Contribution Reminder
 
-------------------------------------------------------------------------
+Want to improve, modify, or add features to CTRL-PATH?
 
+You're welcome to contribute! However, **please submit a Pull Request (PR) before having your changes merged into the main project.**
 
-``` text
-┌──────────────────────────────────────────────┐
-│                                              │
-│   CTRL-PATH                                  │
-│   ────────────────────────────────────────   │
-│   REPOSITORY  : Emman-21 / CTRL-PATH         │
-│   STATUS      : READY TO SET UP              │
-│   NEXT STEP   : CLONE → INSTALL → RUN        │
-│                                              │
-└──────────────────────────────────────────────┘
-```
+1. Create a separate branch or fork the repository.
+2. Make your desired changes.
+3. Commit and push your changes.
+4. Open a Pull Request on GitHub.
+5. Wait for the admin to review your proposed changes.
 
-**CTRL-PATH --- Your local setup starts here.**
+The admin will review your Pull Request before approving and merging the changes into the main branch.
 
-[GitHub Repository](https://github.com/Emman-21/CTRL-PATH)
+> **Important:** Direct changes to the main branch are not permitted. All contributions must go through the Pull Request review process.
 
+---
+
+<div align="center">
+
+**CTRL-PATH**
+
+`CLONE → INSTALL → RUN → CONTRIBUTE`
+
+*Every contribution starts with a pull request.*
+
+</div>
