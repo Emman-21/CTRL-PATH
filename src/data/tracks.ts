@@ -21,7 +21,7 @@ export const TRACKS_DATA: Record<'NT' | 'BA' | 'SM', TrackInfo> = {
     introAchievement: {
       id: 1,
       name: "Peridot's Protocol",
-      gemstoneUrl: '/assets/aistudio/01_peridots_protocol_f55976cf.png',
+      gemstoneUrl: '/assets/pictures/01_peridots_protocol_f55976cf.png',
     },
     keySubjects: [
       'Network Fundamentals & Architecture',
@@ -171,7 +171,7 @@ export const TRACKS_DATA: Record<'NT' | 'BA' | 'SM', TrackInfo> = {
     introAchievement: {
       id: 6,
       name: "Garnet's Foresight",
-      gemstoneUrl: '/assets/aistudio/06_garnets_foresight_de542d8b.png',
+      gemstoneUrl: '/assets/pictures/06_garnets_foresight_de542d8b.png',
     },
     keySubjects: [
       'Data Analytics & Exploration',
@@ -321,7 +321,7 @@ export const TRACKS_DATA: Record<'NT' | 'BA' | 'SM', TrackInfo> = {
     introAchievement: {
       id: 11,
       name: "Pearl's Precision",
-      gemstoneUrl: '/assets/aistudio/11_pearls_precision_8d450275.png',
+      gemstoneUrl: '/assets/pictures/11_pearls_precision_8d450275.png',
     },
     keySubjects: [
       'IT Service Management Fundamentals (ITIL)',
