@@ -7,25 +7,19 @@ import { LuniSprite } from '../luni/LuniSprite';
 import type { DashboardNextActivity } from './DashboardHero';
 
 const CrossroadsSignpostIllustration: React.FC = () => (
-  <div className="relative w-28 h-20 sm:w-36 sm:h-24 shrink-0 rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs bg-linear-to-b from-sky-200 to-indigo-100 flex items-center justify-center select-none">
-    <svg viewBox="0 0 120 80" className="w-full h-full pixelated" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="120" height="80" fill="#BAE6FD" />
-      <circle cx="20" cy="20" r="14" fill="#E0F2FE" />
-      <circle cx="36" cy="16" r="16" fill="#E0F2FE" />
-      <circle cx="50" cy="22" r="12" fill="#E0F2FE" />
-      <path d="M-10 60 Q60 52 130 60 L130 90 L-10 90 Z" fill="#65A30D" />
-      <path d="M-10 68 Q60 62 130 68 L130 90 L-10 90 Z" fill="#78350F" />
-      <rect x="56" y="24" width="8" height="42" fill="#92400E" stroke="#78350F" strokeWidth="1" />
-      <path d="M40 28 L78 28 L84 34 L78 40 L40 40 Z" fill="#FDE68A" stroke="#B45309" strokeWidth="1.5" />
-      <text x="44" y="36.5" fill="#78350F" fontSize="6.5" fontFamily="sans-serif" fontWeight="bold">KNOWLEDGE</text>
-      <path d="M36 42 L72 42 L78 47 L72 52 L36 52 Z" fill="#FDE68A" stroke="#B45309" strokeWidth="1.5" />
-      <text x="40" y="49.5" fill="#78350F" fontSize="6.5" fontFamily="sans-serif" fontWeight="bold">PRACTICE</text>
-      <path d="M42 54 L84 54 L90 59 L84 64 L42 64 Z" fill="#FDE68A" stroke="#B45309" strokeWidth="1.5" />
-      <text x="46" y="61.5" fill="#78350F" fontSize="5.5" fontFamily="sans-serif" fontWeight="bold">BRIGHTER PATHS</text>
-      <circle cx="30" cy="58" r="2" fill="#F43F5E" />
-      <circle cx="92" cy="59" r="2.5" fill="#FBBF24" />
-      <circle cx="86" cy="62" r="2" fill="#FFFFFF" />
-    </svg>
+  <div className="relative w-28 h-20 sm:w-36 sm:h-24 shrink-0 rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs select-none bg-slate-100 dark:bg-slate-900 group">
+    <img
+      src="/assets/aistudio/Gemini_Generated_Image_3awrwn3awrwn3awr_013726b0.jpg"
+      alt="Crossroads signpost pointing to knowledge, practice, and a brighter path"
+      className="w-full h-full object-cover block dark:hidden transition-transform duration-300 group-hover:scale-105"
+      loading="eager"
+    />
+    <img
+      src="/assets/aistudio/Gemini_Generated_Image_fa4wzefa4wzefa4w_8364c5ea.jpg"
+      alt="Crossroads signpost illuminated beneath a night sky"
+      className="w-full h-full object-cover hidden dark:block transition-transform duration-300 group-hover:scale-105"
+      loading="eager"
+    />
   </div>
 );
 

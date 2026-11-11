@@ -10,7 +10,6 @@ import {
   Bell,
   Trophy,
   Settings,
-  Sparkles,
 } from 'lucide-react';
 import { BACKGROUNDS } from '../../assets/manifest';
 
@@ -38,17 +37,20 @@ export const Sidebar: React.FC = () => {
     <aside className="w-64 bg-white border-r border-slate-200/90 flex flex-col h-screen sticky top-0 shrink-0 z-30 select-none">
       {/* Brand Header */}
       <div className="p-6 border-b border-slate-100 flex flex-col gap-1">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm ring-2 ring-blue-100">
-            <Sparkles className="w-5 h-5 text-amber-300" />
-          </div>
+        <div className="flex items-center gap-3">
+          <img
+            src="/assets/aistudio/894455811_1534282605544392_6561933623517659718_n_7d027482.jpg"
+            alt="Luni, the CTRL+PATH mascot"
+            className="w-10 h-10 rounded-xl object-cover shrink-0 select-none shadow-xs"
+            style={{ imageRendering: 'pixelated' }}
+          />
           <div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 font-brand" style={{ fontFamily: "'Nunito', 'Inter', sans-serif" }}>
               <span className="font-black text-lg tracking-tight text-slate-900">CTRL</span>
               <span className="font-black text-lg text-blue-600">+</span>
               <span className="font-black text-lg tracking-tight text-slate-900">PATH</span>
             </div>
-            <div className="text-[10px] text-slate-400 font-medium tracking-wide">
+            <div className="text-xs text-slate-400 font-medium tracking-wide">
               Explore · Compare · Find Your Path
             </div>
           </div>

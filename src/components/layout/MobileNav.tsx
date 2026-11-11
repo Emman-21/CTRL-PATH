@@ -11,7 +11,6 @@ import {
   Trophy,
   Settings,
   X,
-  Sparkles,
 } from 'lucide-react';
 
 export interface MobileNavProps {
@@ -109,13 +108,20 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
         className="relative w-72 max-w-[80vw] bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200"
       >
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">
-              <Sparkles className="w-4 h-4 text-amber-300" />
-            </div>
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/assets/aistudio/894455811_1534282605544392_6561933623517659718_n_7d027482.jpg"
+              alt="Luni, the CTRL+PATH mascot"
+              className="w-9 h-9 rounded-xl object-cover shrink-0 select-none shadow-xs"
+              style={{ imageRendering: 'pixelated' }}
+            />
             <div>
-              <div className="font-extrabold text-slate-900 text-sm">CTRL+PATH</div>
-              <div className="text-[10px] text-slate-400">BatStateU Alangilan</div>
+              <div className="font-extrabold text-slate-900 text-sm font-brand" style={{ fontFamily: "'Nunito', 'Inter', sans-serif" }}>
+                <span>CTRL</span>
+                <span className="text-blue-600">+</span>
+                <span>PATH</span>
+              </div>
+              <div className="text-xs text-slate-400">BatStateU Alangilan</div>
             </div>
           </div>
           <button
