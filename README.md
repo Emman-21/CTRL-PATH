@@ -1,4 +1,5 @@
-# CTRL-PATH - Academic Track Guide
+#  🌙 CTRL-PATH - Academic Track Guide
+### Explore - Compare - Find Your Path
 
 > **Terminal-Based Installation Guide**
 
@@ -86,7 +87,7 @@ The admin will review your Pull Request before approving and merging the changes
 
 <div align="center">
 
-**CTRL-PATH**
+**CTRL-PATH **
 
 `CLONE → INSTALL → RUN → CONTRIBUTE`
 
