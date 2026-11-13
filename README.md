@@ -1,4 +1,4 @@
-# CTRL-PATH
+# CTRL-PATH - Academic Track Guide
 
 > **Terminal-Based Installation Guide**
 
