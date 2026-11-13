@@ -1,4 +1,4 @@
-#  🌙 CTRL-PATH - Academic Track Guide
+#  🌙 CTRL-PATH - Academic Track Guide 🧚
 ### Explore - Compare - Find Your Path
 
 > **Terminal-Based Installation Guide**
