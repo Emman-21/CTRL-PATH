@@ -14,16 +14,12 @@ import { ResultsScorecards } from '../components/results/ResultsScorecards';
 import { ResultsSpotlight } from '../components/results/ResultsSpotlight';
 import { ResultsAnswerReview } from '../components/results/ResultsAnswerReview';
 import { ResultsAttemptHistory } from '../components/results/ResultsAttemptHistory';
-import {
-  analyzeQuizAttempt,
-  SAMPLE_DEMO_ATTEMPT,
-} from '../utils/resultsAnalytics';
+import { analyzeQuizAttempt } from '../utils/resultsAnalytics';
 import {
   Sparkles,
   ArrowRight,
   RotateCcw,
   Lightbulb,
-  Search,
   Compass,
   GitCompare,
   Printer,
@@ -35,27 +31,23 @@ export const SmartResultsPage: React.FC = () => {
   const navigate = useNavigate();
   const [params]=useSearchParams();
 
-  const [previewMode, setPreviewMode] = useState<boolean>(false);
   const [selectedAttemptIndex, setSelectedAttemptIndex] = useState<number>(()=>Math.max(0,state.quizAttempts.findIndex(a=>a.id===params.get('attempt'))));
 
   // Print state
   const [, setIsPrinting] = useState<boolean>(false);
 
-  const hasRealAttempts = state.quizAttempts.length > 0;
   const activeAttempt = useMemo(() => {
-    if (previewMode || !hasRealAttempts) {
-      return SAMPLE_DEMO_ATTEMPT;
-    }
-    return state.quizAttempts[selectedAttemptIndex] || state.quizAttempts[0];
-  }, [hasRealAttempts, previewMode, state.quizAttempts, selectedAttemptIndex]);
+    return state.quizAttempts[selectedAttemptIndex] || state.quizAttempts[0] || null;
+  }, [state.quizAttempts, selectedAttemptIndex]);
 
   // Analyze the active attempt
   const analysis = useMemo(() => {
-    return analyzeQuizAttempt(activeAttempt);
+    return activeAttempt ? analyzeQuizAttempt(activeAttempt) : null;
   }, [activeAttempt]);
 
   // Handle navigate to comparison with preselected top 2 tracks
   const handleProceedToCompare = () => {
+    if (!activeAttempt || !analysis) return;
     // If tie, choose the tied tracks, otherwise highest + second highest
     let tracksToCompare: TrackCode[] = [];
     if (analysis.isTie && analysis.tiedTracks && analysis.tiedTracks.length >= 2) {
@@ -86,8 +78,8 @@ export const SmartResultsPage: React.FC = () => {
     }, 200);
   };
 
-  // If completely empty and not previewing
-  if (!hasRealAttempts && !previewMode) {
+  // Results exist only after a real quiz submission.
+  if (!activeAttempt || !analysis) {
     return (
       <div className="space-y-8 animate-in fade-in duration-200">
         <PageHeader
@@ -115,14 +107,6 @@ export const SmartResultsPage: React.FC = () => {
                 Start CTRL Quiz Adventure
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setPreviewMode(true)}
-              icon={<Search className="w-4 h-4 text-blue-600" />}
-            >
-              Preview Sample Results Report
-            </Button>
           </div>
         </Card>
       </div>
@@ -131,32 +115,6 @@ export const SmartResultsPage: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 pb-12 print:space-y-4 print:p-0">
-      {/* Sample preview notice banner if active */}
-      {previewMode && (
-        <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-between text-xs font-medium">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>
-              <strong>Sample Preview Mode:</strong> You are viewing an illustrative assessment report. Take the real quiz
-              to generate your personal analytics!
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to="/quiz">
-              <span className="font-bold underline text-amber-800 hover:text-amber-900">Take Quiz →</span>
-            </Link>
-            {hasRealAttempts && (
-              <button
-                onClick={() => setPreviewMode(false)}
-                className="px-2 py-1 bg-white border border-amber-300 rounded-lg text-slate-700 hover:bg-amber-100"
-              >
-                Exit Preview
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <PageHeader
         title="Your Path Insights & Guidance"
@@ -173,7 +131,7 @@ export const SmartResultsPage: React.FC = () => {
           <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Selected Attempt:
           </div>
-          {hasRealAttempts ? (
+          {state.quizAttempts.length > 0 ? (
             <div className="flex items-center gap-2">
               {state.quizAttempts.map((att, idx) => (
                 <button
@@ -189,11 +147,7 @@ export const SmartResultsPage: React.FC = () => {
                 </button>
               ))}
             </div>
-          ) : (
-            <span className="px-3 py-1 rounded-lg bg-blue-100 text-blue-800 text-xs font-bold">
-              Demonstration Sample
-            </span>
-          )}
+          ) : null}
         </div>
 
         <div className="flex items-center gap-2">

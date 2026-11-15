@@ -9,13 +9,13 @@ import type { DashboardNextActivity } from './DashboardHero';
 const CrossroadsSignpostIllustration: React.FC = () => (
   <div className="relative w-28 h-20 sm:w-36 sm:h-24 shrink-0 rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs select-none bg-slate-100 dark:bg-slate-900 group">
     <img
-      src="/assets/aistudio/Gemini_Generated_Image_3awrwn3awrwn3awr_013726b0.jpg"
+      src="/assets/pictures/dashboard-day.jpg"
       alt="Crossroads signpost pointing to knowledge, practice, and a brighter path"
       className="w-full h-full object-cover block dark:hidden transition-transform duration-300 group-hover:scale-105"
       loading="eager"
     />
     <img
-      src="/assets/aistudio/Gemini_Generated_Image_fa4wzefa4wzefa4w_8364c5ea.jpg"
+      src="/assets/pictures/dashboard-night.jpg"
       alt="Crossroads signpost illuminated beneath a night sky"
       className="w-full h-full object-cover hidden dark:block transition-transform duration-300 group-hover:scale-105"
       loading="eager"

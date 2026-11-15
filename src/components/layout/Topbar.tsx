@@ -64,7 +64,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileNav }) => {
           <span className="topbar-avatar"><StudentAvatar name={state.name} style={state.avatarStyle}/></span>
           <div className="text-left hidden lg:block">
             <div className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors max-w-36 truncate">
-              {state.name}
+              {state.name || 'Set up profile'}
             </div>
             <div className="text-[10px] text-slate-400 -mt-0.5">Student</div>
           </div>

@@ -15,7 +15,7 @@ export const INITIAL_STATE: StudentState = {
   achievementSchemaVersion: 2,
   achievementRecords: [],
   attemptComparisons: [],
-  name: 'Your Display Name',
+  name: '',
   university: '',
   program: '',
   yearLevel: '',

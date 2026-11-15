@@ -53,6 +53,8 @@ test('actual cards render only public metadata and real detail navigation',()=>{
 });
 test('profile validates display name, lengths, avatar and optional fields',()=>{
   const valid={...profileValues(fresh()),name:'Learner',avatarStyle:'initials' as const};assert.deepEqual(validateProfile(valid),{});
+  assert.equal(fresh().name,'');
+  assert.equal(migrateStudentData({...serializeStudent(fresh()),name:'Your Display Name'},fresh()).name,'');
   assert.ok(validateProfile({...valid,name:'   '}).name);assert.ok(validateProfile({...valid,biography:'x'.repeat(501)}).biography);
   assert.ok(validateProfile({...valid,avatarStyle:'invalid' as any}).avatarStyle);
 });
@@ -73,6 +75,7 @@ test('corrupt module, reflection, comparison and avatar fields normalize without
 test('progress selectors use saved scores and records, exclude malformed attempts, and never unlock',()=>{
   const state=fresh();state.quizAttempts=[{id:'summary',date:'2026-11-03',attemptNumber:1,ntScore:70,baScore:90,smScore:50,totalAnswered:24,totalQuestions:24,durationMinutes:12}];
   const p=studentProgress(state);assert.equal(p.attempts.length,1);assert.equal(p.latest?.id,'summary');assert.equal(p.analysis?.highestTrack,'BA');assert.equal(p.analysis?.trackBreakdowns.BA.percentage,90);assert.equal(p.moduleCount,0);assert.equal(p.collection.unlocked,0);assert.equal(p.fullyAnswered,0);assert.deepEqual(state.achievementRecords,[]);
+  assert.equal(p.analysis?.trackBreakdowns.BA.raw,undefined);assert.equal(p.analysis?.answerReviewAvailable,false);
 });
 test('versioned export contains student and active quiz only, never unrelated keys or unknown root fields',()=>{
   const storage=new MemoryStorage();storage.setItem('other_app_token','secret');storage.setItem(`${STUDENT_STORAGE_KEY}_backup_123`,'old data');storage.setItem(QUIZ_SESSION_KEY,JSON.stringify({attemptId:'saved',attemptNumber:1,answers:{[QUIZ_QUESTIONS[0].id]:true,unknown:'secret'},credential:'secret'}));
