@@ -110,7 +110,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img
-              src="/assets/aistudio/894455811_1534282605544392_6561933623517659718_n_7d027482.jpg"
+              src="/assets/pictures/ctrl-path-avatar.jpg"
               alt="Luni, the CTRL+PATH mascot"
               className="w-9 h-9 rounded-xl object-cover shrink-0 select-none shadow-xs"
               style={{ imageRendering: 'pixelated' }}

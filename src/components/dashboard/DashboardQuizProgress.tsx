@@ -58,7 +58,13 @@ export const DashboardQuizProgress: React.FC<DashboardQuizProgressProps> = ({
     <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
       <span className="text-xs text-slate-500 flex items-center gap-1.5">
         <Clock className="w-3.5 h-3.5 text-slate-400" />
-        <span>Attempt {Math.min(3, attemptsCount + 1)} of 3</span>
+        <span>
+          {activeQuiz
+            ? `Attempt ${Math.min(3, attemptsCount + 1)} of 3 in progress`
+            : attemptsCount > 0
+              ? `${attemptsCount} attempt${attemptsCount === 1 ? '' : 's'} completed`
+              : 'No attempts yet'}
+        </span>
       </span>
 
       <Link to="/quiz">

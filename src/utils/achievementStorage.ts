@@ -23,6 +23,7 @@ export function migrateStudentData(raw: unknown, defaults: StudentState): Studen
   for (const key of ['name', 'university', 'program', 'yearLevel'] as const) {
     state[key] = typeof raw[key] === 'string' ? raw[key] : defaults[key];
   }
+  if (state.name === 'Your Display Name') state.name = '';
   for (const key of ['exploredTracks', 'trackProgress', 'preferences', 'currentQuizProgress'] as const) {
     (state as any)[key] = { ...defaults[key], ...(object(raw[key]) ? raw[key] : {}) };
   }

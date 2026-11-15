@@ -39,7 +39,7 @@ export const Sidebar: React.FC = () => {
       <div className="p-6 border-b border-slate-100 flex flex-col gap-1">
         <div className="flex items-center gap-3">
           <img
-            src="/assets/aistudio/894455811_1534282605544392_6561933623517659718_n_7d027482.jpg"
+            src="/assets/pictures/ctrl-path-avatar.jpg"
             alt="Luni, the CTRL+PATH mascot"
             className="w-10 h-10 rounded-xl object-cover shrink-0 select-none shadow-xs"
             style={{ imageRendering: 'pixelated' }}

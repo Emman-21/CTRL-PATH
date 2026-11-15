@@ -31,7 +31,9 @@ export const ResultsScorecards: React.FC<ResultsScorecardsProps> = ({ analysis }
             <div className="text-right">
               <span className="text-2xl font-black text-blue-600">{analysis.trackBreakdowns.NT.percentage}%</span>
               <div className="text-[10px] text-slate-400 font-medium">
-                {analysis.trackBreakdowns.NT.raw}/{analysis.trackBreakdowns.NT.total} pts
+                {analysis.trackBreakdowns.NT.raw === undefined
+                  ? 'Raw score unavailable'
+                  : `${analysis.trackBreakdowns.NT.raw}/${analysis.trackBreakdowns.NT.total} pts`}
               </div>
             </div>
           </div>
@@ -71,7 +73,9 @@ export const ResultsScorecards: React.FC<ResultsScorecardsProps> = ({ analysis }
             <div className="text-right">
               <span className="text-2xl font-black text-violet-600">{analysis.trackBreakdowns.BA.percentage}%</span>
               <div className="text-[10px] text-slate-400 font-medium">
-                {analysis.trackBreakdowns.BA.raw}/{analysis.trackBreakdowns.BA.total} pts
+                {analysis.trackBreakdowns.BA.raw === undefined
+                  ? 'Raw score unavailable'
+                  : `${analysis.trackBreakdowns.BA.raw}/${analysis.trackBreakdowns.BA.total} pts`}
               </div>
             </div>
           </div>
@@ -111,7 +115,9 @@ export const ResultsScorecards: React.FC<ResultsScorecardsProps> = ({ analysis }
             <div className="text-right">
               <span className="text-2xl font-black text-emerald-600">{analysis.trackBreakdowns.SM.percentage}%</span>
               <div className="text-[10px] text-slate-400 font-medium">
-                {analysis.trackBreakdowns.SM.raw}/{analysis.trackBreakdowns.SM.total} pts
+                {analysis.trackBreakdowns.SM.raw === undefined
+                  ? 'Raw score unavailable'
+                  : `${analysis.trackBreakdowns.SM.raw}/${analysis.trackBreakdowns.SM.total} pts`}
               </div>
             </div>
           </div>
