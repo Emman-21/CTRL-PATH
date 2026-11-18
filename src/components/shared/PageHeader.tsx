@@ -42,8 +42,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       </div>
 
       {/* Content */}
-      <div className="relative z-10 px-6 py-7 sm:px-8 sm:py-8 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-        <div className="max-w-xl min-w-0">
+      <div className="relative z-10 px-6 py-7 sm:px-8 sm:py-8 flex flex-row items-start justify-between gap-4 sm:gap-6">
+        <div className="max-w-xl min-w-0 flex-1">
           {badge && <div className="mb-2.5">{badge}</div>}
 
           <div className="flex items-center gap-2">
@@ -61,12 +61,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         </div>
 
         {/* Luni Guide Card with Speech Bubble */}
-        <div className="shrink-0 flex items-center md:items-end justify-end gap-3 self-end md:self-auto">
-          <div className="bg-white/95 backdrop-blur-md border border-indigo-100/90 rounded-2xl p-3.5 shadow-sm max-w-[240px] relative hidden xl:block">
+        <div className="shrink-0 flex items-start justify-end gap-3 self-start">
+          <div className="bg-white/95 backdrop-blur-md border border-indigo-100/90 rounded-2xl p-3.5 shadow-sm max-w-[240px] relative hidden lg:block">
             <div className="text-xs font-bold text-indigo-700 mb-0.5">{luniTitle}</div>
             <p className="text-xs text-slate-600 leading-snug">{luniQuote}</p>
             {/* Speech bubble arrow pointer */}
-            <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-l-8 border-l-white/95" />
+            <div className="absolute -right-2 top-9 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-l-8 border-l-white/95" />
           </div>
 
           <div className="relative">

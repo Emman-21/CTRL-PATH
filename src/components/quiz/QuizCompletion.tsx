@@ -27,6 +27,14 @@ export const QuizCompletion: React.FC<QuizCompletionProps> = ({
   const firstSparkGem = GEMSTONE_ASSETS.find((g) => g.id === 16);
 
   const highestTrackInfo = TRACKS_DATA[scoreResult.highestTrack];
+  const maxPercentage = Math.max(
+    scoreResult.ntPercentage,
+    scoreResult.baPercentage,
+    scoreResult.smPercentage
+  );
+  const isNtTop = maxPercentage > 0 && scoreResult.ntPercentage === maxPercentage;
+  const isBaTop = maxPercentage > 0 && scoreResult.baPercentage === maxPercentage;
+  const isSmTop = maxPercentage > 0 && scoreResult.smPercentage === maxPercentage;
 
   return (
     <div className="max-w-2xl mx-auto w-full space-y-6 animate-in zoom-in-95 duration-200">
@@ -36,12 +44,12 @@ export const QuizCompletion: React.FC<QuizCompletionProps> = ({
 
         {/* Luni Celebration */}
         <div className="relative z-10 flex justify-center mb-3">
-          <LuniCharacter state="celebrating" size={104} animate glow />
+          <LuniCharacter state="celebrating" size={104} animate glow motionOverride="slow-jump" />
         </div>
 
         {/* First Spark Achievement Toast if newly unlocked */}
         {firstSparkUnlocked && firstSparkGem && (
-          <div className="relative z-10 mb-4 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 flex items-center justify-center gap-3 animate-bounce duration-1000">
+          <div className="relative z-10 mb-4 -mx-6 sm:-mx-8 px-6 sm:px-8 py-3.5 bg-amber-50/90 border-y border-amber-200 flex items-center justify-center gap-3">
             <img
               src={firstSparkGem.url}
               alt={firstSparkGem.name}
@@ -51,7 +59,7 @@ export const QuizCompletion: React.FC<QuizCompletionProps> = ({
               <div className="text-[10px] font-black uppercase text-amber-700 tracking-wider">
                 Achievement Unlocked!
               </div>
-              <div className="text-xs font-black text-slate-900">{firstSparkGem.name}</div>
+              <div className="text-xs font-black text-[#0f172a] dark:text-black">{firstSparkGem.name}</div>
               <div className="text-[11px] text-slate-500">First completed assessment journey</div>
             </div>
           </div>
@@ -74,49 +82,139 @@ export const QuizCompletion: React.FC<QuizCompletionProps> = ({
         {/* Three Gemstone Score Displays */}
         <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6 text-center">
           {/* NT Track */}
-          <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 flex flex-col items-center">
+          <div
+            className={`p-4 rounded-2xl flex flex-col items-center transition-all ${
+              isNtTop
+                ? 'bg-[#dbeafe] border-2 border-blue-500 ring-2 ring-blue-400/45 shadow-[0_0_20px_rgba(37,99,235,0.22)] dark:bg-[#172e63] dark:border-sky-400 dark:ring-sky-400/50 dark:shadow-[0_0_26px_rgba(56,189,248,0.38)]'
+                : 'bg-[#f8fafc] border border-slate-200 dark:bg-[#0b1222] dark:border-slate-700/80'
+            }`}
+          >
             {ntGem && (
               <img
                 src={ntGem.url}
                 alt="NT Gemstone"
-                className="w-12 h-12 object-contain pixelated drop-shadow-xs mb-1"
+                className={`w-12 h-12 object-contain pixelated mb-1 transition-transform ${
+                  isNtTop ? 'drop-shadow-md scale-105' : 'drop-shadow-xs opacity-75'
+                }`}
               />
             )}
-            <div className="text-xs font-bold text-blue-700">Networking Technology</div>
-            <div className="text-2xl font-black text-blue-900 mt-0.5">{scoreResult.ntPercentage}%</div>
-            <div className="text-[10px] text-slate-500">
+            <div
+              className={`text-xs font-bold ${
+                isNtTop
+                  ? 'text-blue-800 dark:text-sky-200'
+                  : 'text-blue-700/80 dark:text-sky-300'
+              }`}
+            >
+              Networking Technology
+            </div>
+            <div
+              className={`text-2xl font-black mt-0.5 ${
+                isNtTop
+                  ? 'text-[#172554] dark:text-white'
+                  : 'text-slate-700 dark:text-slate-200'
+              }`}
+            >
+              {scoreResult.ntPercentage}%
+            </div>
+            <div
+              className={`text-[10px] font-medium ${
+                isNtTop
+                  ? 'text-blue-800 dark:text-sky-100'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
               {scoreResult.ntRaw} / {scoreResult.ntTotal} scored units
             </div>
           </div>
 
           {/* BA Track */}
-          <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-200 flex flex-col items-center">
+          <div
+            className={`p-4 rounded-2xl flex flex-col items-center transition-all ${
+              isBaTop
+                ? 'bg-[#ede9fe] border-2 border-purple-500 ring-2 ring-purple-400/45 shadow-[0_0_20px_rgba(124,58,237,0.22)] dark:bg-[#2c1957] dark:border-purple-400 dark:ring-purple-400/50 dark:shadow-[0_0_26px_rgba(192,132,252,0.38)]'
+                : 'bg-[#f8fafc] border border-slate-200 dark:bg-[#0b1222] dark:border-slate-700/80'
+            }`}
+          >
             {baGem && (
               <img
                 src={baGem.url}
                 alt="BA Gemstone"
-                className="w-12 h-12 object-contain pixelated drop-shadow-xs mb-1"
+                className={`w-12 h-12 object-contain pixelated mb-1 transition-transform ${
+                  isBaTop ? 'drop-shadow-md scale-105' : 'drop-shadow-xs opacity-75'
+                }`}
               />
             )}
-            <div className="text-xs font-bold text-purple-700">Business Analytics</div>
-            <div className="text-2xl font-black text-purple-900 mt-0.5">{scoreResult.baPercentage}%</div>
-            <div className="text-[10px] text-slate-500">
+            <div
+              className={`text-xs font-bold ${
+                isBaTop
+                  ? 'text-purple-800 dark:text-purple-200'
+                  : 'text-purple-700/80 dark:text-purple-300'
+              }`}
+            >
+              Business Analytics
+            </div>
+            <div
+              className={`text-2xl font-black mt-0.5 ${
+                isBaTop
+                  ? 'text-[#3b0764] dark:text-white'
+                  : 'text-slate-700 dark:text-slate-200'
+              }`}
+            >
+              {scoreResult.baPercentage}%
+            </div>
+            <div
+              className={`text-[10px] font-medium ${
+                isBaTop
+                  ? 'text-purple-800 dark:text-purple-100'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
               {scoreResult.baRaw} / {scoreResult.baTotal} scored units
             </div>
           </div>
 
           {/* SM Track */}
-          <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex flex-col items-center">
+          <div
+            className={`p-4 rounded-2xl flex flex-col items-center transition-all ${
+              isSmTop
+                ? 'bg-[#d1fae5] border-2 border-emerald-500 ring-2 ring-emerald-400/45 shadow-[0_0_20px_rgba(5,150,105,0.22)] dark:bg-[#0e3828] dark:border-emerald-400 dark:ring-emerald-400/50 dark:shadow-[0_0_26px_rgba(52,211,153,0.38)]'
+                : 'bg-[#f8fafc] border border-slate-200 dark:bg-[#0b1222] dark:border-slate-700/80'
+            }`}
+          >
             {smGem && (
               <img
                 src={smGem.url}
                 alt="SM Gemstone"
-                className="w-12 h-12 object-contain pixelated drop-shadow-xs mb-1"
+                className={`w-12 h-12 object-contain pixelated mb-1 transition-transform ${
+                  isSmTop ? 'drop-shadow-md scale-105' : 'drop-shadow-xs opacity-75'
+                }`}
               />
             )}
-            <div className="text-xs font-bold text-emerald-700">Service Management</div>
-            <div className="text-2xl font-black text-emerald-900 mt-0.5">{scoreResult.smPercentage}%</div>
-            <div className="text-[10px] text-slate-500">
+            <div
+              className={`text-xs font-bold ${
+                isSmTop
+                  ? 'text-emerald-800 dark:text-emerald-200'
+                  : 'text-emerald-700/80 dark:text-emerald-300'
+              }`}
+            >
+              Service Management
+            </div>
+            <div
+              className={`text-2xl font-black mt-0.5 ${
+                isSmTop
+                  ? 'text-[#022c22] dark:text-white'
+                  : 'text-slate-700 dark:text-slate-200'
+              }`}
+            >
+              {scoreResult.smPercentage}%
+            </div>
+            <div
+              className={`text-[10px] font-medium ${
+                isSmTop
+                  ? 'text-emerald-800 dark:text-emerald-100'
+                  : 'text-slate-500 dark:text-slate-400'
+              }`}
+            >
               {scoreResult.smRaw} / {scoreResult.smTotal} scored units
             </div>
           </div>
@@ -135,13 +233,26 @@ export const QuizCompletion: React.FC<QuizCompletionProps> = ({
             {scoreResult.isTie ? (
               <span>
                 Your responses showed an equal tie between{' '}
-                <strong>{scoreResult.tiedTracks?.join(' & ')}</strong>! You demonstrate versatile foundational
+                <strong className="inline-block px-2 py-0.5 rounded-md bg-yellow-100/90 text-yellow-800 border border-yellow-300/80 dark:bg-yellow-400/20 dark:text-yellow-300 dark:border-yellow-400/40 font-extrabold">
+                  {scoreResult.tiedTracks?.join(' & ')}
+                </strong>! You demonstrate versatile foundational
                 comprehension.
               </span>
             ) : (
               <span>
                 Your responses showed the highest alignment in{' '}
-                <strong className="text-blue-700">{highestTrackInfo.name}</strong> ({highestTrackInfo.tagline}).
+                <strong
+                  className={`inline-block px-2 py-0.5 rounded-md border font-extrabold ${
+                    scoreResult.highestTrack === 'NT'
+                      ? 'bg-blue-100/90 text-blue-700 border-blue-200/80 dark:bg-sky-400/20 dark:text-sky-300 dark:border-sky-400/40'
+                      : scoreResult.highestTrack === 'BA'
+                      ? 'bg-violet-100/90 text-violet-700 border-violet-200/80 dark:bg-violet-400/20 dark:text-violet-300 dark:border-violet-400/40'
+                      : 'bg-emerald-100/90 text-emerald-700 border-emerald-200/80 dark:bg-emerald-400/20 dark:text-emerald-300 dark:border-emerald-400/40'
+                  }`}
+                >
+                  {highestTrackInfo.name}
+                </strong>{' '}
+                ({highestTrackInfo.tagline}).
               </span>
             )}
           </p>

@@ -16,7 +16,7 @@ export const MultipleChoiceRenderer: React.FC<MultipleChoiceRendererProps> = ({
   disabled = false,
 }) => {
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2">
       {question.options.map((option) => {
         const isSelected = value === option.key;
 
@@ -26,7 +26,7 @@ export const MultipleChoiceRenderer: React.FC<MultipleChoiceRendererProps> = ({
             type="button"
             disabled={disabled}
             onClick={() => onChange(option.key)}
-            className={`w-full p-4 rounded-2xl border-2 text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
+            className={`w-full p-3 rounded-2xl border-2 text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
               isSelected
                 ? 'border-blue-600 bg-blue-50/80 text-blue-950 font-bold shadow-xs ring-2 ring-blue-300'
                 : 'border-slate-200 bg-white hover:border-blue-300 text-slate-700 hover:bg-slate-50'

@@ -1,6 +1,6 @@
 import type { StudentState, QuizAttempt, TrackCode } from '../types';
 import { serializeStudent, STUDENT_STORAGE_KEY } from './achievementStorage';
-import { achievementStats, isCompletedAttempt } from './achievementRules';
+import { achievementStats, evaluateAchievements, isCompletedAttempt } from './achievementRules';
 import { analyzeQuizAttempt } from './resultsAnalytics';
 import { QUIZ_QUESTIONS } from '../data/quiz/quizQuestions';
 import { TRACKS_DATA } from '../data/tracks';
@@ -36,10 +36,37 @@ export function studentProgress(state:StudentState) {
   const journeyPercent=Math.min(100,Math.round(explored/3*35+(state.trackProgress.NT+state.trackProgress.BA+state.trackProgress.SM)/300*35+Math.min(1,attempts.length/2)*15+Math.min(1,collection.unlocked/10)*15));
   return {attempts,latest,explored,collection,moduleCount,journeyPercent,fullyAnswered:attempts.filter(isCompletedAttempt).length,analysis:latest?analyzeQuizAttempt(latest):null};
 }
+export function areAllTrackSubjectsCompleted(track:TrackCode,completions:StudentState['moduleCompletions']):boolean {
+  const trackData=TRACKS_DATA[track];
+  if(!trackData) return false;
+  const completedIds=new Set(completions.filter(c=>c.track===track).map(c=>c.moduleId));
+  if(trackData.subjects&&trackData.subjects.length>0) {
+    return trackData.subjects.every(subject=>{
+      const available=subject.modules.filter(m=>m.status==='available');
+      return available.length>0&&available.every(m=>completedIds.has(m.id));
+    });
+  }
+  const available=trackData.modules.filter(m=>m.status==='available');
+  return available.length>0&&available.every(m=>completedIds.has(m.id));
+}
 export function completeLearningModule(state:StudentState,track:TrackCode,moduleId:string,now=new Date().toISOString()):StudentState {
-  const module=TRACKS_DATA[track]?.modules.find(m=>m.id===moduleId&&m.status==='available');
+  const trackData=TRACKS_DATA[track];
+  const module=trackData?.modules.find(m=>m.id===moduleId&&m.status==='available');
   if(!module||state.moduleCompletions.some(m=>m.moduleId===moduleId)) return state;
-  return {...state,moduleCompletions:[...state.moduleCompletions,{track,moduleId,completedAt:now}],trackProgress:{...state.trackProgress,[track]:Math.min(100,state.trackProgress[track]+15)}};
+  const nextCompletions=[...state.moduleCompletions,{track,moduleId,completedAt:now}];
+  const availableModules=trackData.modules.filter(m=>m.status==='available');
+  const completedInTrack=availableModules.filter(m=>nextCompletions.some(c=>c.track===track&&c.moduleId===m.id)).length;
+  const pct=availableModules.length>0?Math.round((completedInTrack/availableModules.length)*100):state.trackProgress[track];
+  const nextProgress=Math.max(state.trackProgress[track],Math.min(100,pct));
+  const allSubjectsDone=areAllTrackSubjectsCompleted(track,nextCompletions);
+  const nextState:StudentState={
+    ...state,
+    moduleCompletions:nextCompletions,
+    trackProgress:{...state.trackProgress,[track]:nextProgress},
+    exploredTracks:allSubjectsDone?{...state.exploredTracks,[track]:true}:state.exploredTracks,
+    explorationDates:allSubjectsDone?{...state.explorationDates,[track]:state.explorationDates[track]||now}:state.explorationDates,
+  };
+  return allSubjectsDone?evaluateAchievements(nextState,{type:'track-explored',track},now):nextState;
 }
 export const QUIZ_SESSION_KEY='ctrl_path_quiz_session_v1';
 export function isStudentStorageKey(key:string) {

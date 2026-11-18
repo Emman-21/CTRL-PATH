@@ -8,17 +8,16 @@ import { TrackCode } from '../../types';
 import { useCommunity } from '../../context/CommunityContext';
 import { useStudent } from '../../context/StudentContext';
 import { useLocation } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, MessageCircle, Minus, Volume2, VolumeX } from 'lucide-react';
 
 export const LuniAssistantWidget: React.FC = () => {
   const { state: studentState, updatePreferences } = useStudent();
   const location = useLocation();
-  const {stories}=useCommunity();
+  const { stories } = useCommunity();
 
   const [showSpeechBubble, setShowSpeechBubble] = useState(false);
   const [showFullPanel, setShowFullPanel] = useState(false);
   const [characterState, setCharacterState] = useState<LuniState>('waving');
-  // Single source of truth: preference (no local mirror to drift out of sync).
   const isMinimized = studentState.preferences?.luniMinimized ?? false;
   const [isSleeping, setIsSleeping] = useState(false);
 
@@ -29,17 +28,41 @@ export const LuniAssistantWidget: React.FC = () => {
     );
   });
 
+  const [quizAnsweringActive, setQuizAnsweringActive] = useState<boolean>(() => {
+    return (
+      typeof window !== 'undefined' &&
+      window.sessionStorage.getItem('ctrl_quiz_answering') === 'true'
+    );
+  });
+
   useEffect(() => {
     const handleFocusChange = () => {
       setIsQuizFocusMode(window.sessionStorage.getItem('ctrl_quiz_focus_mode') === 'true');
     };
+    const handleAnsweringChange = () => {
+      setQuizAnsweringActive(window.sessionStorage.getItem('ctrl_quiz_answering') === 'true');
+    };
+    handleFocusChange();
+    handleAnsweringChange();
     window.addEventListener('ctrl_focus_mode_changed', handleFocusChange);
-    return () => window.removeEventListener('ctrl_focus_mode_changed', handleFocusChange);
+    window.addEventListener('ctrl_quiz_answering_changed', handleAnsweringChange);
+    return () => {
+      window.removeEventListener('ctrl_focus_mode_changed', handleFocusChange);
+      window.removeEventListener('ctrl_quiz_answering_changed', handleAnsweringChange);
+    };
   }, []);
+
+  const isQuizAnswering = location.pathname === '/quiz' && quizAnsweringActive;
+
+  useEffect(() => {
+    if (isQuizAnswering) {
+      setShowSpeechBubble(false);
+      setShowFullPanel(false);
+    }
+  }, [isQuizAnswering]);
 
   // Determine current contextual dialogue
   const getActiveDialogue = (): LuniDialogueItem => {
-    // Check if on tracks page with specific track query parameter
     const searchParams = new URLSearchParams(location.search);
     const trackParam = searchParams.get('track') as TrackCode | null;
 
@@ -47,38 +70,31 @@ export const LuniAssistantWidget: React.FC = () => {
       return TRACK_SPECIFIC_DIALOGUES[trackParam];
     }
 
-    if (location.pathname.startsWith('/alumni')) return {...ROUTE_DIALOGUES['/alumni'],message:stories.length ? "Everyone's journey is different, Luminary! Let's learn from the experiences of those who came before us." : ROUTE_DIALOGUES['/alumni'].message};
-    const routeKey=location.pathname.startsWith('/announcements')?'/announcements':location.pathname;
-    const routeDialogue = ROUTE_DIALOGUES[routeKey] || ROUTE_DIALOGUES['/'];
-    return routeDialogue;
+    if (location.pathname.startsWith('/alumni')) {
+      return {
+        ...ROUTE_DIALOGUES['/alumni'],
+        message: stories.length
+          ? "Everyone's journey is different, Luminary! Let's learn from the experiences of those who came before us."
+          : ROUTE_DIALOGUES['/alumni'].message,
+      };
+    }
+    const routeKey = location.pathname.startsWith('/announcements')
+      ? '/announcements'
+      : location.pathname;
+    return ROUTE_DIALOGUES[routeKey] || ROUTE_DIALOGUES['/'];
   };
 
   const activeDialogue = getActiveDialogue();
 
-  // Route transition effect: update Luni's mood and pop auto-tip if enabled
+  // Route transition effect: update Luni's state without popping intrusive auto-dialogues
   useEffect(() => {
     setIsSleeping(false);
     const dialogue = getActiveDialogue();
     setCharacterState(dialogue.state);
+    setShowSpeechBubble(false);
+  }, [location.pathname, location.search, stories.length]);
 
-    // Auto-pop tip if enabled in preferences and not on quiz
-    if (
-      studentState.preferences?.luniAutoTips !== false &&
-      location.pathname !== '/quiz' &&
-      !isMinimized
-    ) {
-      setShowSpeechBubble(true);
-      // Auto-hide bubble after 8 seconds
-      const timer = setTimeout(() => {
-        setShowSpeechBubble(false);
-      }, 8000);
-      return () => clearTimeout(timer);
-    } else {
-      setShowSpeechBubble(false);
-    }
-  }, [location.pathname, location.search, isMinimized, studentState.preferences?.luniAutoTips, stories.length]);
-
-  // Inactivity timeout: transition Luni to sleeping pose after 90 seconds of no interaction
+  // Inactivity timeout: transition Luni to sleeping pose after 90 seconds
   useEffect(() => {
     if (isSleeping || isMinimized || showFullPanel) return;
 
@@ -103,15 +119,9 @@ export const LuniAssistantWidget: React.FC = () => {
       window.removeEventListener('mousemove', resetSleep);
       window.removeEventListener('keydown', resetSleep);
     };
-  }, [isSleeping, isMinimized, showFullPanel, activeDialogue.state, studentState.preferences?.luniMinimized]);
+  }, [isSleeping, isMinimized, showFullPanel, activeDialogue.state]);
 
-  // If Luni is globally disabled in user preferences, return null
-  if (studentState.preferences?.luniEnabled === false) {
-    return null;
-  }
-
-  // If Focus Mode is active on the Quiz, hide the floating companion completely to preserve distraction-free state
-  if (isQuizFocusMode) {
+  if (studentState.preferences?.luniEnabled === false || isQuizFocusMode || isQuizAnswering) {
     return null;
   }
 
@@ -122,10 +132,13 @@ export const LuniAssistantWidget: React.FC = () => {
 
   return (
     <>
-      <div data-luni-animated={studentState.preferences.luniFloatingAnimation !== false} className="fixed bottom-5 right-5 z-40 flex flex-col items-end select-none">
+      <div
+        data-luni-animated={studentState.preferences.luniFloatingAnimation !== false}
+        className="fixed bottom-6 right-6 z-40 flex flex-col items-end select-none"
+      >
         {/* Floating Speech Bubble */}
         {showSpeechBubble && !isMinimized && !showFullPanel && (
-          <div className="mb-3">
+          <div className="mb-2.5">
             <LuniDialogueBubble
               dialogue={activeDialogue}
               onDismiss={() => setShowSpeechBubble(false)}
@@ -139,51 +152,56 @@ export const LuniAssistantWidget: React.FC = () => {
 
         {/* Character & Quick Launcher */}
         <div className="flex items-end gap-2">
-          {/* Minimized Compact Icon */}
           {isMinimized ? (
+            /* Minimized Sleek Pill */
             <button
               onClick={() => toggleMinimize(false)}
-              className="flex items-center gap-2 px-3 py-2 bg-white/95 hover:bg-blue-50 border border-blue-200 rounded-full shadow-lg text-slate-800 transition-all hover:scale-105 active:scale-95 group"
+              className="flex items-center gap-2.5 px-3.5 py-2 bg-white/95 hover:bg-indigo-50 border border-indigo-200/90 rounded-full shadow-lg shadow-indigo-950/10 text-slate-800 transition-all hover:scale-105 active:scale-95 group cursor-pointer"
               aria-label="Wake Luni Companion"
             >
-              <div className="relative w-6 h-6 flex items-center justify-center">
-                <LuniCharacter state="waving" size={26} animate={false} showParticles={false} />
+              <div className="relative w-7 h-7 flex items-center justify-center">
+                <LuniCharacter state="waving" size={28} animate={false} showParticles={false} />
               </div>
-              <span className="text-xs font-black text-blue-700 hidden sm:inline">Ask Luni!</span>
+              <div className="text-left hidden sm:block">
+                <div className="text-xs font-black text-indigo-950 leading-none">Ask Luni!</div>
+                <div className="text-[10px] text-indigo-500 font-semibold leading-none mt-0.5">
+                  AI Mentor
+                </div>
+              </div>
               <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-sparkle-spin" />
             </button>
           ) : (
             <div className="flex flex-col items-end group">
-              {/* Controls bar above Luni */}
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mb-1 flex items-center gap-1 bg-white/90 backdrop-blur-xs px-2 py-1 rounded-full border border-slate-200 shadow-xs text-[10px] text-slate-600">
+              {/* Quick Action Floating Pill (Hover controls) */}
+              <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 -mb-1 flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-full text-white shadow-lg text-[11px] font-semibold">
                 <button
                   onClick={() => setShowSpeechBubble(!showSpeechBubble)}
-                  className="hover:text-blue-600 px-1 font-bold"
-                  aria-label="Toggle speech bubble"
+                  className="hover:text-amber-300 transition-colors p-0.5 cursor-pointer"
+                  title={showSpeechBubble ? 'Hide tip' : 'Show tip'}
                 >
-                  {showSpeechBubble ? 'Mute' : 'Tip'}
+                  {showSpeechBubble ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
                 </button>
-                <span>•</span>
+                <span className="text-white/30">•</span>
                 <button
                   onClick={() => toggleMinimize(true)}
-                  className="hover:text-blue-600 px-1 font-bold"
-                  aria-label="Minimize companion"
+                  className="hover:text-amber-300 transition-colors p-0.5 cursor-pointer"
+                  title="Minimize Luni"
                 >
-                  Minimize
+                  <Minus className="w-3 h-3" />
                 </button>
-                <span>•</span>
+                <span className="text-white/30">•</span>
                 <button
                   onClick={() => setShowFullPanel(true)}
-                  className="hover:text-blue-600 px-1 font-bold"
-                  aria-label="Open Full Guide"
+                  className="hover:text-amber-300 transition-colors flex items-center gap-1 cursor-pointer"
                 >
-                  Q&A
+                  <MessageCircle className="w-3 h-3 text-amber-400" />
+                  <span>Chat</span>
                 </button>
               </div>
 
-              {/* Luni Silhouette Trigger (Free from circular container!) */}
+              {/* Luni Sprite with Subtle Pedestal & Glowing Glow */}
               <div
-                className="relative cursor-pointer transition-transform duration-200 hover:scale-110 active:scale-95 flex flex-col items-center"
+                className="relative cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95 flex flex-col items-center"
                 onClick={() => {
                   if (showSpeechBubble) {
                     setShowFullPanel(true);
@@ -202,23 +220,28 @@ export const LuniAssistantWidget: React.FC = () => {
                 }}
                 aria-label="Luni, Moonstone Companion. Click to chat and ask questions."
               >
-                {/* Floating Shadow Under Luni */}
-                <div className="absolute -bottom-1 w-10 h-2 bg-slate-900/15 rounded-full blur-2xs" />
+                {/* Soft Celestial Glow Aura */}
+                <div className="absolute inset-0 bg-radial from-indigo-400/25 to-transparent rounded-full blur-md -z-10 scale-90" />
 
-                <LuniCharacter
-                  state={characterState}
-                  size={74}
-                  animate
-                  showParticles
-                  interactive
-                />
+                {/* Soft ground shadow */}
+                <div className="absolute bottom-0 w-12 h-2.5 bg-indigo-950/15 rounded-full blur-xs" />
+
+                <div className="filter drop-shadow-[0_4px_10px_rgba(99,102,241,0.2)]">
+                  <LuniCharacter
+                    state={characterState}
+                    size={76}
+                    animate
+                    showParticles
+                    interactive
+                  />
+                </div>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Expandable Assistant Panel (Desktop Modal / Mobile Bottom Sheet) */}
+      {/* Expandable Assistant Panel */}
       <LuniAssistantPanel
         isOpen={showFullPanel}
         onClose={() => setShowFullPanel(false)}

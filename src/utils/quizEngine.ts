@@ -1,4 +1,4 @@
-import { QuizSessionState, QuizScoreResult } from '../types/quiz';
+import { QuizSessionState, QuizScoreResult, QuizQuestion, SequencingQuestion } from '../types/quiz';
 import { QUIZ_QUESTIONS } from '../data/quiz/quizQuestions';
 import { TrackCode } from '../types';
 
@@ -272,3 +272,145 @@ export function calculateQuizScores(
     durationMinutes: resolvedDuration,
   };
 }
+
+/**
+ * Determine whether a single quiz question has a complete, non-empty answer.
+ */
+export function isQuestionAnswered(question: QuizQuestion, answer: unknown): boolean {
+  if (answer === undefined || answer === null || answer === '') {
+    return false;
+  }
+
+  switch (question.type) {
+    case 'true_false':
+      return typeof answer === 'boolean';
+    case 'multiple_choice':
+      return typeof answer === 'string' && answer.trim().length > 0;
+    case 'matching': {
+      if (typeof answer !== 'object' || Array.isArray(answer)) return false;
+      const map = answer as Record<string, unknown>;
+      return question.pairs.every(
+        (pair) => typeof map[pair.term] === 'string' && String(map[pair.term]).trim().length > 0
+      );
+    }
+    case 'sequencing':
+      return (
+        Array.isArray(answer) &&
+        answer.length === question.steps.length &&
+        answer.every((step) => typeof step === 'string' && step.trim().length > 0)
+      );
+    case 'identification': {
+      if (question.isEnumeration && question.enumerationFields) {
+        return (
+          Array.isArray(answer) &&
+          question.enumerationFields.every(
+            (_, idx) => typeof answer[idx] === 'string' && answer[idx].trim().length > 0
+          )
+        );
+      }
+      return typeof answer === 'string' && answer.trim().length > 0;
+    }
+    default:
+      return false;
+  }
+}
+
+/**
+ * Return 0-based indices of unanswered questions within a chapter's ordered question IDs.
+ */
+export function getUnansweredQuestionIndices(
+  questionIds: string[],
+  answers: Record<string, unknown>,
+  questions: QuizQuestion[] = QUIZ_QUESTIONS
+): number[] {
+  const byId = new Map(questions.map((q) => [q.id, q]));
+  const unanswered: number[] = [];
+
+  questionIds.forEach((id, idx) => {
+    const q = byId.get(id);
+    if (!q || !isQuestionAnswered(q, answers[id])) {
+      unanswered.push(idx);
+    }
+  });
+
+  return unanswered;
+}
+
+/**
+ * Return true only when every question in the chapter has been answered.
+ */
+export function isChapterComplete(
+  questionIds: string[],
+  answers: Record<string, unknown>,
+  questions: QuizQuestion[] = QUIZ_QUESTIONS
+): boolean {
+  if (questionIds.length === 0) return false;
+  return getUnansweredQuestionIndices(questionIds, answers, questions).length === 0;
+}
+
+/**
+ * Deterministically shuffle sequencing steps so they do not start in the exact answer order.
+ */
+export function getShuffledSequencingSteps(question: Pick<SequencingQuestion, 'id' | 'steps'>): string[] {
+  const steps = [...question.steps];
+  if (steps.length <= 1) return steps;
+
+  const prng = createPrng(`seq-${question.id || steps.join('|')}`);
+  for (let i = steps.length - 1; i > 0; i--) {
+    const j = Math.floor(prng() * (i + 1));
+    [steps[i], steps[j]] = [steps[j], steps[i]];
+  }
+
+  // Guarantee the starting order is never identical to the exact solution
+  const isIdentical = steps.every((s, idx) => s === question.steps[idx]);
+  if (isIdentical) {
+    const first = steps.shift()!;
+    steps.push(first);
+  }
+
+  return steps;
+}
+
+/**
+ * Return a new sequencing array with the item at `fromIndex` moved to `toIndex`.
+ */
+export function reorderSequencingSteps(
+  steps: readonly string[],
+  fromIndex: number,
+  toIndex: number
+): string[] {
+  if (
+    fromIndex < 0 ||
+    fromIndex >= steps.length ||
+    toIndex < 0 ||
+    toIndex >= steps.length ||
+    fromIndex === toIndex
+  ) {
+    return [...steps];
+  }
+
+  const updated = [...steps];
+  const [moved] = updated.splice(fromIndex, 1);
+  updated.splice(toIndex, 0, moved);
+  return updated;
+}
+
+/**
+ * Given the vertical midpoints of each rendered step slot and a pointer Y coordinate,
+ * determine the target slot index where the dragged step should be placed.
+ */
+export function computeSequencingDropIndex(
+  slotMidpoints: readonly number[],
+  pointerY: number
+): number {
+  if (slotMidpoints.length <= 1) return 0;
+
+  for (let i = 0; i < slotMidpoints.length - 1; i++) {
+    const boundary = (slotMidpoints[i] + slotMidpoints[i + 1]) / 2;
+    if (pointerY < boundary) {
+      return i;
+    }
+  }
+  return slotMidpoints.length - 1;
+}
+

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Sparkles, ArrowDown, Gem } from 'lucide-react';
 import { BACKGROUNDS, GEMSTONE_ASSETS, type GemstoneAsset } from '../assets/manifest';
 import { useStudent } from '../context/StudentContext';

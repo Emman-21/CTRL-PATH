@@ -10,6 +10,19 @@ export const BACKGROUNDS = {
   quizMinimalClouds: '/assets/pictures/04_quiz_minimal_clouds_872b3764.png',
 } as const;
 
+export const UNIVERSITY_LOGOS = {
+  bsuAlangilan: {
+    url: '/assets/aistudio/image_42b32454.png',
+    alt: 'Batangas State University Alangilan Official Seal',
+    label: 'Batangas State University',
+  },
+  cicsAlangilan: {
+    url: '/assets/aistudio/423862284_122100317924200684_1941444354870706094_n_4155d14a.jpg',
+    alt: 'Integrated Information Technology Student Society (IINTESS) — CICS Alangilan Seal',
+    label: 'CICS Alangilan ~ IINTESS',
+  },
+} as const;
+
 export type LuniPoseKey =
   | 'idle'
   | 'wave'
@@ -136,8 +149,8 @@ export const GEMSTONE_ASSETS: GemstoneAsset[] = [
     category: 'NT',
     rarity: 'Common',
     url: '/assets/pictures/01_peridots_protocol_f55976cf.png',
-    description: 'Mark Networking Technology track as explored and review network basics.',
-    requirement: "Mark Networking Technology as explored.",
+    description: 'Complete all modules across both Networking Technology subjects to master network and IoT fundamentals.',
+    requirement: 'Complete all modules in both Networking Technology subjects (NTT 401 & NTT 402).',
   },
   {
     id: 2,
@@ -193,8 +206,8 @@ export const GEMSTONE_ASSETS: GemstoneAsset[] = [
     category: 'BA',
     rarity: 'Common',
     url: '/assets/pictures/06_garnets_foresight_de542d8b.png',
-    description: 'Mark Business Analytics track as explored and inspect data storytelling.',
-    requirement: "Mark Business Analytics as explored.",
+    description: 'Complete all available modules across both Business Analytics subjects and explore data storytelling.',
+    requirement: 'Complete all available modules in both Business Analytics subjects (BAT 401 & BAT 402).',
   },
   {
     id: 7,
@@ -250,8 +263,8 @@ export const GEMSTONE_ASSETS: GemstoneAsset[] = [
     category: 'SM',
     rarity: 'Common',
     url: '/assets/pictures/11_pearls_precision_8d450275.png',
-    description: 'Mark Service Management track as explored and understand ITIL principles.',
-    requirement: "Mark Service Management as explored.",
+    description: 'Complete all modules across both Service Management subjects and understand ITIL workflows.',
+    requirement: 'Complete all modules in both Service Management subjects (SMT 401 & SMT 402).',
   },
   {
     id: 12,
@@ -355,3 +368,19 @@ export const GEMSTONE_ASSETS: GemstoneAsset[] = [
     requirement: "Unlock all 15 NT, BA, and SM track-specific achievements.",
   },
 ];
+
+/**
+ * High-definition AI-generated assets for Track Explorer & NetAcad Reader
+ * Generated via Gemini per user prompts and stored in /public/assets/aistudio/
+ */
+export const TRACK_GENERATED_IMAGES = {
+  /** Modern data center server room with engineer and blue/cyan LED cables (NT / Computer Networking 3) */
+  ntDataCenter: '/assets/aistudio/Gemini_Generated_Image_ff5grlff5grlff5g_c3f13806.jpg',
+  /** Ultrawide 3-monitor analyst workstation with data flows and architecture (BA / Systems Analysis) */
+  baWorkstation: '/assets/aistudio/Gemini_Generated_Image_svdehgsvdehgsvde_cfa1031e.jpg',
+  /** 24/7 IT-BPO enterprise operations command center with timezone clocks and multi-screens (SM) */
+  smCommandCenter: '/assets/aistudio/Gemini_Generated_Image_saf5susaf5susaf5_1f235ff0.jpg',
+  /** Glowing digital neon cybersecurity padlock in cyan matrix (Junior Cybersecurity Analyst / NetAcad) */
+  cyberSecurityLock: '/assets/aistudio/Gemini_Generated_Image_lsy053lsy053lsy0_11d55428.jpg',
+} as const;
+

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { GEMSTONE_ASSETS } from '../../assets/manifest';
 import { useStudent } from '../../context/StudentContext';
 import { LuniSprite } from '../luni/LuniSprite';

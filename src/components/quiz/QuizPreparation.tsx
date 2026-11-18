@@ -31,13 +31,13 @@ export const QuizPreparation: React.FC<QuizPreparationProps> = ({
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               {levelMeta.name}
             </h2>
-            <div className="text-xs font-bold text-blue-600 mt-0.5">
+            <div className="text-xs font-bold text-blue-600 dark:text-sky-300 mt-0.5">
               Format: {levelMeta.typeTitle} · {levelMeta.questionCount} Questions ({levelMeta.estimatedTime})
             </div>
           </div>
 
           <div className="shrink-0 hidden sm:block">
-            <LuniCharacter state="pointing" size={68} animate />
+            <LuniCharacter state="pointing" size={68} animate={false} hoverCircle />
           </div>
         </div>
 
@@ -47,7 +47,7 @@ export const QuizPreparation: React.FC<QuizPreparationProps> = ({
 
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
             <div className="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5 text-blue-600" />
+              <BookOpen className="w-3.5 h-3.5 text-blue-600 dark:text-sky-300" />
               <span>Instructions</span>
             </div>
             <p className="text-xs text-slate-600 leading-normal">{levelMeta.instructions}</p>
@@ -69,13 +69,13 @@ export const QuizPreparation: React.FC<QuizPreparationProps> = ({
           </div>
 
           {/* Luni's Tip */}
-          <div className="p-3.5 rounded-2xl bg-linear-to-r from-blue-50/60 to-purple-50/60 border border-indigo-100 flex items-start gap-3">
+          <div className="p-3.5 rounded-2xl bg-linear-to-r from-blue-50/60 to-purple-50/60 dark:from-slate-800/95 dark:via-indigo-950/80 dark:to-slate-900/95 border border-indigo-100 dark:border-indigo-800/60 flex items-start gap-3">
             <div className="shrink-0 mt-0.5">
-              <LuniCharacter state="encouraging" size={40} animate showParticles={false} />
+              <LuniCharacter state="encouraging" size={40} animate={false} showParticles={false} />
             </div>
             <div>
-              <div className="text-xs font-black text-indigo-950">Luni's Preparation Advice</div>
-              <p className="text-xs text-slate-600 leading-relaxed mt-0.5">{levelMeta.luniTip}</p>
+              <div className="text-xs font-black text-indigo-950 dark:text-indigo-200">Luni's Preparation Advice</div>
+              <p className="text-xs text-slate-600 dark:text-slate-200 leading-relaxed mt-0.5">{levelMeta.luniTip}</p>
             </div>
           </div>
         </div>

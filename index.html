@@ -1,15 +1,29 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      try {
+        var raw = localStorage.getItem('ctrl_path_student_data_v1');
+        var parsed = raw ? JSON.parse(raw) : null;
+        var prefs = parsed && parsed.preferences;
+        var theme = prefs && prefs.themeExplicit === true && prefs.theme === 'light' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = theme;
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    </script>
     <title>CTRL+PATH — Academic Guidance Platform</title>
     <meta name="description" content="Magical academic guidance platform for first-year BSIT students at Batangas State University – Alangilan to explore Networking Technology, Business Analytics, and Service Management." />
     <meta property="og:title" content="CTRL+PATH — Academic Guidance Platform" />
     <meta property="og:description" content="Magical academic guidance platform for first-year BSIT students at Batangas State University – Alangilan to explore Networking Technology, Business Analytics, and Service Management." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" type="image/jpeg" href="/assets/pictures/ctrl-path-avatar.jpg" />
+    <link rel="icon" type="image/jpeg" href="/assets/aistudio/894455811_1534282605544392_6561933623517659718_n_7d027482.jpg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Nunito:wght@500;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">

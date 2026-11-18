@@ -11,7 +11,9 @@ import {
   Trophy,
   Settings,
   X,
+  Sparkles,
 } from 'lucide-react';
+import { UniversityCrests } from '../shared/UniversityCrests';
 
 export interface MobileNavProps {
   isOpen: boolean;
@@ -110,18 +112,18 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img
-              src="/assets/pictures/ctrl-path-avatar.jpg"
+              src="/assets/aistudio/894455811_1534282605544392_6561933623517659718_n_7d027482.jpg"
               alt="Luni, the CTRL+PATH mascot"
               className="w-9 h-9 rounded-xl object-cover shrink-0 select-none shadow-xs"
               style={{ imageRendering: 'pixelated' }}
             />
             <div>
-              <div className="font-extrabold text-slate-900 text-sm font-brand" style={{ fontFamily: "'Nunito', 'Inter', sans-serif" }}>
+              <div className="font-extrabold text-slate-900 dark:text-slate-100 text-sm font-brand" style={{ fontFamily: "'Nunito', 'Inter', sans-serif" }}>
                 <span>CTRL</span>
-                <span className="text-blue-600">+</span>
+                <span className="text-blue-600 dark:text-blue-400">+</span>
                 <span>PATH</span>
               </div>
-              <div className="text-xs text-slate-400">BatStateU Alangilan</div>
+              <div className="text-xs text-slate-400 dark:text-slate-500">BatStateU Alangilan</div>
             </div>
           </div>
           <button
@@ -156,6 +158,18 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
             );
           })}
         </nav>
+
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
+          <UniversityCrests size="sm" gapClassName="gap-1.5" />
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+              Batangas State University
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+              CICS · Alangilan Campus
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

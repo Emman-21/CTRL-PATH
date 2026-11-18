@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, Search, Compass } from 'lucide-react';
 import { PageHeader } from '../components/shared/PageHeader';

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LuniPoseKey, LUNI_POSES } from '../../assets/manifest';
-import { LuniState, LuniParticleType } from '../../types/luni';
+import { LuniState, LuniParticleType, LuniStateConfig } from '../../types/luni';
 import { LUNI_STATE_CONFIGS } from '../../data/luniDialogues';
 import { useStudent } from '../../context/StudentContext';
 
@@ -11,11 +11,15 @@ export interface LuniCharacterProps {
   animate?: boolean;
   showParticles?: boolean;
   particleOverride?: LuniParticleType;
+  motionOverride?: LuniStateConfig['motion'] | 'slow-jump';
   onClick?: () => void;
   className?: string;
   interactive?: boolean;
   alt?: string;
   glow?: boolean;
+  hoverCircle?: boolean;
+  hoverGlow?: boolean;
+  staticCircle?: boolean;
 }
 
 export const LuniCharacter: React.FC<LuniCharacterProps> = ({
@@ -25,11 +29,15 @@ export const LuniCharacter: React.FC<LuniCharacterProps> = ({
   animate = true,
   showParticles = true,
   particleOverride,
+  motionOverride,
   onClick,
   className = '',
   interactive = false,
   alt,
   glow = false,
+  hoverCircle = false,
+  hoverGlow = true,
+  staticCircle = false,
 }) => {
   const { state: studentState } = useStudent();
   const [isHovered, setIsHovered] = useState(false);
@@ -48,11 +56,15 @@ export const LuniCharacter: React.FC<LuniCharacterProps> = ({
   const activePoseKey: LuniPoseKey = pose || config.pose;
   const poseData = LUNI_POSES[activePoseKey] || LUNI_POSES.idle;
   const activeParticle: LuniParticleType = particleOverride || config.particle;
+  const activeMotion = motionOverride || config.motion;
 
   // Determine motion class
   let motionClass = '';
   if (animationsEnabled) {
-    switch (config.motion) {
+    switch (activeMotion) {
+      case 'slow-jump':
+        motionClass = 'animate-slow-jump';
+        break;
       case 'bounce':
         motionClass = 'animate-bounce duration-1000';
         break;
@@ -90,8 +102,28 @@ export const LuniCharacter: React.FC<LuniCharacterProps> = ({
       } ${motionClass} ${className}`}
       style={{ width: size, height: size }}
     >
+      {/* Static Circle Backdrop (always visible when enabled) */}
+      {staticCircle && (
+        <div
+          aria-hidden="true"
+          className="absolute -inset-2 rounded-full bg-violet-500/15 dark:bg-violet-400/20 pointer-events-none"
+        />
+      )}
+
+      {/* Hover Circle Backdrop (when explicitly enabled) */}
+      {hoverCircle && (
+        <div
+          aria-hidden="true"
+          className={`absolute -inset-1.5 rounded-full border transition-all duration-200 pointer-events-none ${
+            isHovered
+              ? 'opacity-100 scale-100 bg-blue-100/75 border-blue-300/80 shadow-[0_0_16px_rgba(59,130,246,0.22)] dark:bg-sky-400/15 dark:border-sky-400/50 dark:shadow-[0_0_18px_rgba(56,189,248,0.22)]'
+              : 'opacity-0 scale-90 bg-transparent border-transparent'
+          }`}
+        />
+      )}
+
       {/* Soft Ambient Aura Glow */}
-      {(activeParticle === 'glow' || isHovered || glow) && animationsEnabled && (
+      {(activeParticle === 'glow' || (hoverGlow && isHovered) || glow) && animationsEnabled && (
         <div
           className="absolute inset-0 rounded-full bg-blue-300/35 blur-md -z-10 animate-soft-glow"
           style={{ transform: 'scale(1.25)' }}
@@ -143,9 +175,9 @@ export const LuniCharacter: React.FC<LuniCharacterProps> = ({
       <img
         src={poseData.url}
         alt={alt || `Luni in ${poseData.name} pose: ${poseData.description}`}
-        className="w-full h-full object-contain pixelated pointer-events-none drop-shadow-sm transition-transform duration-200"
+        className="relative z-10 w-full h-full object-contain pixelated pointer-events-none drop-shadow-sm transition-transform duration-200"
         style={{
-          transform: isHovered && interactive ? 'scale(1.06)' : 'scale(1)',
+          transform: isHovered && (interactive || hoverCircle) ? 'scale(1.06)' : 'scale(1)',
         }}
         loading="lazy"
       />

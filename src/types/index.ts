@@ -1,5 +1,25 @@
 export type TrackCode = 'NT' | 'BA' | 'SM';
 
+export interface TrackModuleTopic {
+  id: string;
+  numberPrefix?: string;
+  title: string;
+  objective: string;
+  readingMinutes?: number;
+  startSlidePage?: number;
+  contentSections?: {
+    heading: string;
+    body: string;
+    bullets?: string[];
+    codeBlock?: string;
+    table?: {
+      headers: string[];
+      rows: string[][];
+    };
+    tip?: string;
+  }[];
+}
+
 export interface TrackModule {
   id: string;
   title: string;
@@ -9,6 +29,32 @@ export interface TrackModule {
   status: 'available' | 'completed' | 'in_preparation';
   durationMinutes: number;
   overviewSummary: string;
+  moduleNumber?: number;
+  objectives?: string[];
+  topics?: TrackModuleTopic[];
+  embeddedPdfUrl?: string;
+  pdfStartPage?: number;
+  pdfEndPage?: number;
+  slidesGdriveUrl?: string;
+  pptFileName?: string;
+  heroImage?: string;
+  keyTakeaways?: string[];
+}
+
+export interface TrackSubject {
+  id: string;
+  code: string;
+  title: string;
+  subtitle?: string;
+  description: string;
+  status: 'available' | 'in_preparation';
+  category: string;
+  durationText: string;
+  moduleCount: number;
+  modules: TrackModule[];
+  gdriveUrl?: string;
+  bannerGradient?: string;
+  heroImage?: string;
 }
 
 export interface RealWorldApplication {
@@ -16,6 +62,22 @@ export interface RealWorldApplication {
   scenario: string;
   solution: string;
   impact: string;
+}
+
+export interface PotentialCareerItem {
+  id?: string;
+  title: string;
+  description: string;
+  sampleRoles: string[];
+  level?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  salaryRange?: string;
+  type?: string;
+  durationHours?: string;
+  isFree?: boolean;
+  bannerGradient?: string;
+  image?: string;
+  relatableSkills?: string[];
+  responsibilities?: string[];
 }
 
 export interface TrackInfo {
@@ -31,6 +93,10 @@ export interface TrackInfo {
   description: string;
   focus: string;
   luniQuote: string;
+  gdriveUrl?: string;
+  courseCode?: string;
+  courseTitle?: string;
+  subjects?: TrackSubject[];
   introAchievement: {
     id: number;
     name: string;
@@ -43,17 +109,15 @@ export interface TrackInfo {
   }[];
   modules: TrackModule[];
   realWorldApplications: RealWorldApplication[];
-  possibleCareers: {
-    title: string;
-    description: string;
-    sampleRoles: string[];
-  }[];
+  possibleCareers: PotentialCareerItem[];
   workStyle: string[];
   interests: string[];
   bestFitTraits: string[];
 }
 
 export interface StudentPreferences {
+  theme?: 'light' | 'dark';
+  themeExplicit?: boolean;
   reducedMotion: boolean;
   highContrast: boolean;
   textSize: 'normal' | 'large';

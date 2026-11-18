@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useBlocker, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../components/shared/PageHeader';
 import { BACKGROUNDS } from '../assets/manifest';

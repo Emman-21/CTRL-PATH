@@ -3,7 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { Card } from '../shared/Card';
 import { ProgressBar } from '../shared/ProgressBar';
-import { NtPixelArt, BaPixelArt, SmPixelArt } from '../shared/PixelArt';
+import {
+  NtPixelArt,
+  BaPixelArt,
+  SmPixelArt,
+  NtTrackBadge,
+  BaTrackBadge,
+  SmTrackBadge,
+} from '../shared/PixelArt';
 import type { TrackCode } from '../../types';
 
 interface DashboardTrackCardsProps {
@@ -41,9 +48,7 @@ export const DashboardTrackCards: React.FC<DashboardTrackCardsProps> = ({ trackP
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
-                  NT
-                </div>
+                <NtTrackBadge size={40} className="shrink-0 rounded-xl shadow-xs" />
                 <div>
                   <h3 className="font-black text-slate-900 text-base leading-tight">Networking Technology</h3>
                   <span className="text-[11px] text-blue-600 font-semibold">Infrastructure & Security</span>
@@ -78,9 +83,7 @@ export const DashboardTrackCards: React.FC<DashboardTrackCardsProps> = ({ trackP
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
-                  BA
-                </div>
+                <BaTrackBadge size={40} className="shrink-0 rounded-xl shadow-xs" />
                 <div>
                   <h3 className="font-black text-slate-900 text-base leading-tight">Business Analytics</h3>
                   <span className="text-[11px] text-violet-600 font-semibold">Data & Intelligence</span>
@@ -115,9 +118,7 @@ export const DashboardTrackCards: React.FC<DashboardTrackCardsProps> = ({ trackP
           <div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
-                  SM
-                </div>
+                <SmTrackBadge size={40} className="shrink-0 rounded-xl shadow-xs" />
                 <div>
                   <h3 className="font-black text-slate-900 text-base leading-tight">Service Management</h3>
                   <span className="text-[11px] text-emerald-600 font-semibold">Operations, CX & Tech</span>

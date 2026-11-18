@@ -29,14 +29,14 @@ export interface DetailedResultsAnalysis {
   tiedTracks?: TrackCode[];
   /**
    * True when the analysis has trustworthy per-question data
-   * from a real submission with saved answers.
+   * (either real answers from a modern submission, or clearly-labeled sample data).
    * False for legacy attempts that predate answer tracking.
    */
   answerReviewAvailable: boolean;
   trackBreakdowns: {
-    NT: { raw?: number; total: number; percentage: number; level: string; label: string };
-    BA: { raw?: number; total: number; percentage: number; level: string; label: string };
-    SM: { raw?: number; total: number; percentage: number; level: string; label: string };
+    NT: { raw: number; total: number; percentage: number; level: string; label: string };
+    BA: { raw: number; total: number; percentage: number; level: string; label: string };
+    SM: { raw: number; total: number; percentage: number; level: string; label: string };
   };
   headlineTitle: string;
   spotlightNarrative: string;
@@ -139,6 +139,52 @@ export function evaluateQuestionForReview(
 }
 
 /**
+ * Deterministic sample synthesis for the demo preview only.
+ * Never used for real student attempts.
+ */
+function synthesizeSampleQuestion(
+  q: QuizQuestion,
+  ntPct: number,
+  baPct: number,
+  smPct: number
+): EvaluatedQuestion {
+  const targetScore = q.track === 'NT' ? ntPct : q.track === 'BA' ? baPct : smPct;
+  const pseudoScore = q.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 100;
+  const isCorrect = pseudoScore <= targetScore;
+
+  let studentDisplay = isCorrect ? 'Demonstrated Correct Understanding' : 'Alternative Response Given';
+  let correctDisplay = '';
+
+  if (q.type === 'true_false') {
+    correctDisplay = q.correctAnswer ? 'True' : 'False';
+    studentDisplay = isCorrect ? correctDisplay : q.correctAnswer ? 'False' : 'True';
+  } else if (q.type === 'multiple_choice') {
+    const correctOpt = q.options.find((o) => o.key === q.correctAnswer);
+    correctDisplay = `${q.correctAnswer}: ${correctOpt ? correctOpt.text : ''}`;
+    studentDisplay = isCorrect ? correctDisplay : 'Alternative selection';
+  } else if (q.type === 'matching') {
+    correctDisplay = q.pairs.map((p) => `${p.term} → ${p.definition}`).join('; ');
+    studentDisplay = isCorrect ? 'All pairs matched correctly' : 'Partial match';
+  } else if (q.type === 'sequencing') {
+    correctDisplay = q.steps.map((s, idx) => `${idx + 1}. ${s}`).join(' → ');
+    studentDisplay = isCorrect ? 'All sequence steps in order' : 'Steps rearranged';
+  } else if (q.type === 'identification') {
+    correctDisplay = q.isEnumeration && q.enumerationFields
+      ? q.enumerationFields.map((f) => f.acceptedAnswers[0]).join(', ')
+      : q.acceptedAnswers[0];
+    studentDisplay = isCorrect ? correctDisplay : 'Unverified term';
+  }
+
+  return {
+    question: q,
+    isCorrect,
+    status: isCorrect ? 'correct' : 'incorrect',
+    studentDisplay,
+    correctDisplay,
+  };
+}
+
+/**
  * Generate a comprehensive results analysis object from a QuizAttempt
  */
 export function analyzeQuizAttempt(attempt: QuizAttempt): DetailedResultsAnalysis {
@@ -146,8 +192,9 @@ export function analyzeQuizAttempt(attempt: QuizAttempt): DetailedResultsAnalysi
   const baPct = Math.round(attempt.baScore);
   const smPct = Math.round(attempt.smScore);
 
+  const isSampleAttempt = attempt.id === 'demo-sample-attempt';
   const answers = attempt.answers || {};
-  const hasRealAnswers = Object.keys(answers).length > 0;
+  const hasRealAnswers = !isSampleAttempt && Object.keys(answers).length > 0;
 
   const getLevelLabel = (pct: number) => {
     if (pct >= 75) return 'High Alignment';
@@ -176,10 +223,15 @@ export function analyzeQuizAttempt(attempt: QuizAttempt): DetailedResultsAnalysi
     5: { name: 'Level 5: Domain Technical Mastery', type: 'Identification & Enumeration' },
   };
 
-  // Evaluate only saved answers; legacy summaries cannot support answer review.
+  // Determine per-question evaluation strategy:
+  // - Sample demo: synthesize deterministic data (clearly preview-only)
+  // - Real attempt with answers: evaluate honestly
+  // - Real legacy attempt without answers: return empty (no fabrication)
   let evaluatedQuestions: EvaluatedQuestion[] = [];
   if (hasRealAnswers) {
     evaluatedQuestions = QUIZ_QUESTIONS.map((q) => evaluateQuestionForReview(q, answers[q.id]));
+  } else if (isSampleAttempt) {
+    evaluatedQuestions = QUIZ_QUESTIONS.map((q) => synthesizeSampleQuestion(q, ntPct, baPct, smPct));
   }
   // Legacy real attempt: evaluatedQuestions stays empty
 
@@ -327,24 +379,24 @@ export function analyzeQuizAttempt(attempt: QuizAttempt): DetailedResultsAnalysi
     isTie,
     highestTrack,
     tiedTracks: isTie ? tiedTracks : undefined,
-    answerReviewAvailable: hasRealAnswers,
+    answerReviewAvailable: hasRealAnswers || isSampleAttempt,
     trackBreakdowns: {
       NT: {
-        raw: attempt.ntRaw,
+        raw: attempt.ntRaw ?? Math.round((ntPct / 100) * 33),
         total: 33,
         percentage: ntPct,
         level: getLevelLabel(ntPct),
         label: 'Networking Technology',
       },
       BA: {
-        raw: attempt.baRaw,
+        raw: attempt.baRaw ?? Math.round((baPct / 100) * 33),
         total: 33,
         percentage: baPct,
         level: getLevelLabel(baPct),
         label: 'Business Analytics',
       },
       SM: {
-        raw: attempt.smRaw,
+        raw: attempt.smRaw ?? Math.round((smPct / 100) * 33),
         total: 33,
         percentage: smPct,
         level: getLevelLabel(smPct),
@@ -358,5 +410,49 @@ export function analyzeQuizAttempt(attempt: QuizAttempt): DetailedResultsAnalysi
     demonstratedStrengths,
     growthOpportunities,
     evaluatedQuestions,
+  };
+}
+
+/**
+ * Sample preview data when student hasn't taken a quiz yet
+ */
+export const SAMPLE_DEMO_ATTEMPT: QuizAttempt = {
+  id: 'demo-sample-attempt',
+  date: 'Sample Exploration',
+  attemptNumber: 1,
+  ntScore: 82,
+  baScore: 73,
+  smScore: 61,
+  totalAnswered: 99,
+  totalQuestions: 99,
+  durationMinutes: 28,
+};
+
+export interface ScorecardDisplayValues {
+  percentageText: string;
+  rawText: string;
+  levelLabel: string;
+  progressValue: number;
+}
+
+/**
+ * Formats track scorecard metrics, returning "--%" when no quiz results exist yet.
+ */
+export function formatTrackScorecardDisplay(
+  breakdown: { raw: number; total: number; percentage: number; level: string } | null | undefined
+): ScorecardDisplayValues {
+  if (!breakdown) {
+    return {
+      percentageText: '--%',
+      rawText: '--/33 pts',
+      levelLabel: 'Quiz Not Taken',
+      progressValue: 0,
+    };
+  }
+  return {
+    percentageText: `${breakdown.percentage}%`,
+    rawText: `${breakdown.raw}/${breakdown.total} pts`,
+    levelLabel: breakdown.level,
+    progressValue: breakdown.percentage,
   };
 }

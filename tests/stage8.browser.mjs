@@ -116,7 +116,7 @@ try {
   await page.getByRole('button',{name:'Clear my local data',exact:true}).click();await dialog().getByRole('button',{name:'Cancel',exact:true}).click();assert.equal((await saved()).name,longName);
   await page.getByRole('button',{name:'Clear my local data',exact:true}).click();await dialog().getByRole('button',{name:'Permanently clear CTRL+PATH data',exact:true}).click();
   await page.getByText('Your local CTRL+PATH data has been cleared.',{exact:true}).waitFor();
-  const cleared=await saved();assert.equal(cleared.quizAttempts.length,0);assert.equal(cleared.achievementRecords.length,0);assert.equal(cleared.reflections.NT.interests,'');assert.equal(cleared.name,'');
+  const cleared=await saved();assert.equal(cleared.quizAttempts.length,0);assert.equal(cleared.achievementRecords.length,0);assert.equal(cleared.reflections.NT.interests,'');assert.equal(cleared.name,'Your Display Name');
   assert.deepEqual(await page.evaluate(key=>[localStorage.getItem('unrelated_app'),localStorage.getItem('ctrl_path_app_configuration'),localStorage.getItem(`${key}_backup_123`),sessionStorage.getItem('ctrl_quiz_focus_mode'),sessionStorage.getItem('unrelated_session')],key),['keep','keep',null,null,'keep']);
   check('Real JSON download, cancel preservation, explicitly confirmed scoped clear and unrelated storage retained');
   // Replace only this isolated browser's development data module with synthetic

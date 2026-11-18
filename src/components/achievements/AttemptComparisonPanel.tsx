@@ -15,20 +15,20 @@ export function AttemptComparisonPanel() {
   const eligible = eligibleAttemptPair(state, [first, second]);
   const recorded = state.attemptComparisons.some(c => [first, second].every(id => c.attemptIds.includes(id)));
   return <div id="attempt-comparison"><Card className="space-y-4">
-    <h2 className="font-extrabold text-lg text-slate-900">Compare your completed attempts</h2>
-    <p className="text-sm text-slate-600">Reflect on what changed. These scores are learning signals; your pathway is still your choice.</p>
-    <div className="grid sm:grid-cols-2 gap-4">{[first, second].map((value, index) => <label key={index} className="text-sm font-bold text-slate-700">
+    <h2 className="font-extrabold text-lg text-slate-900 dark:text-slate-100">Compare your completed attempts</h2>
+    <p className="text-sm text-slate-600 dark:text-slate-300">Reflect on what changed. These scores are learning signals; your pathway is still your choice.</p>
+    <div className="grid sm:grid-cols-2 gap-4">{[first, second].map((value, index) => <label key={index} className="text-sm font-bold text-slate-700 dark:text-slate-300">
       {index === 0 ? 'Earlier result' : 'Result to compare'}
-      <select className="block w-full mt-2 border border-slate-300 rounded-xl p-3 bg-white" value={value} onChange={e => { (index === 0 ? setFirst : setSecond)(e.target.value); setReviewed(false); }}>
+      <select className="block w-full mt-2 border border-slate-300 dark:border-slate-700 rounded-xl p-3 bg-white dark:bg-[#0a0f1d]" value={value} onChange={e => { (index === 0 ? setFirst : setSecond)(e.target.value); setReviewed(false); }}>
         {attempts.map(attempt => <option key={attempt.id} value={attempt.id}>Attempt {attempt.attemptNumber} — {attempt.date}</option>)}
       </select></label>)}</div>
     {eligible && a && b ? <>
-      <div className="overflow-x-auto"><table className="w-full text-sm text-left"><caption className="sr-only">Scores from the two selected completed attempts</caption>
-        <thead><tr><th className="p-2">Track</th><th className="p-2">Attempt {a.attemptNumber}</th><th className="p-2">Attempt {b.attemptNumber}</th><th className="p-2">Change</th></tr></thead>
-        <tbody>{(['NT', 'BA', 'SM'] as const).map(track => { const key = `${track.toLowerCase()}Score` as 'ntScore' | 'baScore' | 'smScore'; const delta = b[key] - a[key]; return <tr key={track} className="border-t border-slate-100"><th className="p-2">{track}</th><td className="p-2">{a[key]}%</td><td className="p-2">{b[key]}%</td><td className="p-2">{delta > 0 ? '+' : ''}{delta} points</td></tr>; })}</tbody>
+      <div className="overflow-x-auto"><table className="w-full text-sm text-left text-slate-700 dark:text-slate-200"><caption className="sr-only">Scores from the two selected completed attempts</caption>
+        <thead><tr className="text-slate-500 dark:text-slate-400"><th className="p-2">Track</th><th className="p-2">Attempt {a.attemptNumber}</th><th className="p-2">Attempt {b.attemptNumber}</th><th className="p-2">Change</th></tr></thead>
+        <tbody>{(['NT', 'BA', 'SM'] as const).map(track => { const key = `${track.toLowerCase()}Score` as 'ntScore' | 'baScore' | 'smScore'; const delta = b[key] - a[key]; return <tr key={track} className="border-t border-slate-100 dark:border-slate-800"><th className="p-2">{track}</th><td className="p-2">{a[key]}%</td><td className="p-2">{b[key]}%</td><td className="p-2">{delta > 0 ? '+' : ''}{delta} points</td></tr>; })}</tbody>
       </table></div>
-      <label className="flex items-start gap-3 text-sm text-slate-700"><input type="checkbox" className="mt-1 w-4 h-4" checked={reviewed} onChange={e => setReviewed(e.target.checked)} />I reviewed the differences between these completed attempts.</label>
+      <label className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300"><input type="checkbox" className="mt-1 w-4 h-4" checked={reviewed} onChange={e => setReviewed(e.target.checked)} />I reviewed the differences between these completed attempts.</label>
       <button className="vault-primary-button disabled:opacity-50" disabled={!reviewed || recorded} onClick={() => completeAttemptComparison([first, second])}>{recorded ? 'Comparison completed' : 'Complete attempt comparison'}</button>
-    </> : <p className="text-sm text-slate-600">Select two different completed attempts, including an eligible retake (attempt 2 or 3).</p>}
+    </> : <p className="text-sm text-slate-600 dark:text-slate-400">Select two different completed attempts, including an eligible retake (attempt 2 or 3).</p>}
   </Card></div>;
 }

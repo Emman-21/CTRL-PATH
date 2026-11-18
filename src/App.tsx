@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { StudentProvider } from './context/StudentContext';
 import { CommunityProvider } from './context/CommunityContext';

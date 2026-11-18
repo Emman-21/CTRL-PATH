@@ -12,6 +12,14 @@ import {
 import { Button } from '../shared/Button';
 import { Card } from '../shared/Card';
 import { ProgressBar } from '../shared/ProgressBar';
+import {
+  NtTrackBadge,
+  BaTrackBadge,
+  SmTrackBadge,
+  NtPixelArt,
+  BaPixelArt,
+  SmPixelArt,
+} from '../shared/PixelArt';
 import type { TrackCode, TrackInfo } from '../../types';
 
 interface CompareTrackCardProps {
@@ -25,12 +33,6 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
   track,
   trackScore,
 }) => {
-  const headerTheme = {
-    NT: 'bg-blue-600 text-white',
-    BA: 'bg-violet-600 text-white',
-    SM: 'bg-emerald-600 text-white',
-  };
-
   const borderTheme = {
     NT: 'border-blue-200 hover:border-blue-300',
     BA: 'border-violet-200 hover:border-violet-300',
@@ -41,11 +43,13 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
     <Card className={`flex flex-col space-y-6 border-2 transition-all ${borderTheme[code]}`}>
       <div className="flex items-start justify-between pb-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
-          <div
-            className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-xs ${headerTheme[code]}`}
-          >
-            {code}
-          </div>
+          {code === 'NT' ? (
+            <NtTrackBadge size={48} className="shrink-0 rounded-2xl shadow-xs" />
+          ) : code === 'BA' ? (
+            <BaTrackBadge size={48} className="shrink-0 rounded-2xl shadow-xs" />
+          ) : (
+            <SmTrackBadge size={48} className="shrink-0 rounded-2xl shadow-xs" />
+          )}
           <div>
             <h3 className="font-black text-slate-900 text-lg leading-tight">{track.name}</h3>
             <p className="text-xs text-slate-500 mt-0.5">{track.tagline}</p>
@@ -58,6 +62,26 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
           className="w-10 h-10 object-contain pixelated shrink-0 drop-shadow-xs"
           title={track.introAchievement.name}
         />
+      </div>
+
+      <div
+        className={`h-16 flex items-center justify-center rounded-xl overflow-hidden border ${
+          code === 'NT'
+            ? 'bg-[var(--accent-nt-tint)] dark:bg-linear-to-b dark:from-blue-950/50 dark:to-slate-900 border-[var(--accent-nt-border)] dark:border-blue-900/40'
+            : code === 'BA'
+            ? 'bg-[var(--accent-ba-tint)] dark:bg-linear-to-b dark:from-purple-950/50 dark:to-slate-900 border-[var(--accent-ba-border)] dark:border-purple-900/40'
+            : 'bg-[var(--accent-sm-tint)] dark:bg-linear-to-b dark:from-emerald-950/50 dark:to-slate-900 border-[var(--accent-sm-border)] dark:border-emerald-900/40'
+        }`}
+      >
+        <div className="scale-85 origin-center">
+          {code === 'NT' ? (
+            <NtPixelArt size="sm" />
+          ) : code === 'BA' ? (
+            <BaPixelArt size="sm" />
+          ) : (
+            <SmPixelArt size="sm" />
+          )}
+        </div>
       </div>
 
       <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">

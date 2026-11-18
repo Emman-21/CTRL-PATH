@@ -66,7 +66,7 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({ analys
       </div>
 
       {!analysis.answerReviewAvailable ? (
-        <div className="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-900 leading-relaxed">
+        <div className="p-6 rounded-2xl bg-amber-50 dark:bg-[#241c08] border border-amber-200 dark:border-amber-800/60 text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
           <strong className="block mb-1">Answer review unavailable.</strong>
           This attempt was submitted before detailed answer tracking was introduced. You can still see your track-level scores and spotlight analysis above, but per-question review is not available for this attempt.
         </div>
@@ -80,19 +80,19 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({ analys
                 placeholder="Search concepts, keywords..."
                 value={reviewSearchQuery}
                 onChange={(event) => setReviewSearchQuery(event.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-blue-500"
+                className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs focus:outline-hidden focus:border-blue-500"
               />
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#131d33] border border-transparent dark:border-slate-800 p-1 rounded-xl text-xs font-bold">
               {['ALL', 'NT', 'BA', 'SM'].map((track) => (
                 <button
                   key={track}
                   onClick={() => setReviewTrackFilter(track)}
-                  className={`px-2.5 py-1 rounded-lg transition-all ${
+                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                     reviewTrackFilter === track
-                      ? 'bg-white shadow-xs text-slate-900'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-white dark:bg-[#1e2d4d]! shadow-xs text-slate-900 dark:text-slate-100'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
                   {track === 'ALL' ? 'All Tracks' : track}
@@ -100,35 +100,37 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({ analys
               ))}
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#131d33] border border-transparent dark:border-slate-800 p-1 rounded-xl text-xs font-bold">
               <button
                 onClick={() => setReviewStatusFilter('ALL')}
-                className={`px-2.5 py-1 rounded-lg transition-all ${
-                  reviewStatusFilter === 'ALL' ? 'bg-white shadow-xs text-slate-900' : 'text-slate-600'
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  reviewStatusFilter === 'ALL'
+                    ? 'bg-white dark:bg-[#1e2d4d]! shadow-xs text-slate-900 dark:text-slate-100'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 All Status
               </button>
               <button
                 onClick={() => setReviewStatusFilter('CORRECT')}
-                className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
                   reviewStatusFilter === 'CORRECT'
-                    ? 'bg-white shadow-xs text-emerald-700'
-                    : 'text-slate-600'
+                    ? 'bg-white dark:bg-[#1e2d4d]! shadow-xs text-emerald-700 dark:text-emerald-300'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 <span>Correct</span>
               </button>
               <button
                 onClick={() => setReviewStatusFilter('INCORRECT')}
-                className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
                   reviewStatusFilter === 'INCORRECT'
-                    ? 'bg-white shadow-xs text-rose-700'
-                    : 'text-slate-600'
+                    ? 'bg-white dark:bg-[#1e2d4d]! shadow-xs text-rose-700 dark:text-rose-300'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
-                <XCircle className="w-3 h-3 text-rose-500" />
+                <XCircle className="w-3 h-3 text-rose-500 dark:text-rose-400" />
                 <span>Needs Review</span>
               </button>
             </div>
@@ -136,7 +138,7 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({ analys
 
           <div className="space-y-3">
             {filteredQuestions.length === 0 ? (
-              <div className="text-center py-8 text-xs text-slate-500">
+              <div className="text-center py-8 text-xs text-slate-500 dark:text-slate-400">
                 No questions found matching your filter selections. Try clearing your search query.
               </div>
             ) : (
@@ -147,30 +149,30 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({ analys
                     key={item.question.id}
                     className={`rounded-2xl border transition-all ${
                       item.isCorrect
-                        ? 'border-slate-200 bg-white'
-                        : 'border-amber-200 bg-amber-50/20'
+                        ? 'border-slate-200 bg-white dark:bg-[#0f172a] dark:border-slate-800'
+                        : 'border-amber-200 bg-amber-50/20 dark:border-amber-800/50 dark:bg-[#1a1509]'
                     }`}
                   >
                     <button
                       onClick={() => setExpandedQuestionId(isExpanded ? null : item.question.id)}
-                      className="w-full p-4 flex items-start justify-between gap-3 text-left hover:bg-slate-50/50 rounded-2xl transition-colors"
+                      className="w-full p-4 flex items-start justify-between gap-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded-2xl transition-colors cursor-pointer"
                     >
                       <div className="flex items-start gap-3">
                         <div className="shrink-0 mt-0.5">
                           {item.isCorrect ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                           ) : (
-                            <XCircle className="w-4 h-4 text-rose-500" />
+                            <XCircle className="w-4 h-4 text-rose-500 dark:text-rose-400" />
                           )}
                         </div>
                         <div>
                           <div className="flex flex-wrap items-center gap-2 mb-1.5">
                             <TrackBadge code={item.question.track} size="sm" />
-                            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-transparent dark:border-slate-700/70">
                               Level {item.question.level} · {item.question.type.replace('_', ' ')}
                             </span>
                           </div>
-                          <div className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
+                          <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-snug">
                             {item.question.prompt}
                           </div>
                         </div>
@@ -185,13 +187,13 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({ analys
                     </button>
 
                     {isExpanded && (
-                      <div className="px-4 pb-4 pt-2 border-t border-slate-100 text-xs space-y-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-xl bg-slate-50">
+                      <div className="px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 rounded-xl bg-slate-50 dark:bg-[#131d33]">
                           <div>
                             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
                               Your Answer:
                             </div>
-                            <div className={`font-semibold ${item.isCorrect ? 'text-emerald-700' : 'text-rose-700'}`}>
+                            <div className={`font-semibold ${item.isCorrect ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
                               {item.studentDisplay}
                             </div>
                           </div>
@@ -199,13 +201,13 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({ analys
                             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
                               Correct Concept:
                             </div>
-                            <div className="font-semibold text-slate-900">{item.correctDisplay}</div>
+                            <div className="font-semibold text-slate-900 dark:text-slate-100">{item.correctDisplay}</div>
                           </div>
                         </div>
 
                         {item.question.explanation && (
-                          <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100 text-blue-900 flex items-start gap-2">
-                            <Lightbulb className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                          <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100 dark:border-blue-900/60 text-blue-900 dark:text-blue-200 flex items-start gap-2">
+                            <Lightbulb className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                             <div className="leading-relaxed">
                               <strong>Curriculum Insight:</strong> {item.question.explanation}
                             </div>
@@ -219,7 +221,7 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({ analys
             )}
 
             {filteredQuestions.length > 30 && (
-              <div className="text-center pt-2 text-xs text-slate-500 font-medium">
+              <div className="text-center pt-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Showing top 30 filtered results. Use the search box or level tabs to narrow down specific questions.
               </div>
             )}

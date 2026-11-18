@@ -14,12 +14,16 @@ import { ResultsScorecards } from '../components/results/ResultsScorecards';
 import { ResultsSpotlight } from '../components/results/ResultsSpotlight';
 import { ResultsAnswerReview } from '../components/results/ResultsAnswerReview';
 import { ResultsAttemptHistory } from '../components/results/ResultsAttemptHistory';
-import { analyzeQuizAttempt } from '../utils/resultsAnalytics';
+import {
+  analyzeQuizAttempt,
+  SAMPLE_DEMO_ATTEMPT,
+} from '../utils/resultsAnalytics';
 import {
   Sparkles,
   ArrowRight,
   RotateCcw,
   Lightbulb,
+  Search,
   Compass,
   GitCompare,
   Printer,
@@ -31,23 +35,27 @@ export const SmartResultsPage: React.FC = () => {
   const navigate = useNavigate();
   const [params]=useSearchParams();
 
+  const [previewMode, setPreviewMode] = useState<boolean>(false);
   const [selectedAttemptIndex, setSelectedAttemptIndex] = useState<number>(()=>Math.max(0,state.quizAttempts.findIndex(a=>a.id===params.get('attempt'))));
 
   // Print state
   const [, setIsPrinting] = useState<boolean>(false);
 
+  const hasRealAttempts = state.quizAttempts.length > 0;
   const activeAttempt = useMemo(() => {
-    return state.quizAttempts[selectedAttemptIndex] || state.quizAttempts[0] || null;
-  }, [state.quizAttempts, selectedAttemptIndex]);
+    if (previewMode || !hasRealAttempts) {
+      return SAMPLE_DEMO_ATTEMPT;
+    }
+    return state.quizAttempts[selectedAttemptIndex] || state.quizAttempts[0];
+  }, [hasRealAttempts, previewMode, state.quizAttempts, selectedAttemptIndex]);
 
   // Analyze the active attempt
   const analysis = useMemo(() => {
-    return activeAttempt ? analyzeQuizAttempt(activeAttempt) : null;
+    return analyzeQuizAttempt(activeAttempt);
   }, [activeAttempt]);
 
   // Handle navigate to comparison with preselected top 2 tracks
   const handleProceedToCompare = () => {
-    if (!activeAttempt || !analysis) return;
     // If tie, choose the tied tracks, otherwise highest + second highest
     let tracksToCompare: TrackCode[] = [];
     if (analysis.isTie && analysis.tiedTracks && analysis.tiedTracks.length >= 2) {
@@ -78,10 +86,10 @@ export const SmartResultsPage: React.FC = () => {
     }, 200);
   };
 
-  // Results exist only after a real quiz submission.
-  if (!activeAttempt || !analysis) {
+  // If completely empty and not previewing
+  if (!hasRealAttempts && !previewMode) {
     return (
-      <div className="space-y-8 animate-in fade-in duration-200">
+      <div className="space-y-8 animate-in fade-in duration-200 pb-12">
         <PageHeader
           title="Smart Results & Guidance"
           subtitle="Discover where your instincts, analytical patterns, and problem-solving talents align across BSIT specializations."
@@ -91,12 +99,14 @@ export const SmartResultsPage: React.FC = () => {
           luniQuote="Complete the 5-level CTRL Quiz adventure to generate your personalized path analytics! 🌟"
         />
 
-        <Card padding="lg" className="text-center py-12 max-w-2xl mx-auto border-blue-200 shadow-sm bg-white">
+        <ResultsScorecards analysis={null} />
+
+        <Card padding="lg" className="text-center py-12 max-w-2xl mx-auto border-blue-200 dark:border-blue-900/60! shadow-sm bg-white dark:bg-[#0f172a]">
           <div className="flex justify-center mb-4">
             <LuniSprite pose="curious" size={120} animate glow />
           </div>
-          <h2 className="text-2xl font-black text-slate-900 mb-2">No Assessment Completed Yet</h2>
-          <p className="text-sm text-slate-600 max-w-md mx-auto mb-6 leading-relaxed">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 mb-2">No Assessment Completed Yet</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto mb-6 leading-relaxed">
             You haven't completed a CTRL Quiz attempt yet. Take the 5-level interactive assessment to unlock
             your comprehensive track alignment analysis, level-by-level mastery breakdown, and personalized recommendations!
           </p>
@@ -107,6 +117,14 @@ export const SmartResultsPage: React.FC = () => {
                 Start CTRL Quiz Adventure
               </Button>
             </Link>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setPreviewMode(true)}
+              icon={<Search className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+            >
+              Preview Sample Results Report
+            </Button>
           </div>
         </Card>
       </div>
@@ -115,6 +133,32 @@ export const SmartResultsPage: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200 pb-12 print:space-y-4 print:p-0">
+      {/* Sample preview notice banner if active */}
+      {previewMode && (
+        <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-[#241c08] border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 flex items-center justify-between text-xs font-medium">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>
+              <strong>Sample Preview Mode:</strong> You are viewing an illustrative assessment report. Take the real quiz
+              to generate your personal analytics!
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link to="/quiz">
+              <span className="font-bold underline text-amber-800 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100">Take Quiz →</span>
+            </Link>
+            {hasRealAttempts && (
+              <button
+                onClick={() => setPreviewMode(false)}
+                className="px-2 py-1 bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-700/60 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 cursor-pointer"
+              >
+                Exit Preview
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <PageHeader
         title="Your Path Insights & Guidance"
@@ -126,28 +170,32 @@ export const SmartResultsPage: React.FC = () => {
       />
 
       {/* Top Action & Attempt Selection Bar */}
-      <Card className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/95">
+      <Card className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/95 dark:bg-[#0f172a]">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Selected Attempt:
           </div>
-          {state.quizAttempts.length > 0 ? (
+          {hasRealAttempts ? (
             <div className="flex items-center gap-2">
               {state.quizAttempts.map((att, idx) => (
                 <button
                   key={att.id || idx}
                   onClick={() => setSelectedAttemptIndex(idx)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border cursor-pointer ${
                     selectedAttemptIndex === idx
                       ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      : 'bg-slate-50 dark:bg-[#131d33] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-[#1a2744]'
                   }`}
                 >
                   Attempt {att.attemptNumber} ({att.date})
                 </button>
               ))}
             </div>
-          ) : null}
+          ) : (
+            <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-200 border border-transparent dark:border-blue-800/70 text-xs font-bold">
+              Demonstration Sample
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -155,7 +203,7 @@ export const SmartResultsPage: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={handlePrint}
-            icon={<Printer className="w-3.5 h-3.5 text-slate-600" />}
+            icon={<Printer className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />}
           >
             Save / Print
           </Button>
@@ -179,8 +227,8 @@ export const SmartResultsPage: React.FC = () => {
         {/* Demonstrated Strengths */}
         <Card className="flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 text-slate-900 font-extrabold text-sm mb-4">
-              <Lightbulb className="w-4 h-4 text-amber-500" />
+            <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100 font-extrabold text-sm mb-4">
+              <Lightbulb className="w-4 h-4 text-amber-500 dark:text-amber-400" />
               <span>Your Key Demonstrated Strengths</span>
             </div>
 
@@ -188,15 +236,15 @@ export const SmartResultsPage: React.FC = () => {
               {analysis.demonstratedStrengths.map((st, idx) => (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100/70 transition-colors"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#131d33] border border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#182542] transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-extrabold text-xs sm:text-sm text-slate-900">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       {st.title}
                     </span>
                     <TrackBadge code={st.track} size="sm" />
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                     {st.description}
                   </p>
                 </div>
@@ -208,8 +256,8 @@ export const SmartResultsPage: React.FC = () => {
         {/* Growth Opportunities */}
         <Card className="flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 text-slate-900 font-extrabold text-sm mb-4">
-              <Compass className="w-4 h-4 text-blue-600" />
+            <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100 font-extrabold text-sm mb-4">
+              <Compass className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <span>Recommended Areas for Growth & Exploration</span>
             </div>
 
@@ -217,20 +265,20 @@ export const SmartResultsPage: React.FC = () => {
               {analysis.growthOpportunities.map((op, idx) => (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100/70 transition-colors"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#131d33] border border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#182542] transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-extrabold text-xs sm:text-sm text-slate-900">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
                       {op.title}
                     </span>
                     <TrackBadge code={op.track} size="sm" />
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed mb-2">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
                     {op.description}
                   </p>
                   <Link
                     to={op.recommendedRoute}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     <span>Explore Track Modules</span>
                     <ArrowRight className="w-3 h-3" />
@@ -244,22 +292,22 @@ export const SmartResultsPage: React.FC = () => {
 
       {/* Level-by-Level Assessment Mastery Breakdown */}
       <Card>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-3 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-3 border-b border-slate-100 dark:border-slate-800">
           <div>
             <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-blue-600" />
-              <h3 className="font-extrabold text-slate-900 text-base">
+              <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base">
                 Five-Level Assessment Breakdown
               </h3>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Review how your understanding evolved across different question formats and cognitive tiers.
             </p>
           </div>
         </div>
 
           {analysis.levelPerformances.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-900 leading-relaxed">
+          <div className="p-6 rounded-2xl bg-amber-50 dark:bg-[#241c08] border border-amber-200 dark:border-amber-800/60 text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
             <strong className="block mb-1">Level breakdown unavailable.</strong>
             This attempt was submitted before detailed answer tracking was introduced. Only track-level scores and the spotlight analysis above are available for this attempt.
           </div>
@@ -268,24 +316,24 @@ export const SmartResultsPage: React.FC = () => {
           {analysis.levelPerformances.map((lvl) => (
             <div
               key={lvl.level}
-              className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 flex flex-col md:flex-row md:items-center justify-between gap-4"
+              className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-[#131d33] flex flex-col md:flex-row md:items-center justify-between gap-4"
             >
               <div className="min-w-[240px]">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="w-6 h-6 rounded-lg bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center">
                     {lvl.level}
                   </span>
-                  <span className="font-extrabold text-sm text-slate-900">{lvl.name}</span>
+                  <span className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{lvl.name}</span>
                 </div>
-                <div className="text-xs text-slate-500">Format: {lvl.questionType}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Format: {lvl.questionType}</div>
               </div>
 
               <div className="flex-1 max-w-md">
                 <div className="flex items-center justify-between text-xs mb-1 font-semibold">
-                  <span className="text-slate-600">
+                  <span className="text-slate-600 dark:text-slate-300">
                     {lvl.correct} of {lvl.total} correct
                   </span>
-                  <span className="font-black text-slate-900">{lvl.percentage}%</span>
+                  <span className="font-black text-slate-900 dark:text-slate-100">{lvl.percentage}%</span>
                 </div>
                 <ProgressBar
                   value={lvl.percentage}
@@ -295,7 +343,7 @@ export const SmartResultsPage: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] text-slate-500 font-medium">Strongest In:</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Strongest In:</span>
                 <TrackBadge code={lvl.leadingTrack} size="sm" />
               </div>
             </div>
@@ -317,42 +365,46 @@ export const SmartResultsPage: React.FC = () => {
       )}
 
       {/* Action / Next Steps Bar */}
-      <Card className="bg-linear-to-r from-slate-900 to-indigo-950 text-white p-6 rounded-3xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h3 className="text-lg font-black tracking-tight">Ready for the Next Chapter?</h3>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
+      <Card className="bg-linear-to-r from-blue-50 via-indigo-50/90 to-violet-50 dark:from-slate-900 dark:via-[#111b36] dark:to-indigo-950 border-indigo-200/80! dark:border-indigo-900/70! text-slate-900 dark:text-white p-6 sm:p-7 rounded-3xl shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-1.5">
+            <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
+              Ready for the Next Chapter?
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
               Compare your top tracks side-by-side in Path Compare to inspect curriculum subjects,
               internship capstones, and alumni career paths!
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
             <Button
               variant="outline"
               size="md"
               onClick={handleProceedToCompare}
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20"
-              icon={<GitCompare className="w-4 h-4" />}
+              className="bg-white! hover:bg-blue-50/80! text-slate-800! border-indigo-200! hover:border-blue-300! shadow-2xs whitespace-nowrap dark:bg-white/10! dark:hover:bg-white/20! dark:text-white! dark:border-white/20!"
+              icon={<GitCompare className="w-4 h-4 text-blue-600 dark:text-blue-300" />}
             >
               Side-by-Side Comparison
             </Button>
 
             {state.quizAttempts.length < 3 ? (
-              <Link to="/quiz">
+              <Link to="/quiz" className="shrink-0">
                 <Button
                   variant="primary"
                   size="md"
+                  className="whitespace-nowrap"
                   icon={<RotateCcw className="w-4 h-4" />}
                 >
                   Retake Assessment ({state.quizAttempts.length + 1}/3)
                 </Button>
               </Link>
             ) : (
-              <Link to="/alumni">
+              <Link to="/alumni" className="shrink-0">
                 <Button
                   variant="primary"
                   size="md"
+                  className="whitespace-nowrap"
                   icon={<ArrowRight className="w-4 h-4" />}
                 >
                   Read Alumni Stories

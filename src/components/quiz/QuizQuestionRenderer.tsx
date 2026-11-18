@@ -21,14 +21,21 @@ export const QuizQuestionRenderer: React.FC<QuizQuestionRendererProps> = ({
   disabled = false,
 }) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Question Header & Prompt */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-center justify-between gap-5">
         <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
           {question.prompt}
         </h3>
-        <div className="shrink-0 hidden sm:block">
-          <LuniCharacter state="thinking" size={54} animate showParticles={false} />
+        <div className="shrink-0 hidden sm:flex items-center justify-center p-2.5">
+          <LuniCharacter
+            state="thinking"
+            size={56}
+            animate
+            showParticles={false}
+            hoverGlow={false}
+            staticCircle
+          />
         </div>
       </div>
 

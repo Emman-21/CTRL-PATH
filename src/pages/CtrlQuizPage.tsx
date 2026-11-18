@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card } from '../components/shared/Card';
 import { Button } from '../components/shared/Button';
-import { ProgressBar } from '../components/shared/ProgressBar';
 
 import { BACKGROUNDS } from '../assets/manifest';
 import { useStudent } from '../context/StudentContext';
@@ -9,10 +8,7 @@ import { useStudent } from '../context/StudentContext';
 import {
   ArrowRight,
   ArrowLeft,
-  RotateCcw,
-  Eye,
-  EyeOff,
-  FileCheck,
+  AlertCircle,
 } from 'lucide-react';
 
 // Modular Quiz Components
@@ -20,7 +16,6 @@ import { QuizIntro } from '../components/quiz/QuizIntro';
 import { QuizPreparation } from '../components/quiz/QuizPreparation';
 import { QuizLevelCompletion } from '../components/quiz/QuizLevelCompletion';
 import { QuizQuestionRenderer } from '../components/quiz/QuizQuestionRenderer';
-import { QuizReviewModal } from '../components/quiz/QuizReviewModal';
 import { QuizCompletion } from '../components/quiz/QuizCompletion';
 
 // Engine & Data
@@ -33,10 +28,13 @@ import {
   saveQuizSession,
   clearQuizSession,
   calculateQuizScores,
+  isQuestionAnswered,
+  getUnansweredQuestionIndices,
+  isChapterComplete,
 } from '../utils/quizEngine';
 
 export const CtrlQuizPage: React.FC = () => {
-  const { state: studentState, saveQuizAttempt } = useStudent();
+  const { state: studentState, saveQuizAttempt, recordActivity } = useStudent();
 
   // Active quiz session state loaded from local storage
   const [session, setSession] = useState<QuizSessionState | null>(() => loadQuizSession());
@@ -52,12 +50,6 @@ export const CtrlQuizPage: React.FC = () => {
     return 'intro';
   });
 
-  // Focus mode state
-  const [focusMode, setFocusMode] = useState<boolean>(false);
-
-  // Review modal visibility
-  const [showReviewModal, setShowReviewModal] = useState<boolean>(false);
-
   // Final scoring result
   const [scoreResult, setScoreResult] = useState<QuizScoreResult | null>(null);
 
@@ -65,19 +57,20 @@ export const CtrlQuizPage: React.FC = () => {
   // distinguish "just unlocked" from "already had it" on the completion screen.
   const [hadFirstSparkOnSubmit, setHadFirstSparkOnSubmit] = useState(false);
 
-  // Sync Focus Mode with sessionStorage and window event for Luni assistant
+  // Sync answering stage with sessionStorage and window event for non-scrolling main layout
   useEffect(() => {
+    const isAnswering = flowStage === 'question';
     if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem('ctrl_quiz_focus_mode', String(focusMode));
-      window.dispatchEvent(new Event('ctrl_focus_mode_changed'));
+      window.sessionStorage.setItem('ctrl_quiz_answering', String(isAnswering));
+      window.dispatchEvent(new Event('ctrl_quiz_answering_changed'));
     }
     return () => {
       if (typeof window !== 'undefined') {
-        window.sessionStorage.removeItem('ctrl_quiz_focus_mode');
-        window.dispatchEvent(new Event('ctrl_focus_mode_changed'));
+        window.sessionStorage.removeItem('ctrl_quiz_answering');
+        window.dispatchEvent(new Event('ctrl_quiz_answering_changed'));
       }
     };
-  }, [focusMode]);
+  }, [flowStage]);
 
   // Current Level metadata
   const currentLevelNum = session?.currentLevel || 1;
@@ -89,9 +82,40 @@ export const CtrlQuizPage: React.FC = () => {
 
   const currentQIndex = session?.currentQuestionIndex || 0;
   const activeQuestionId = currentLevelQuestionIds[currentQIndex];
-  const activeQuestion: QuizQuestion | undefined = QUIZ_QUESTIONS.find(
-    (q) => q.id === activeQuestionId
+  const quizQuestionsById = useMemo(
+    () => new Map(QUIZ_QUESTIONS.map((q) => [q.id, q])),
+    []
   );
+  const activeQuestion: QuizQuestion | undefined = quizQuestionsById.get(activeQuestionId);
+  const unansweredIndices = useMemo(
+    () => getUnansweredQuestionIndices(currentLevelQuestionIds, session?.answers || {}),
+    [currentLevelQuestionIds, session?.answers]
+  );
+  const isCurrentChapterComplete =
+    currentLevelQuestionIds.length > 0 && unansweredIndices.length === 0;
+  const isLastQuestionInChapter =
+    currentLevelQuestionIds.length > 0 && currentQIndex === currentLevelQuestionIds.length - 1;
+
+  const pillNavRef = useRef<HTMLDivElement | null>(null);
+  const activePillRef = useRef<HTMLButtonElement | null>(null);
+  const pillDragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    scrollLeft: number;
+    didDrag: boolean;
+  } | null>(null);
+  const suppressPillClickRef = useRef(false);
+
+  // Keep the active question pill visible inside the swipable strip
+  useEffect(() => {
+    if (flowStage === 'question' && activePillRef.current) {
+      activePillRef.current.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'nearest',
+        block: 'nearest',
+      });
+    }
+  }, [flowStage, currentLevelNum, currentQIndex]);
 
   // Start new attempt
   const handleStartNewAttempt = () => {
@@ -129,6 +153,17 @@ export const CtrlQuizPage: React.FC = () => {
     saveQuizSession(updated);
   };
 
+  // Jump to a specific question inside the active chapter
+  const handleJumpToChapterQuestion = (qIndex: number) => {
+    if (!session || qIndex < 0 || qIndex >= currentLevelQuestionIds.length) return;
+    const updated: QuizSessionState = {
+      ...session,
+      currentQuestionIndex: qIndex,
+    };
+    setSession(updated);
+    saveQuizSession(updated);
+  };
+
   // Next Question
   const handleNextQuestion = () => {
     if (!session) return;
@@ -140,17 +175,19 @@ export const CtrlQuizPage: React.FC = () => {
       setSession(updated);
       saveQuizSession(updated);
     } else {
-      // Reached end of current level
+      // Require all questions in the chapter to be answered before proceeding or submitting
+      if (!isChapterComplete(currentLevelQuestionIds, session.answers)) {
+        return;
+      }
       if (currentLevelNum < 5) {
         setFlowStage('level_complete');
       } else {
-        // End of Level 5 -> Open review modal
-        setShowReviewModal(true);
+        handleConfirmSubmit();
       }
     }
   };
 
-  // Previous Question
+  // Previous Question (within the current chapter)
   const handlePrevQuestion = () => {
     if (!session) return;
     if (currentQIndex > 0) {
@@ -160,23 +197,13 @@ export const CtrlQuizPage: React.FC = () => {
       };
       setSession(updated);
       saveQuizSession(updated);
-    } else if (currentLevelNum > 1) {
-      // Go to previous level's last question
-      const prevLvl = currentLevelNum - 1;
-      const prevIds = session.shuffledQuestionsByLevel[prevLvl] || [];
-      const updated: QuizSessionState = {
-        ...session,
-        currentLevel: prevLvl,
-        currentQuestionIndex: Math.max(0, prevIds.length - 1),
-      };
-      setSession(updated);
-      saveQuizSession(updated);
     }
   };
 
   // Proceed to next level from Level Complete screen
   const handleContinueToNextLevel = () => {
-    if (!session) return;
+    if (!session || !isChapterComplete(currentLevelQuestionIds, session.answers)) return;
+    recordActivity('quiz-chapter-completed');
     if (currentLevelNum < 5) {
       const nextLvl = currentLevelNum + 1;
       const updated: QuizSessionState = {
@@ -188,28 +215,13 @@ export const CtrlQuizPage: React.FC = () => {
       saveQuizSession(updated);
       setFlowStage('preparation');
     } else {
-      setShowReviewModal(true);
+      handleConfirmSubmit();
     }
-  };
-
-  // Jump to specific question from review modal
-  const handleJumpToQuestion = (level: number, questionIndex: number) => {
-    if (!session) return;
-    const updated: QuizSessionState = {
-      ...session,
-      currentLevel: level,
-      currentQuestionIndex: questionIndex,
-      levelPrepSeen: { ...session.levelPrepSeen, [level]: true },
-    };
-    setSession(updated);
-    saveQuizSession(updated);
-    setFlowStage('question');
   };
 
   // Confirm and Submit Final Attempt
   const handleConfirmSubmit = () => {
     if (!session) return;
-    setShowReviewModal(false);
 
     // Capture BEFORE saveQuizAttempt fires so we can detect a newly-unlocked First Spark
     const hadBefore = studentState.achievementRecords.some(
@@ -243,58 +255,23 @@ export const CtrlQuizPage: React.FC = () => {
     setFlowStage('completed');
   };
 
+  const isAnsweringStage = flowStage === 'question';
+
   return (
     <div
-      className={`relative min-h-[82vh] flex flex-col justify-center rounded-3xl overflow-hidden transition-all duration-300 ${
-        focusMode ? 'bg-slate-900 text-white p-4 sm:p-8' : 'bg-slate-50'
+      className={`relative flex flex-col justify-start rounded-3xl overflow-hidden transition-all duration-300 bg-slate-50 border border-slate-200/80 shadow-xs ${
+        isAnsweringStage
+          ? 'flex-1 min-h-0 p-4 sm:p-6'
+          : 'min-h-[82vh] p-4 sm:p-6 md:p-8'
       }`}
     >
       {/* Background Cloudscape (Minimal to prevent distraction during assessment) */}
-      {!focusMode && (
-        <div className="absolute inset-0 pointer-events-none opacity-40 z-0">
-          <img
-            src={BACKGROUNDS.quizMinimalClouds}
-            alt=""
-            className="w-full h-full object-cover pixelated"
-          />
-        </div>
-      )}
-
-      {/* Top Bar Header with Title, Focus Mode, and Attempt Tracker */}
-      <div className="relative z-10 flex items-center justify-between pb-4 border-b border-slate-200/80 mb-6">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="font-black text-xs sm:text-sm tracking-tight uppercase text-blue-600">
-            CTRL Quiz Adventure
-          </span>
-          <span className="text-[11px] sm:text-xs text-slate-400 font-medium hidden sm:inline">
-            · 99 Questions (33 NT, 33 BA, 33 SM)
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Focus Mode Toggle */}
-          <button
-            type="button"
-            onClick={() => setFocusMode(!focusMode)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              focusMode
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-2xs'
-            }`}
-            aria-label="Toggle Focus Mode"
-          >
-            {focusMode ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            <span className="hidden sm:inline">{focusMode ? 'Exit Focus Mode' : 'Focus Mode'}</span>
-          </button>
-
-          {/* Attempt Tracker Pill */}
-          <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-500 font-medium bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
-            <RotateCcw className="w-3 h-3 text-slate-400" />
-            <span>
-              Attempt {session ? session.attemptNumber : Math.min(3, studentState.quizAttempts.length + 1)} of 3
-            </span>
-          </div>
-        </div>
+      <div className="absolute inset-0 pointer-events-none opacity-40 z-0">
+        <img
+          src={BACKGROUNDS.quizMinimalClouds}
+          alt=""
+          className="w-full h-full object-cover pixelated"
+        />
       </div>
 
       {/* FLOW STAGE 1: INTRO */}
@@ -318,10 +295,10 @@ export const CtrlQuizPage: React.FC = () => {
 
       {/* FLOW STAGE 3: ACTIVE QUESTIONS */}
       {flowStage === 'question' && activeQuestion && (
-        <div className="relative z-10 max-w-2xl mx-auto w-full space-y-4">
-          {/* Level & Question Progress Bar */}
-          <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
-            <div>
+        <div className="relative z-10 max-w-5xl mx-auto w-full flex-1 min-h-0 flex flex-col justify-start space-y-3 sm:space-y-3.5">
+          {/* Level & Question Number Navigator */}
+          <div className="bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center md:justify-between gap-3 shrink-0">
+            <div className="shrink-0">
               <div className="text-[11px] font-black uppercase text-indigo-600 tracking-wider">
                 Chapter {currentLevelNum}: {currentLevelMeta.typeTitle}
               </div>
@@ -330,60 +307,168 @@ export const CtrlQuizPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="w-28 sm:w-36 text-right">
-              <ProgressBar
-                value={Math.round(((currentQIndex + 1) / currentLevelQuestionIds.length) * 100)}
-                variant="primary"
-                size="sm"
-                showLabel
-              />
+            <div
+              ref={pillNavRef}
+              onPointerDown={(e) => {
+                const el = pillNavRef.current;
+                if (!el || el.scrollWidth <= el.clientWidth || e.pointerType === 'touch') return;
+                pillDragRef.current = {
+                  pointerId: e.pointerId,
+                  startX: e.clientX,
+                  scrollLeft: el.scrollLeft,
+                  didDrag: false,
+                };
+                suppressPillClickRef.current = false;
+              }}
+              onPointerMove={(e) => {
+                const drag = pillDragRef.current;
+                const el = pillNavRef.current;
+                if (!drag || !el || drag.pointerId !== e.pointerId) return;
+                const dx = e.clientX - drag.startX;
+                if (!drag.didDrag && Math.abs(dx) > 6) {
+                  drag.didDrag = true;
+                  suppressPillClickRef.current = true;
+                  try {
+                    el.setPointerCapture(e.pointerId);
+                  } catch {
+                    // ignore
+                  }
+                }
+                if (drag.didDrag) {
+                  el.scrollLeft = drag.scrollLeft - dx;
+                }
+              }}
+              onPointerUp={(e) => {
+                const drag = pillDragRef.current;
+                const el = pillNavRef.current;
+                if (drag && el && drag.pointerId === e.pointerId) {
+                  if (drag.didDrag) {
+                    try {
+                      el.releasePointerCapture(e.pointerId);
+                    } catch {
+                      // ignore
+                    }
+                    setTimeout(() => {
+                      suppressPillClickRef.current = false;
+                    }, 0);
+                  }
+                  pillDragRef.current = null;
+                }
+              }}
+              onPointerCancel={() => {
+                pillDragRef.current = null;
+                suppressPillClickRef.current = false;
+              }}
+              onWheel={(e) => {
+                const el = pillNavRef.current;
+                if (!el || el.scrollWidth <= el.clientWidth) return;
+                if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                  el.scrollLeft += e.deltaY;
+                }
+              }}
+              className="w-full md:w-auto min-w-0 max-w-full flex items-center flex-nowrap overflow-x-auto touch-pan-x select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden gap-1.5 py-1 px-1"
+              role="navigation"
+              aria-label={`Chapter ${currentLevelNum} question selector`}
+            >
+              {currentLevelQuestionIds.map((qId, qIdx) => {
+                const qObj = quizQuestionsById.get(qId);
+                const answered = qObj
+                  ? isQuestionAnswered(qObj, session?.answers[qId])
+                  : false;
+                const isCurrent = qIdx === currentQIndex;
+
+                return (
+                  <button
+                    key={qId}
+                    ref={isCurrent ? activePillRef : undefined}
+                    type="button"
+                    onClick={() => {
+                      if (suppressPillClickRef.current) return;
+                      handleJumpToChapterQuestion(qIdx);
+                    }}
+                    aria-label={`Question ${qIdx + 1} (${answered ? 'Answered' : 'Unanswered'})`}
+                    aria-current={isCurrent ? 'step' : undefined}
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-black transition-all cursor-pointer inline-flex items-center justify-center shrink-0 ${
+                      answered
+                        ? 'bg-blue-600 border border-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:border-blue-400 dark:text-white dark:hover:bg-blue-500 shadow-2xs'
+                        : 'bg-[#ffffff] border border-blue-300 text-blue-700 hover:bg-blue-50 dark:bg-[#162344] dark:border-blue-400/70 dark:text-blue-300 dark:hover:bg-blue-500/25'
+                    } ${
+                      isCurrent
+                        ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-white dark:ring-sky-300 dark:ring-offset-[#0f172a]'
+                        : ''
+                    }`}
+                  >
+                    {qIdx + 1}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* White Question Card */}
-          <Card padding="lg" className="border-slate-200 shadow-sm relative">
-            <QuizQuestionRenderer
-              question={activeQuestion}
-              value={session?.answers[activeQuestion.id]}
-              onChange={handleAnswerChange}
-            />
+          <Card padding="md" className="border-slate-200 shadow-sm relative flex flex-col justify-between min-h-0">
+            <div className="min-h-0 overflow-y-auto px-0.5 pt-0.5">
+              <QuizQuestionRenderer
+                question={activeQuestion}
+                value={session?.answers[activeQuestion.id]}
+                onChange={handleAnswerChange}
+              />
+            </div>
+
+            {isLastQuestionInChapter && !isCurrentChapterComplete && (
+              <div className="mt-3 px-3.5 py-2.5 rounded-xl bg-blue-50/70 border border-blue-200 dark:bg-[#111e3b] dark:border-blue-400/40 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+                <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200 font-semibold">
+                  <AlertCircle className="w-4 h-4 text-blue-600 dark:text-sky-400 shrink-0" />
+                  <span>
+                    Answer all questions in Chapter {currentLevelNum} before proceeding ({unansweredIndices.length} remaining).
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1">
+                  {unansweredIndices.slice(0, 6).map((idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleJumpToChapterQuestion(idx)}
+                      className="px-2 py-0.5 rounded-md text-[11px] font-black bg-[#ffffff] border border-blue-300 text-blue-700 hover:bg-blue-100 dark:bg-[#162344] dark:border-blue-400/60 dark:text-blue-300 dark:hover:bg-blue-500/25 cursor-pointer"
+                    >
+                      #{idx + 1}
+                    </button>
+                  ))}
+                  {unansweredIndices.length > 6 && (
+                    <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300 px-1">
+                      +{unansweredIndices.length - 6} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Navigation Bar */}
-            <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2 shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
-                disabled={currentQIndex === 0 && currentLevelNum === 1}
+                disabled={currentQIndex === 0}
                 onClick={handlePrevQuestion}
                 icon={<ArrowLeft className="w-4 h-4" />}
               >
                 Previous
               </Button>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowReviewModal(true)}
-                  icon={<FileCheck className="w-4 h-4" />}
-                >
-                  Review All
-                </Button>
-
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleNextQuestion}
-                  icon={<ArrowRight className="w-4 h-4" />}
-                  iconPosition="right"
-                >
-                  {currentQIndex === currentLevelQuestionIds.length - 1
-                    ? currentLevelNum === 5
-                      ? 'Review & Submit'
-                      : `Complete Level ${currentLevelNum}`
-                    : 'Next Question'}
-                </Button>
-              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={isLastQuestionInChapter && !isCurrentChapterComplete}
+                onClick={handleNextQuestion}
+                icon={<ArrowRight className="w-4 h-4" />}
+                iconPosition="right"
+              >
+                {isLastQuestionInChapter
+                  ? currentLevelNum === 5
+                    ? 'Submit Assessment'
+                    : `Complete Level ${currentLevelNum}`
+                  : 'Next Question'}
+              </Button>
             </div>
           </Card>
         </div>
@@ -406,17 +491,6 @@ export const CtrlQuizPage: React.FC = () => {
             studentState.achievementRecords.some((r) => r.id === 'special-first-spark')
           }
           onRetake={handleStartNewAttempt}
-        />
-      )}
-
-      {/* REVIEW & SUBMISSION MODAL */}
-      {session && (
-        <QuizReviewModal
-          isOpen={showReviewModal}
-          onClose={() => setShowReviewModal(false)}
-          session={session}
-          onJumpToQuestion={handleJumpToQuestion}
-          onConfirmSubmit={handleConfirmSubmit}
         />
       )}
     </div>

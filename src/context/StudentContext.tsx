@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { StudentState, TrackCode, QuizAttempt, SavedComparison, StudentPreferences } from '../types';
 
-import { validateProfile, studentProgress, completeLearningModule, clearStudentData, type ProfileValues, type SaveResult } from '../utils/studentControls';
+import { validateProfile, studentProgress, completeLearningModule, areAllTrackSubjectsCompleted, clearStudentData, type ProfileValues, type SaveResult } from '../utils/studentControls';
 import { evaluateAchievements, eligibleAttemptPair, withAchievementRecords } from '../utils/achievementRules';
 import { loadStudentData, serializeStudent, STUDENT_STORAGE_KEY as STORAGE_KEY } from '../utils/achievementStorage';
+import { recordActivity } from '../utils/streakManager';
 
 export const INITIAL_STATE: StudentState = {
   profileSchemaVersion: 1,
@@ -15,7 +16,7 @@ export const INITIAL_STATE: StudentState = {
   achievementSchemaVersion: 2,
   achievementRecords: [],
   attemptComparisons: [],
-  name: '',
+  name: 'Your Display Name',
   university: '',
   program: '',
   yearLevel: '',
@@ -37,6 +38,8 @@ export const INITIAL_STATE: StudentState = {
     SM: { interests: '', topicsToLearn: '', questions: '' },
   },
   preferences: {
+    theme: 'dark',
+    themeExplicit: false,
     reducedMotion: false,
     highContrast: false,
     textSize: 'normal',
@@ -72,6 +75,7 @@ interface StudentContextType {
   updatePreferences: (prefs: Partial<StudentPreferences>) => SaveResult;
   updateProfile: (values: ProfileValues) => SaveResult;
   completeModule: (track: TrackCode, moduleId: string) => void;
+  recordActivity: (actionDescription?: string) => void;
   resetAllData: () => SaveResult;
 }
 
@@ -118,7 +122,10 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const clean=Object.fromEntries(Object.entries(values).map(([key,value])=>[key,value.trim()])) as ProfileValues;
     return persistChange({...state,...clean,profileSchemaVersion:1});
   };
-  const completeModule = (track: TrackCode,moduleId:string) => setState(prev=>completeLearningModule(prev,track,moduleId));
+  const completeModule = (track: TrackCode, moduleId: string) => {
+    recordActivity('module-completed');
+    setState((prev) => completeLearningModule(prev, track, moduleId));
+  };
 
   const nextActivity = !state.exploredTracks.SM
     ? {
@@ -148,12 +155,19 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const markTrackExplored = (track: TrackCode) => {
     const gemId = { NT: 1, BA: 6, SM: 11 }[track];
+    if (!areAllTrackSubjectsCompleted(track, state.moduleCompletions)) {
+      return { newlyUnlocked: false, gemId };
+    }
+    recordActivity('track-explored');
     const newlyUnlocked = !state.unlockedGemstones.includes(gemId);
-    setState(prev => evaluateAchievements({ ...prev,
-      exploredTracks: { ...prev.exploredTracks, [track]: true },
-      explorationDates: { ...prev.explorationDates, [track]: prev.explorationDates[track] || new Date().toISOString() },
-      trackProgress: { ...prev.trackProgress, [track]: Math.max(prev.trackProgress[track], 60) },
-    }, { type: 'track-explored', track }));
+    setState(prev => {
+      if (!areAllTrackSubjectsCompleted(track, prev.moduleCompletions)) return prev;
+      return evaluateAchievements({ ...prev,
+        exploredTracks: { ...prev.exploredTracks, [track]: true },
+        explorationDates: { ...prev.explorationDates, [track]: prev.explorationDates[track] || new Date().toISOString() },
+        trackProgress: { ...prev.trackProgress, [track]: 100 },
+      }, { type: 'track-explored', track });
+    });
     return { newlyUnlocked, gemId };
   };
 
@@ -209,6 +223,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const saveQuizAttempt = (attemptData: Omit<QuizAttempt, 'id' | 'date'>) => {
+    recordActivity('quiz-submitted');
     const now = new Date().toISOString();
     const newAttempt: QuizAttempt = { ...attemptData,
       id: attemptData.submissionId || crypto.randomUUID(), submittedAt: now,
@@ -268,7 +283,15 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  const updatePreferences = (prefs: Partial<StudentPreferences>): SaveResult => persistChange({...state,preferences:{...state.preferences,...prefs}});
+  const updatePreferences = (prefs: Partial<StudentPreferences>): SaveResult =>
+    persistChange({
+      ...state,
+      preferences: {
+        ...state.preferences,
+        ...prefs,
+        ...(prefs.theme !== undefined ? { themeExplicit: prefs.themeExplicit ?? true } : {}),
+      },
+    });
 
   const resetAllData = (): SaveResult => {
     const result=clearStudentData(localStorage,sessionStorage);
@@ -297,6 +320,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updatePreferences,
         updateProfile,
         completeModule,
+        recordActivity,
         resetAllData,
       }}
     >

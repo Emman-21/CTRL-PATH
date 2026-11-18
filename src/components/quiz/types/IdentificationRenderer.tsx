@@ -27,7 +27,7 @@ export const IdentificationRenderer: React.FC<IdentificationRendererProps> = ({
     };
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <p className="text-xs text-slate-500">
           Enter each element into its corresponding field below:
         </p>

@@ -7,7 +7,20 @@ export function PreferencePanels() {
   const change=(prefs:Partial<StudentPreferences>)=>{const result=updatePreferences(prefs);setMessage(result.message);};
   const toggle=(key:keyof StudentPreferences,label:string,description:string)=><label className="control-setting" key={key}><span><strong>{label}</strong><small>{description}</small></span><input type="checkbox" checked={Boolean(state.preferences[key])} onChange={e=>change({[key]:e.target.checked})}/></label>;
   return <><ControlCard title="Appearance and accessibility" description="Make your learning space comfortable. Your preferences apply across CTRL+PATH.">
-    <div className="control-setting"><span><strong>Theme</strong><small>The current portal uses the light theme.</small></span><span className="community-tag">Light</span></div>
+    <label className="control-setting">
+      <span>
+        <strong>Theme</strong>
+        <small>Choose between Light Mode and Celestial Dark Mode (Moonlit Sky).</small>
+      </span>
+      <select
+        aria-label="Theme"
+        value={state.preferences.theme || 'dark'}
+        onChange={e => change({ theme: e.target.value as 'light' | 'dark' })}
+      >
+        <option value="light">☀️ Light Theme</option>
+        <option value="dark">🌙 Dark Theme (Moonlit Sky)</option>
+      </select>
+    </label>
     {toggle('reducedMotion','Reduced motion','Turn off interface animation. A system reduced-motion preference is also respected.')}
     {toggle('highContrast','Higher contrast','Use darker text and stronger borders throughout the portal.')}
     <label className="control-setting"><span><strong>Text size</strong><small>Increase interface and reading text.</small></span><select aria-label="Text size" value={state.preferences.textSize} onChange={e=>change({textSize:e.target.value as 'normal'|'large'})}><option value="normal">Normal</option><option value="large">Large</option></select></label>

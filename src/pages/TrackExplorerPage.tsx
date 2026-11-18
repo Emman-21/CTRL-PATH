@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '../components/shared/Card';
 import { Button } from '../components/shared/Button';
-import { TrackBadge } from '../components/shared/Badge';
+import { NtTrackBadge, BaTrackBadge, SmTrackBadge } from '../components/shared/PixelArt';
 import { LuniSprite } from '../components/luni/LuniSprite';
 import { ModuleDetailModal } from '../components/shared/ModuleDetailModal';
 import { TrackOverviewCard } from '../components/tracks/TrackOverviewCard';
@@ -11,8 +11,9 @@ import { TrackDetailTabs } from '../components/tracks/TrackDetailTabs';
 import { BACKGROUNDS } from '../assets/manifest';
 import { TRACKS_DATA } from '../data/tracks';
 import { useStudent } from '../context/StudentContext';
-import { TrackCode, TrackModule } from '../types';
+import { TrackCode, TrackModule, TrackSubject } from '../types';
 import { Link, useSearchParams } from 'react-router-dom';
+import { NetAcadTrackReader } from '../components/tracks/NetAcadTrackReader';
 import {
   Compass,
   CheckCircle2,
@@ -23,40 +24,68 @@ import {
   Sparkles,
   ArrowLeft,
   Clock,
-  Lightbulb,
   Cpu,
   MessageSquare,
+  Share2,
+  Lock,
+  ExternalLink,
+  FolderOpen,
+  GraduationCap,
+  Layers,
+  Banknote,
 } from 'lucide-react';
 
 export const TrackExplorerPage: React.FC = () => {
   const {
     state,
-    markTrackExplored,
     completeModule,
     toggleComparisonSelection,
     clearComparisonSelection,
     saveTrackReflection,
+    recordActivity,
   } = useStudent();
-  const [params]=useSearchParams();
-  const initialTrack=params.get('track');
+  const [params] = useSearchParams();
+  const initialTrack = params.get('track');
 
   // Navigation state: either viewing all 3 pathways (null) or a specific track detail
-  const [activeTrackCode, setActiveTrackCode] = useState<TrackCode | null>(['NT','BA','SM'].includes(initialTrack || '') ? initialTrack as TrackCode : null);
+  const [activeTrackCode, setActiveTrackCode] = useState<TrackCode | null>(
+    ['NT', 'BA', 'SM'].includes(initialTrack || '') ? (initialTrack as TrackCode) : null
+  );
 
   // Modals & Celebrations
   const [activeModule, setActiveModule] = useState<TrackModule | null>(null);
   const [detailTab, setDetailTab] = useState('about');
+  const [selectedSubject, setSelectedSubject] = useState<TrackSubject | null>(null);
+  const [isReaderOpen, setIsReaderOpen] = useState(false);
+  const [readerModuleId, setReaderModuleId] = useState<string | null>(null);
   const tracks: TrackCode[] = ['NT', 'BA', 'SM'];
   const currentTrack = activeTrackCode ? TRACKS_DATA[activeTrackCode] : null;
 
-  // Handle Mark as Explored with celebratory achievement unlock
-  const handleMarkAsExplored = (code: TrackCode) => { markTrackExplored(code); };
+  const handleOpenReader = (subject?: TrackSubject, moduleId?: string) => {
+    const targetSubj = subject || currentTrack?.subjects?.[0] || null;
+    setSelectedSubject(targetSubj);
+    if (moduleId) {
+      setReaderModuleId(moduleId);
+    } else if (targetSubj?.modules?.[0]) {
+      setReaderModuleId(targetSubj.modules[0].id);
+    } else if (currentTrack?.modules?.[0]) {
+      setReaderModuleId(currentTrack.modules[0].id);
+    }
+    setIsReaderOpen(true);
+  };
 
   // Open track detail view
   const handleOpenTrack = (code: TrackCode) => {
+    recordActivity('view-track-detail');
     setActiveTrackCode(code);
     setDetailTab('about');
   };
+
+  useEffect(() => {
+    if (initialTrack) {
+      recordActivity('view-track-detail');
+    }
+  }, [initialTrack]);
 
   // Save student reflection
   const handleSaveReflection = (code: TrackCode, values: TrackReflectionValues) => {
@@ -89,7 +118,7 @@ export const TrackExplorerPage: React.FC = () => {
             {activeTrackCode && (
               <button
                 onClick={() => setActiveTrackCode(null)}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 bg-white/80 px-3 py-1 rounded-full border border-blue-200 mb-2 transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 dark:text-sky-300 dark:hover:text-sky-200 bg-white/80 px-3 py-1 rounded-full border border-blue-200 mb-2 transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back to All Pathways</span>
@@ -102,7 +131,7 @@ export const TrackExplorerPage: React.FC = () => {
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
-              {activeTrackCode ? currentTrack?.name : 'Explore Your Future Path'}
+              Academic Tracks
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
@@ -232,33 +261,32 @@ export const TrackExplorerPage: React.FC = () => {
           ==================================================================== */}
       {activeTrackCode && currentTrack && (
         <div className="space-y-6">
-          {/* Track Detail Hero Bar with "Mark as Explored" Button */}
+          {/* Track Detail Hero Bar */}
           <Card padding="lg" className="border-slate-200">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
               <div className="space-y-2">
-                <div className="flex items-center gap-2.5">
-                  <TrackBadge code={activeTrackCode} size="md" />
-                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900">
-                    {currentTrack.name}
-                  </h2>
+                <div className="flex items-center gap-3">
+                  {activeTrackCode === 'NT' ? (
+                    <NtTrackBadge size={44} className="shrink-0 rounded-xl shadow-xs" />
+                  ) : activeTrackCode === 'BA' ? (
+                    <BaTrackBadge size={44} className="shrink-0 rounded-xl shadow-xs" />
+                  ) : (
+                    <SmTrackBadge size={44} className="shrink-0 rounded-xl shadow-xs" />
+                  )}
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+                      {currentTrack.name}
+                    </h2>
+                  </div>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
                   {currentTrack.description}
                 </p>
               </div>
 
-              {/* Action Buttons: Mark as Explored & Compare */}
+              {/* Action Buttons & Earned Exploration Badge */}
               <div className="flex flex-wrap items-center gap-3 shrink-0">
-                {!state.exploredTracks[activeTrackCode] ? (
-                  <Button
-                    variant={activeTrackCode.toLowerCase() as any}
-                    size="md"
-                    onClick={() => handleMarkAsExplored(activeTrackCode)}
-                    icon={<Sparkles className="w-4 h-4 text-amber-300" />}
-                  >
-                    Mark as Explored (+1 Gemstone)
-                  </Button>
-                ) : (
+                {state.exploredTracks[activeTrackCode] && (
                   <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span>Explored & Verified</span>
@@ -283,17 +311,16 @@ export const TrackExplorerPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Sub-Tabs Navigation within Track Detail */}
+            {/* Sub-Tabs Navigation within Track Detail (Real-World Applications removed per user request) */}
             <TrackDetailTabs
               trackCode={activeTrackCode}
               activeTab={detailTab}
               onTabChange={setDetailTab}
               tabs={[
                 { id: 'about', label: 'About & Curriculum', icon: Compass },
-                { id: 'modules', label: `Learning Modules (${currentTrack.modules.length})`, icon: BookOpen },
+                { id: 'modules', label: `Curriculum Subjects (${currentTrack.subjects?.length || 2})`, icon: BookOpen },
                 { id: 'skills', label: 'Core Skills', icon: Cpu },
-                { id: 'applications', label: 'Real-World Applications', icon: Lightbulb },
-                { id: 'careers', label: 'Potential Careers', icon: Briefcase },
+                { id: 'careers', label: `Potential Careers (${currentTrack.possibleCareers.length})`, icon: Briefcase },
                 { id: 'reflect', label: 'My Reflection', icon: MessageSquare },
               ]}
             />
@@ -343,96 +370,159 @@ export const TrackExplorerPage: React.FC = () => {
               </div>
             )}
 
-            {/* TAB 2: LEARNING MODULES */}
+            {/* TAB 2: CURRICULUM SUBJECTS (One box per complete subject course) */}
             {detailTab === 'modules' && (
-              <div className="pt-6 space-y-4 animate-in fade-in">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-extrabold text-sm text-slate-900 uppercase tracking-wide">
-                    Available Educational Modules
-                  </h4>
-                  <span className="text-xs text-slate-500">
-                    Click any module to read educational concepts
-                  </span>
+              <div className="pt-6 space-y-6 animate-in fade-in">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="font-extrabold text-sm text-slate-900 uppercase tracking-wide">
+                      Curriculum Subjects & Course Syllabus
+                    </h4>
+                    <span className="text-xs text-slate-500">
+                      Select a subject below to open all its interactive educational modules
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg">
+                      {currentTrack.subjects?.length || 2} Curriculum Courses
+                    </span>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {currentTrack.modules.map((mod) => (
-                    <Card
-                      key={mod.id}
-                      hoverable
-                      onClick={() => setActiveModule(mod)}
-                      className="p-4 border-slate-200 flex flex-col justify-between"
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded">
-                            {mod.subject}
-                          </span>
-                          {mod.status === 'in_preparation' ? (
-                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                              In Preparation
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                              Available
-                            </span>
+                {/* SUBJECT CARDS (CompNet 3: ENSA card & IoT card) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {currentTrack.subjects?.map((subj) => {
+                    const availableModules = subj.modules.filter((m) => m.status === 'available');
+                    const completedCount = availableModules.filter((m) =>
+                      state.moduleCompletions.some(
+                        (c) => c.track === activeTrackCode && c.moduleId === m.id
+                      )
+                    ).length;
+                    const progressPercent = Math.round(
+                      (completedCount / (availableModules.length || 1)) * 100
+                    );
+
+                    return (
+                      <Card
+                        key={subj.id}
+                        hoverable
+                        onClick={() => handleOpenReader(subj)}
+                        className="p-0 overflow-hidden border-slate-200 flex flex-col justify-between transition-all cursor-pointer hover:shadow-md hover:border-slate-300 group"
+                      >
+                        <div>
+                          {/* Subject Photo Banner */}
+                          {subj.heroImage && (
+                            <div className="relative h-44 sm:h-48 w-full overflow-hidden bg-white">
+                              <img
+                                src={subj.heroImage}
+                                alt={subj.title}
+                                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                              />
+                              <div className="absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-white via-white/45 to-transparent pointer-events-none" />
+                              <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between">
+                                <span className="text-[11px] font-extrabold text-sky-950 bg-sky-200/95 backdrop-blur-xs px-2.5 py-1 rounded-md border border-sky-300/90 uppercase tracking-wider shadow-sm">
+                                  {subj.code}
+                                </span>
+                                {subj.status === 'in_preparation' ? (
+                                  <span className="text-[10px] font-bold text-amber-200 bg-amber-950/85 backdrop-blur-xs px-2.5 py-1 rounded-md border border-amber-500/30">
+                                    In Preparation · Mocked Info
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold text-emerald-200 bg-emerald-950/85 backdrop-blur-xs px-2.5 py-1 rounded-md border border-emerald-500/30">
+                                    Available
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           )}
+
+                          <div className="p-6 space-y-3">
+                            {!subj.heroImage && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-1 rounded-md uppercase tracking-wider">
+                                  {subj.code}
+                                </span>
+                                {subj.status === 'in_preparation' ? (
+                                  <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
+                                    In Preparation · Mocked Info
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                                    Available
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            <h5 className="font-black text-xl text-slate-900 leading-tight">
+                              {subj.title}
+                            </h5>
+
+                            {subj.subtitle && (
+                              <div className="text-xs sm:text-sm font-bold text-blue-700 dark:text-blue-400">
+                                {subj.subtitle}
+                              </div>
+                            )}
+
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                              {subj.description}
+                            </p>
+
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                              <BookOpen className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span>{subj.moduleCount} Educational Modules</span>
+                            </div>
+
+                            {/* Subject Completion Progress */}
+                            {completedCount > 0 && (
+                              <div className="space-y-1 pt-1">
+                                <div className="flex items-center justify-between text-[11px] font-bold">
+                                  <span className="text-slate-500">Progress:</span>
+                                  <span className="text-emerald-600">{progressPercent}%</span>
+                                </div>
+                                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                  <div
+                                    className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                                    style={{ width: `${progressPercent}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        <h5 className="font-bold text-sm text-slate-900 mb-1">{mod.title}</h5>
-                        <p className="text-xs text-slate-600 line-clamp-2 mb-3">
-                          {mod.description}
-                        </p>
-
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {mod.topicTags.map((tag, tIdx) => (
-                            <span
-                              key={tIdx}
-                              className="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded"
-                            >
-                              #{tag}
+                        <div className="p-6 pt-0">
+                          <div className="pt-4 border-t border-slate-100 flex items-center justify-end text-xs">
+                            <span className="text-blue-600 font-bold hover:text-blue-700 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80 transition-colors shadow-2xs">
+                              <span>Open</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
                             </span>
-                          ))}
+                          </div>
                         </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                        <span className="text-slate-400 flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>{mod.durationMinutes} mins</span>
-                        </span>
-                        <span className="text-blue-600 font-bold hover:underline flex items-center gap-0.5">
-                          <span>Open Module</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </span>
-                      </div>
-                    </Card>
-                  ))}
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* TAB 3: CORE SKILLS */}
             {detailTab === 'skills' && (
-              <div className="pt-6 space-y-4 animate-in fade-in">
-                <div className="text-xs text-slate-500 mb-2">
-                  Introductory informational skill categories developed through laboratory practice and coursework:
-                </div>
-
+              <div className="pt-6 animate-in fade-in">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {currentTrack.coreSkills.map((group, idx) => (
-                    <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90">
+                    <div key={idx} className="p-5 rounded-2xl bg-slate-50 border border-slate-200/90 shadow-xs">
                       <h5 className="font-extrabold text-xs sm:text-sm text-slate-900 mb-2 flex items-center gap-2">
-                        <Cpu className="w-4 h-4 text-blue-600" />
-                        <span>{group.category}</span>
+                        <span className="w-2 h-2 rounded-full bg-blue-600" />
+                        <span>{group.category.replace(/\s*\([^)]*\)/g, '').trim()}</span>
                       </h5>
-                      <ul className="space-y-1.5">
+                      <ul className="space-y-2">
                         {group.skills.map((skill, sIdx) => (
                           <li
                             key={sIdx}
-                            className="flex items-center gap-2 text-xs text-slate-700 font-medium"
+                            className="flex items-start gap-2 text-xs text-slate-700 font-medium"
                           >
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 mt-1.5" />
                             <span>{skill}</span>
                           </li>
                         ))}
@@ -443,89 +533,131 @@ export const TrackExplorerPage: React.FC = () => {
               </div>
             )}
 
-            {/* TAB 4: REAL-WORLD APPLICATIONS */}
-            {detailTab === 'applications' && (
-              <div className="pt-6 space-y-4 animate-in fade-in">
-                <div className="text-xs text-slate-500 mb-2">
-                  Concrete practical scenarios demonstrating how this knowledge is applied in industry:
-                </div>
-
-                <div className="space-y-4">
-                  {currentTrack.realWorldApplications.map((app, idx) => (
-                    <div
-                      key={idx}
-                      className="p-5 rounded-2xl border border-slate-200 bg-white shadow-xs space-y-3"
-                    >
-                      <h5 className="font-black text-sm text-slate-900 flex items-center gap-2">
-                        <Lightbulb className="w-4 h-4 text-amber-500" />
-                        <span>{app.title}</span>
-                      </h5>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                          <strong className="text-slate-800 block mb-1">Scenario Challenge:</strong>
-                          <span className="text-slate-600">{app.scenario}</span>
-                        </div>
-                        <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-100">
-                          <strong className="text-blue-900 block mb-1">Engineering Solution:</strong>
-                          <span className="text-slate-600">{app.solution}</span>
-                        </div>
-                        <div className="p-3 rounded-xl bg-emerald-50/50 border border-emerald-100">
-                          <strong className="text-emerald-900 block mb-1">Measurable Impact:</strong>
-                          <span className="text-slate-600">{app.impact}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* TAB 5: POTENTIAL CAREER PATHS */}
+            {/* TAB 4: POTENTIAL CAREERS (4 to 6 text-only list items showcasing realistic job roles) */}
             {detailTab === 'careers' && (
-              <div className="pt-6 space-y-4 animate-in fade-in">
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
-                  <strong>Career Information Note:</strong> Potential careers depend on additional certifications, experience, personal dedication, and hiring requirements. CTRL+PATH does not guarantee employment.
+              <div className="pt-6 space-y-6 animate-in fade-in">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed flex items-start gap-3">
+                  <Briefcase className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-slate-900 font-extrabold block">
+                      Realistic Industry Career Pathways
+                    </strong>
+                    <span>
+                      The career pathways below represent realistic job roles for BSIT graduates based on competencies mastered across this track's curriculum modules. Each role directly draws from the skills and practical concepts embedded in our subjects.
+                    </span>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {currentTrack.possibleCareers.map((career, idx) => (
-                    <div
-                      key={idx}
-                      className="p-5 rounded-2xl border border-slate-200 bg-white flex flex-col justify-between"
-                    >
-                      <div>
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold mb-3">
-                          <Briefcase className="w-4 h-4" />
+                {/* 4 to 6 Text-Only Career List Items */}
+                <div className="space-y-4">
+                  {currentTrack.possibleCareers.map((career, idx) => {
+                    const level = career.level || (idx % 2 === 0 ? 'BEGINNER' : 'INTERMEDIATE');
+                    const levelLabel =
+                      level === 'BEGINNER'
+                        ? 'Entry-Level / Associate'
+                        : level === 'INTERMEDIATE'
+                        ? 'Associate to Mid-Level'
+                        : 'Mid-Level to Senior';
+
+                    const levelBadgeStyle =
+                      level === 'BEGINNER'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : level === 'INTERMEDIATE'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                        : 'bg-purple-50 text-purple-700 border-purple-200';
+
+                    return (
+                      <div
+                        key={career.id || idx}
+                        className="p-5 sm:p-6 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 shadow-2xs hover:shadow-xs transition-all space-y-4"
+                      >
+                        {/* Header: Title, Level, and Sample Titles */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
+                          <div className="flex items-center gap-3">
+                            <span className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center shrink-0">
+                              {idx + 1}
+                            </span>
+                            <div>
+                              <h5 className="font-extrabold text-base sm:text-lg text-slate-900 leading-tight">
+                                {career.title}
+                              </h5>
+                              <div className="text-xs text-slate-500 font-medium mt-0.5">
+                                Primary Specialization: {currentTrack.name}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto shrink-0">
+                            {career.salaryRange && (
+                              <span
+                                className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md border bg-amber-50/90 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-800/70"
+                                title="Estimated Philippine monthly salary range (varies by company, location, and experience)"
+                              >
+                                <Banknote className="w-3.5 h-3.5 shrink-0 opacity-85" />
+                                <span>Est. Salary: {career.salaryRange}</span>
+                              </span>
+                            )}
+                            <span
+                              className={`text-[11px] font-bold px-2.5 py-1 rounded-md border ${levelBadgeStyle}`}
+                            >
+                              {levelLabel}
+                            </span>
+                          </div>
                         </div>
-                        <h5 className="font-extrabold text-sm text-slate-900 mb-1">{career.title}</h5>
-                        <p className="text-xs text-slate-600 leading-relaxed mb-3">
+
+                        {/* Role Description */}
+                        <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
                           {career.description}
                         </p>
-                      </div>
 
-                      <div className="pt-3 border-t border-slate-100">
-                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                          Sample Roles
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {career.sampleRoles.map((role, rIdx) => (
-                            <span
-                              key={rIdx}
-                              className="text-[10px] font-medium bg-slate-100 text-slate-700 px-2 py-0.5 rounded"
-                            >
-                              {role}
+                        {/* Workplace Responsibilities */}
+                        {career.responsibilities && career.responsibilities.length > 0 && (
+                          <div className="pt-1">
+                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-600 block">
+                                Key Workplace Responsibilities:
+                              </span>
+                              <ul className="space-y-1.5">
+                                {career.responsibilities.map((resp, rIdx) => (
+                                  <li
+                                    key={rIdx}
+                                    className="flex items-start gap-2 text-xs text-slate-700 leading-relaxed"
+                                  >
+                                    <span className="text-slate-400 font-bold shrink-0 mt-0.5">•</span>
+                                    <span>{resp}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Sample Roles Footer */}
+                        {career.sampleRoles && career.sampleRoles.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                              Common Job Titles:
                             </span>
-                          ))}
-                        </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {career.sampleRoles.map((role, rIdx) => (
+                                <span
+                                  key={rIdx}
+                                  className="text-[11px] font-semibold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md"
+                                >
+                                  {role}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* TAB 6: EXPLORE AND REFLECT */}
+            {/* TAB 5: EXPLORE AND REFLECT */}
             <TrackReflectionPanel
               trackName={currentTrack.name}
               initialValues={{
@@ -538,6 +670,18 @@ export const TrackExplorerPage: React.FC = () => {
             />
           </Card>
         </div>
+      )}
+
+      {/* ====================================================================
+          CISCO NETACAD INTERACTIVE READER OVERLAY
+          ==================================================================== */}
+      {isReaderOpen && currentTrack && (
+        <NetAcadTrackReader
+          track={currentTrack}
+          subject={selectedSubject || currentTrack.subjects?.[0]}
+          initialModuleId={readerModuleId}
+          onClose={() => setIsReaderOpen(false)}
+        />
       )}
 
       {/* ====================================================================

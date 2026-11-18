@@ -23,7 +23,7 @@ export const QuizLevelCompletion: React.FC<QuizLevelCompletionProps> = ({
     <div className="max-w-xl mx-auto w-full space-y-6 animate-in zoom-in-95 duration-200">
       <Card padding="lg" className="border-indigo-100 shadow-xl text-center relative overflow-hidden">
         <div className="flex justify-center mb-4">
-          <LuniCharacter state="celebrating" size={96} animate glow />
+          <LuniCharacter state="celebrating" size={96} animate glow motionOverride="slow-jump" />
         </div>
 
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black uppercase tracking-wider mb-2">
@@ -36,8 +36,11 @@ export const QuizLevelCompletion: React.FC<QuizLevelCompletionProps> = ({
         </h2>
 
         <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed mb-6">
-          You've successfully finished {currentMeta?.name} ({currentMeta?.typeTitle}). Your answers have
-          been safely recorded.
+          You've successfully finished{' '}
+          <strong className="inline px-1.5 py-[1px] rounded-md box-decoration-clone bg-neutral-700 text-yellow-300 ring-1 ring-neutral-600/50 dark:bg-neutral-700/85 dark:text-yellow-300 dark:ring-neutral-500/40 font-extrabold">
+            {currentMeta?.name}
+          </strong>{' '}
+          ({currentMeta?.typeTitle}). Your answers have been safely recorded.
         </p>
 
         {/* Progress Across 5 Chapters */}
@@ -57,7 +60,7 @@ export const QuizLevelCompletion: React.FC<QuizLevelCompletionProps> = ({
             icon={<ArrowRight className="w-4 h-4" />}
             iconPosition="right"
           >
-            {completedLevel < 5 ? `Prepare for Chapter ${completedLevel + 1}` : 'Review & Submit Assessment'}
+            {completedLevel < 5 ? `Prepare for Chapter ${completedLevel + 1}` : 'Submit Assessment'}
           </Button>
         </div>
       </Card>

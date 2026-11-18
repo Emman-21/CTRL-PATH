@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --color-primary: #2563eb;
@@ -13,14 +15,14 @@
   }
 
   html {
-    background-color: #f8fafc;
+    background-color: #070c18;
     min-height: 100%;
-    color-scheme: light;
+    color-scheme: dark;
   }
 
   body {
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #070c18;
+    color: #f1f5f9;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -28,7 +30,7 @@
     min-height: 100vh;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1, h2, h3, h4, h5, h6, .font-brand, .font-heading {
     font-family: 'Nunito', 'Inter', sans-serif;
     letter-spacing: -0.015em;
   }
@@ -48,6 +50,15 @@
   }
   50% {
     transform: translateY(-6px);
+  }
+}
+
+@keyframes slowJump {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-14px);
   }
 }
 
@@ -77,6 +88,10 @@
 
 .animate-float-gentle {
   animation: floatGentle 3.5s ease-in-out infinite;
+}
+
+.animate-slow-jump {
+  animation: slowJump 3.2s ease-in-out infinite;
 }
 
 .animate-sparkle-spin {
@@ -191,3 +206,548 @@ html[data-high-contrast=true] :is(.control-card,.community-card,.gem-card,input,
 .topbar-avatar .student-avatar { width:28px; height:28px; border-radius:8px; font-size:.6875rem; }.topbar-avatar svg { width:17px; height:17px; }
 [data-luni-animated=false] * { animation:none!important; }
 .control-form-grid label > .control-field-label { color:#334155; font-size:.8125rem; font-weight:750; }.control-field-label small { color:#64748b; font-size:.6875rem; font-weight:450; }
+
+/* ========================================================
+   DESIGN TOKENS & LIGHT MODE SPECIFICATION
+   ======================================================== */
+:root,
+html:not(.dark),
+html[data-theme="light"] {
+  color-scheme: light;
+  /* Core layout & surfaces */
+  --bg: #F4F6FF;
+  --bg-gradient: linear-gradient(180deg, #F4F6FF 0%, #EEF1FB 100%);
+  --surface: #ffffff;
+  --surface-2: #F0F3FC;
+  --border: #DCE3F5;
+  --border-subtle: #E8EEFA;
+  --text: #1E2A4A;
+  --text-muted: #5B6784;
+  --text-subtle: #7A86A3;
+  --card-shadow: 0 8px 24px rgba(59, 91, 219, 0.08);
+
+  /* Hero & glass tokens */
+  --hero-overlay: linear-gradient(to right, rgba(244, 246, 255, 0.98) 0%, rgba(244, 246, 255, 0.90) 50%, rgba(244, 246, 255, 0.45) 100%);
+  --hero-progress-bg: rgba(255, 255, 255, 0.96);
+  --hero-progress-border: #DCE3F5;
+
+  /* Track Accents */
+  --accent-nt: #3B5BDB;
+  --accent-nt-tint: rgba(59, 91, 219, 0.08);
+  --accent-nt-border: #BAC7F5;
+  --accent-nt-text: #2B44B8;
+
+  --accent-ba: #7C3AED;
+  --accent-ba-tint: rgba(124, 58, 237, 0.08);
+  --accent-ba-border: #DDD0F8;
+  --accent-ba-text: #6025C0;
+
+  --accent-sm: #059669;
+  --accent-sm-tint: rgba(5, 150, 105, 0.08);
+  --accent-sm-border: #A7F3D0;
+  --accent-sm-text: #047857;
+
+  /* Gems & Badges */
+  --gem-locked-bg: #F0F3FA;
+  --gem-locked-border: #DCE3F5;
+  --badge-streak-bg: linear-gradient(to right, #FFF7ED, #FFEDD5);
+  --badge-streak-border: #FDBA74;
+  --badge-streak-glow: 0 0 12px rgba(249, 115, 22, 0.25);
+
+  /* Portal backward compatibility */
+  --portal-bg: #F4F6FF;
+  --portal-surface: #ffffff;
+  --portal-heading: #1E2A4A;
+  --portal-copy: #5B6784;
+  --portal-border: #DCE3F5;
+  --portal-accent: #3B5BDB;
+  --color-bg: #F4F6FF;
+  --color-surface: #ffffff;
+  --color-heading: #1E2A4A;
+  --color-secondary: #5B6784;
+}
+
+html:not(.dark) body,
+html[data-theme="light"] body {
+  background: linear-gradient(180deg, #F4F6FF 0%, #EEF1FB 100%) !important;
+  background-attachment: fixed !important;
+  color: #1E2A4A !important;
+}
+
+/* ========================================================
+   MOONLIT SKY CELESTIAL DARK MODE (BSIT Luminary Realm)
+   Approved dark values preserved exactly without alteration
+   ======================================================== */
+html.dark,
+html[data-theme="dark"] {
+  color-scheme: dark;
+  /* Core layout & surfaces (Dark tokens) */
+  --bg: #070c18;
+  --bg-gradient: #070c18;
+  --surface: #0f172a;
+  --surface-2: #0d1526;
+  --border: #1e293b;
+  --border-subtle: #1e293b;
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  /* Hero & glass tokens (Dark) */
+  --hero-overlay: linear-gradient(to right, rgba(10, 15, 29, 0.95) 0%, rgba(13, 21, 42, 0.90) 50%, rgba(17, 26, 46, 0.60) 100%);
+  --hero-progress-bg: rgba(15, 23, 42, 0.95);
+  --hero-progress-border: rgba(49, 46, 129, 0.8);
+
+  /* Track Accents (Dark) */
+  --accent-nt: #38bdf8;
+  --accent-nt-tint: rgba(30, 58, 138, 0.4);
+  --accent-nt-border: rgba(30, 64, 175, 0.7);
+  --accent-nt-text: #93c5fd;
+
+  --accent-ba: #c084fc;
+  --accent-ba-tint: rgba(88, 28, 135, 0.4);
+  --accent-ba-border: rgba(107, 33, 168, 0.7);
+  --accent-ba-text: #d8b4fe;
+
+  --accent-sm: #34d399;
+  --accent-sm-tint: rgba(6, 78, 59, 0.4);
+  --accent-sm-border: rgba(6, 95, 70, 0.7);
+  --accent-sm-text: #6ee7b7;
+
+  /* Gems & Badges (Dark) */
+  --gem-locked-bg: rgba(15, 23, 42, 0.6);
+  --gem-locked-border: #1e293b;
+  --badge-streak-bg: linear-gradient(to right, rgba(69, 26, 3, 0.6), rgba(124, 45, 18, 0.5));
+  --badge-streak-border: rgba(234, 88, 12, 0.8);
+  --badge-streak-glow: 0 0 16px rgba(249, 115, 22, 0.4);
+
+  /* Portal backward compatibility */
+  --color-bg: #070c18;
+  --color-surface: #0f172a;
+  --color-heading: #f8fafc;
+  --color-secondary: #94a3b8;
+  --portal-bg: #070c18;
+  --portal-surface: #0f172a;
+  --portal-heading: #f8fafc;
+  --portal-copy: #94a3b8;
+  --portal-border: #1e293b;
+  --portal-accent: #38bdf8;
+}
+
+html.dark body,
+html[data-theme="dark"] body {
+  background-color: #070c18;
+  color: #f1f5f9;
+}
+
+/* Custom scrollbars in Dark Mode */
+html.dark ::-webkit-scrollbar-track,
+html[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #0a0f1d;
+}
+html.dark ::-webkit-scrollbar-thumb,
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #1e293b;
+}
+html.dark ::-webkit-scrollbar-thumb:hover,
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Base Surfaces & Structural Containers */
+html.dark header,
+html[data-theme="dark"] header {
+  background-color: rgba(13, 20, 36, 0.92) !important;
+  border-color: #1e293b !important;
+}
+
+html.dark aside,
+html[data-theme="dark"] aside {
+  background-color: #0d1424 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark nav a:not([class*="bg-blue-"]):not([class*="bg-indigo-"]):hover {
+  background-color: #16223e !important;
+  color: #f8fafc !important;
+}
+
+html.dark aside nav a[class*="bg-blue-50"],
+html[data-theme="dark"] aside nav a[class*="bg-blue-50"] {
+  background-color: #1a2744 !important;
+  color: #60a5fa !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.15);
+}
+
+html.dark aside .text-blue-600,
+html[data-theme="dark"] aside .text-blue-600 {
+  color: #60a5fa !important;
+}
+
+html.dark .bg-linear-to-t.from-white,
+html[data-theme="dark"] .bg-linear-to-t.from-white {
+  background: linear-gradient(to top, #0d1424 0%, rgba(13, 20, 36, 0.85) 60%, transparent 100%) !important;
+}
+
+/* Surface backgrounds & borders */
+html.dark :is(.bg-white, .bg-white\/90, .bg-white\/95, .bg-white\/80) {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+}
+
+html.dark :is(.bg-slate-50, .bg-slate-100, .bg-slate-100\/90, .bg-slate-100\/80) {
+  background-color: #131d33 !important;
+}
+
+html.dark :is(.border-slate-100, .border-slate-200, .border-slate-200\/80, .border-slate-200\/90, .border-slate-300, .border-indigo-100\/90) {
+  border-color: #1e293b !important;
+}
+
+/* Text adjustments for dark mode readability */
+html.dark :is(.text-slate-900, .text-slate-800) {
+  color: #f8fafc !important;
+}
+
+html.dark :is(.text-slate-700, .text-slate-600) {
+  color: #cbd5e1 !important;
+}
+
+html.dark :is(.text-slate-500, .text-slate-400) {
+  color: #94a3b8 !important;
+}
+
+html.dark :is(.hover\:bg-slate-50:hover, .hover\:bg-slate-100:hover) {
+  background-color: #16223e !important;
+}
+
+/* Inputs, textareas, selects */
+html.dark input:not([type=checkbox]):not([type=radio]),
+html.dark textarea,
+html.dark select {
+  background-color: #0a0f1d !important;
+  border-color: #27354f !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Topbar search & dropdown */
+html.dark .topbar-avatar .student-avatar {
+  background: linear-gradient(135deg, #1e1b4b, #172554);
+  border-color: #3730a3;
+  color: #c7d2fe;
+}
+
+/* Hero card gradients & sky overlays */
+html.dark .bg-linear-to-r.from-white\/95,
+html.dark .bg-linear-to-r.from-white\/90,
+html.dark .bg-linear-to-r.from-white {
+  background: linear-gradient(to right, rgba(10, 15, 29, 0.95) 0%, rgba(13, 20, 36, 0.88) 50%, rgba(15, 23, 42, 0.55) 100%) !important;
+}
+
+html.dark .border-l-white\/95 {
+  border-left-color: #0f172a !important;
+}
+
+/* Stage 7: Gemstone Vault in Celestial Dark Mode */
+html.dark .achievement-vault {
+  color: #f1f5f9;
+}
+html.dark .gem-category-NT { --gem-color: #38bdf8; --gem-tint: #0c1b33; }
+html.dark .gem-category-BA { --gem-color: #a78bfa; --gem-tint: #1e1338; }
+html.dark .gem-category-SM { --gem-color: #34d399; --gem-tint: #06261a; }
+html.dark .gem-category-Special { --gem-color: #fbbf24; --gem-tint: #261e06; }
+
+html.dark .vault-hero {
+  border-color: #2e285a;
+  background-color: #0d1326;
+}
+html.dark .vault-hero-shade {
+  background: linear-gradient(90deg, #0a0f1df8 0%, #0d152bf0 45%, #1e1b4b40 100%);
+}
+html.dark .vault-hero h1 {
+  color: #f8fafc;
+}
+html.dark .vault-hero h1 span {
+  color: #c084fc;
+}
+html.dark .vault-hero-copy > p {
+  color: #cbd5e1;
+}
+html.dark .vault-hero-guide > p {
+  background: #111a2eed;
+  border-color: #3730a3;
+  color: #e2e8f0;
+  box-shadow: 0 8px 30px #03071280;
+}
+html.dark .vault-overview {
+  background: linear-gradient(110deg, #0f172a, #131d36);
+  border-color: #1e293b;
+  box-shadow: 0 4px 20px #03071250;
+  color: #f8fafc;
+}
+html.dark .vault-total strong {
+  color: #f8fafc;
+}
+html.dark .vault-total small {
+  color: #94a3b8;
+}
+html.dark .vault-total b {
+  color: #818cf8;
+}
+html.dark .vault-total p {
+  color: #94a3b8;
+}
+html.dark .vault-category-counts button {
+  background: var(--gem-tint);
+  border-color: color-mix(in srgb, var(--gem-color) 40%, transparent);
+  color: #f8fafc;
+}
+html.dark .vault-category-counts small {
+  color: #94a3b8;
+}
+html.dark .vault-category-counts span {
+  color: #cbd5e1;
+}
+html.dark .vault-filters {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+html.dark .vault-category-filters button {
+  background: #131d33;
+  border-color: #27354f;
+  color: #cbd5e1;
+}
+html.dark .vault-category-filters button:hover {
+  background: #1e293b;
+  color: #f8fafc;
+}
+html.dark .vault-category-filters button[aria-pressed=true] {
+  background: #4f46e5;
+  border-color: #6366f1;
+  color: #fff;
+}
+html.dark .vault-select-filters {
+  border-top-color: #1e293b;
+}
+html.dark .vault-select-filters label {
+  color: #cbd5e1;
+}
+html.dark .gem-card {
+  background: linear-gradient(var(--gem-tint), #0f172a 45%);
+  border-color: #1e293b;
+  border-top: 3px solid var(--gem-color);
+  color: #f1f5f9;
+}
+html.dark .gem-card:hover {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+html.dark .gem-card-title {
+  color: #f8fafc;
+}
+html.dark .gem-description {
+  color: #94a3b8;
+}
+html.dark .gem-requirement {
+  background: #090e1c;
+  color: #cbd5e1;
+}
+html.dark .gem-requirement strong {
+  color: #f1f5f9;
+}
+html.dark .gem-card-status,
+html.dark .gem-progress-label,
+html.dark .gem-category-label,
+html.dark .gem-hint {
+  color: #94a3b8;
+}
+html.dark .gem-meter {
+  background: #1e293b;
+}
+html.dark .rarity-badge {
+  background: #131d33;
+  border-color: #27354f;
+  color: #cbd5e1;
+}
+html.dark .vault-empty {
+  background: #0d1424;
+  border-color: #3730a3;
+  color: #cbd5e1;
+}
+html.dark .vault-footer {
+  background: linear-gradient(120deg, #0c162c, #17122b);
+  border-color: #27354f;
+  color: #f1f5f9;
+}
+html.dark .vault-luni-note p {
+  color: #cbd5e1;
+}
+html.dark .achievement-dialog {
+  background: #0f172a;
+  color: #f1f5f9;
+  border-color: #3730a3;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+}
+html.dark .achievement-close {
+  color: #94a3b8;
+}
+html.dark .achievement-close:hover {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+html.dark .gem-detail > p,
+html.dark .gem-celebration > p {
+  color: #cbd5e1;
+}
+html.dark .gem-detail-requirement {
+  background: #090e1c;
+  border-color: #1e293b;
+  color: #e2e8f0;
+}
+html.dark .achievement-dialog .vault-luni-note {
+  background: #14112a;
+  border-color: #2e285a;
+}
+
+/* Stage 8: Community and Control Center */
+html.dark .community-toolbar,
+html.dark .community-card,
+html.dark .community-detail,
+html.dark .control-card,
+html.dark .control-tabs {
+  background: #0f172a;
+  border-color: #1e293b;
+  color: #f1f5f9;
+}
+html.dark .control-tabs button {
+  color: #94a3b8;
+}
+html.dark .control-tabs button:hover {
+  background: #1e293b;
+  color: #f8fafc;
+}
+html.dark .control-tabs button[aria-selected=true] {
+  color: #60a5fa;
+  background: #132142;
+  box-shadow: inset 3px 0 #3b82f6;
+}
+html.dark .control-metrics > div {
+  background: #131d33;
+  border-color: #1e293b;
+}
+html.dark .control-metrics strong {
+  color: #60a5fa;
+}
+html.dark .control-history article {
+  background: #0c1426;
+  border-color: #1e293b;
+  color: #f1f5f9;
+}
+html.dark .control-criteria {
+  background: #090e1c;
+  border-color: #1e293b;
+  color: #cbd5e1;
+}
+html.dark .community-editorial {
+  background: linear-gradient(110deg, #17122b, #0c1833);
+  border-color: #2e285a;
+}
+html.dark .community-tag {
+  background: #132142;
+  border-color: #27354f;
+  color: #93c5fd;
+}
+html.dark .student-avatar {
+  background: linear-gradient(135deg, #1e1b4b, #172554);
+  border-color: #3730a3;
+  color: #c7d2fe;
+}
+html.dark .control-danger-button {
+  background: #251212;
+  border-color: #5c1d1d;
+  color: #fca5a5;
+}
+html.dark .control-danger-button:hover {
+  background: #361717;
+}
+html.dark .community-secondary-button {
+  background: #131d33;
+  border-color: #27354f;
+  color: #e2e8f0;
+}
+html.dark .community-secondary-button:hover {
+  background: #1e293b;
+}
+html.dark .community-empty {
+  background: radial-gradient(ellipse at top, #151d38 0%, #0a0f1d 75%);
+  border-color: #1e293b;
+  color: #f8fafc;
+}
+html.dark .community-empty-icon {
+  background: #111a2e;
+  border-color: #3730a3;
+  color: #818cf8;
+}
+
+/* Quiz Options & Questions */
+html.dark .bg-blue-50\/80 {
+  background-color: #142247 !important;
+  color: #93c5fd !important;
+}
+html.dark .text-blue-950 {
+  color: #dbeafe !important;
+}
+
+/* Luni Floating Panel in Dark Mode */
+html.dark .luni-panel,
+html.dark [role="dialog"].bg-white {
+  background-color: #0f172a !important;
+  border-color: #27354f !important;
+  color: #f8fafc !important;
+}
+
+/* Community Small Empty State (Announcements / Dashboard Preview) */
+html.dark .community-small-empty {
+  background: #0d1526 !important;
+  border: 1px solid #1e293b !important;
+  color: #94a3b8 !important;
+}
+html.dark .community-small-empty h3 {
+  color: #f1f5f9 !important;
+}
+
+/* Indigo text & borders in Dark Mode */
+html.dark :is(.text-indigo-950, .text-indigo-900) {
+  color: #c7d2fe !important;
+}
+html.dark .text-indigo-700 {
+  color: #a5b4fc !important;
+}
+html.dark .text-indigo-600 {
+  color: #818cf8 !important;
+}
+html.dark :is(.border-indigo-100, .border-indigo-100\/90, .border-indigo-100\/60, .border-indigo-200) {
+  border-color: #1e293b !important;
+}
+
+/* Pastels & light pill backgrounds in Dark Mode */
+html.dark :is(.bg-blue-50, .bg-blue-50\/40, .bg-blue-50\/50, .bg-blue-50\/70, .bg-blue-50\/80, .bg-blue-50\/90) {
+  background-color: #111e3b !important;
+  color: #93c5fd !important;
+}
+html.dark :is(.bg-purple-50, .bg-purple-50\/30, .bg-purple-50\/40, .bg-purple-50\/50, .bg-purple-50\/70) {
+  background-color: #1e1338 !important;
+  color: #c4b5fd !important;
+}
+html.dark :is(.bg-emerald-50, .bg-emerald-50\/40, .bg-emerald-50\/50, .bg-emerald-50\/70) {
+  background-color: #0c2419 !important;
+  color: #6ee7b7 !important;
+}
+html.dark :is(.bg-amber-50, .bg-amber-50\/50, .bg-amber-50\/70) {
+  background-color: #241c08 !important;
+  color: #fde68a !important;
+}
+

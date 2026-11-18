@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Bell, Search } from 'lucide-react';
 import { PageHeader } from '../components/shared/PageHeader';
 import { BACKGROUNDS } from '../assets/manifest';

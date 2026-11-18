@@ -262,13 +262,6 @@ export const SCRIPTED_TOPICS: LuniTopicQA[] = [
     relatedActionLabel: 'Open CTRL Quiz',
   },
   {
-    id: 'focus-mode',
-    question: 'What is Focus Mode during quizzes?',
-    answer:
-      'Focus Mode creates a peaceful, distraction-free environment for taking the CTRL Quiz. It temporarily rests my floating animations, hides decorative particles, and darkens the view so you can focus entirely on reading prompts and answering at your own pace.',
-    category: 'quiz',
-  },
-  {
     id: 'gemstones',
     question: 'How do I unlock Gemstone Achievements?',
     answer:

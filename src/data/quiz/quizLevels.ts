@@ -94,7 +94,7 @@ export const QUIZ_LEVELS: LevelMeta[] = [
     description:
       'Arrange the chronological order of networking packet journeys, data analytics pipelines, and service ticket resolution workflows.',
     instructions:
-      'Use the Move Up (▲) and Move Down (▼) controls to organize the steps from first to last. You can reset the sequence at any time.',
+      'Drag and drop the step cards into chronological order from first to last (or use Up/Down arrow keys while a card is focused). You can reset the sequence at any time.',
     luniTip:
       'Think about what must happen first before the next step can begin. Step by step, the picture becomes clear!',
     keyTopics: [

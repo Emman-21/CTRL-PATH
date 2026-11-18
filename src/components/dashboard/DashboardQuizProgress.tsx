@@ -33,19 +33,19 @@ export const DashboardQuizProgress: React.FC<DashboardQuizProgressProps> = ({
         </Link>
       </div>
 
-      <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 flex items-start gap-4">
-        <div className="w-12 h-12 rounded-xl bg-white border border-blue-200 flex items-center justify-center text-blue-600 font-black text-lg shadow-xs shrink-0">
-          <FileQuestion className="w-6 h-6 text-blue-600" />
+      <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 flex items-start gap-4">
+        <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#0f172a] border border-blue-200 dark:border-blue-800/60 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-lg shadow-xs shrink-0">
+          <FileQuestion className="w-6 h-6 text-blue-600 dark:text-blue-400" />
         </div>
 
         <div className="flex-1 space-y-1.5">
           <div className="flex items-center justify-between">
-            <div className="font-black text-slate-900 text-sm">
+            <div className="font-black text-slate-900 dark:text-slate-100 text-sm">
               {activeQuiz ? `Level ${activeQuiz.currentLevel}: saved assessment` : 'No active assessment'}
             </div>
-            <span className="text-xs font-bold text-blue-700">{quizPercent}%</span>
+            <span className="text-xs font-bold text-blue-700 dark:text-blue-400">{quizPercent}%</span>
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
             {responseCount} of {totalQuestions} responses saved
           </div>
           <div className="pt-1">
@@ -55,16 +55,10 @@ export const DashboardQuizProgress: React.FC<DashboardQuizProgressProps> = ({
       </div>
     </div>
 
-    <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
-      <span className="text-xs text-slate-500 flex items-center gap-1.5">
+    <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
         <Clock className="w-3.5 h-3.5 text-slate-400" />
-        <span>
-          {activeQuiz
-            ? `Attempt ${Math.min(3, attemptsCount + 1)} of 3 in progress`
-            : attemptsCount > 0
-              ? `${attemptsCount} attempt${attemptsCount === 1 ? '' : 's'} completed`
-              : 'No attempts yet'}
-        </span>
+        <span>Attempt {Math.min(3, attemptsCount + 1)} of 3</span>
       </span>
 
       <Link to="/quiz">

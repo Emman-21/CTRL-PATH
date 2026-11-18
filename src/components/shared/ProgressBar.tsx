@@ -34,7 +34,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
 
   return (
     <div className={`w-full flex items-center gap-3 ${className}`}>
-      <div className={`w-full bg-slate-100 rounded-full overflow-hidden ${sizeStyles[size]}`}>
+      <div className={`w-full bg-slate-100 dark:bg-slate-800/90! border border-transparent dark:border-slate-700/60 rounded-full overflow-hidden ${sizeStyles[size]}`}>
         <div
           className={`${sizeStyles[size]} ${barStyles[variant]} rounded-full transition-all duration-500 ease-out`}
           style={{ width: `${percentage}%` }}
