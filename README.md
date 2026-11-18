@@ -1,6 +1,8 @@
 #  🌙🧚 CTRL-PATH - Academic Track Guide 
 ### Explore - Compare - Find Your Path
 
+## Already in production, please wait for the release of the app
+
 > **Terminal-Based Installation Guide**
 
 Follow the commands below using your IDE's integrated terminal.
