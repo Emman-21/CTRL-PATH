@@ -4,16 +4,16 @@ import { PageHeader } from '../components/shared/PageHeader';
 import { Card } from '../components/shared/Card';
 import { Button } from '../components/shared/Button';
 import { TrackBadge } from '../components/shared/Badge';
-import { ProgressBar } from '../components/shared/ProgressBar';
 import { LuniSprite } from '../components/luni/LuniSprite';
 import { BACKGROUNDS } from '../assets/manifest';
 import { useStudent } from '../context/StudentContext';
 import { TrackCode } from '../types';
-import { AttemptComparisonPanel } from '../components/achievements/AttemptComparisonPanel';
 import { ResultsScorecards } from '../components/results/ResultsScorecards';
 import { ResultsSpotlight } from '../components/results/ResultsSpotlight';
 import { ResultsAnswerReview } from '../components/results/ResultsAnswerReview';
-import { ResultsAttemptHistory } from '../components/results/ResultsAttemptHistory';
+import { ResultsShiftView } from '../components/results/ResultsShiftView';
+import { InsightCardSvg } from '../components/results/InsightCardSvg';
+import { FiveLevelBreakdown } from '../components/results/FiveLevelBreakdown';
 import {
   analyzeQuizAttempt,
   SAMPLE_DEMO_ATTEMPT,
@@ -27,7 +27,6 @@ import {
   Compass,
   GitCompare,
   Printer,
-  Layers,
 } from 'lucide-react';
 
 export const SmartResultsPage: React.FC = () => {
@@ -37,6 +36,20 @@ export const SmartResultsPage: React.FC = () => {
 
   const [previewMode, setPreviewMode] = useState<boolean>(false);
   const [selectedAttemptIndex, setSelectedAttemptIndex] = useState<number>(()=>Math.max(0,state.quizAttempts.findIndex(a=>a.id===params.get('attempt'))));
+  const [selectedReviewLevel, setSelectedReviewLevel] = useState<number | 'ALL'>(1);
+
+  const handleReviewLevel = (level: number) => {
+    setSelectedReviewLevel(level);
+    if (typeof document !== 'undefined') {
+      const target = document.getElementById('answer-review-section');
+      if (target && typeof target.scrollIntoView === 'function') {
+        target.scrollIntoView({
+          behavior: state.preferences.reducedMotion ? 'auto' : 'smooth',
+          block: 'start',
+        });
+      }
+    }
+  };
 
   // Print state
   const [, setIsPrinting] = useState<boolean>(false);
@@ -89,10 +102,12 @@ export const SmartResultsPage: React.FC = () => {
   // If completely empty and not previewing
   if (!hasRealAttempts && !previewMode) {
     return (
-      <div className="space-y-8 animate-in fade-in duration-200 pb-12">
+      <div className="space-y-8 animate-in fade-in duration-200 pb-6">
         <PageHeader
           title="Smart Results & Guidance"
           subtitle="Discover where your instincts, analytical patterns, and problem-solving talents align across BSIT specializations."
+          titleClassName="text-3xl sm:text-4xl font-black"
+          subtitleClassName="text-xs sm:text-[13px]"
           backgroundImage={BACKGROUNDS.dashboardSkyKingdom}
           luniPose="sit"
           luniTitle="Welcome to Results, Explorer!"
@@ -132,7 +147,7 @@ export const SmartResultsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-200 pb-12 print:space-y-4 print:p-0">
+    <div className="space-y-8 animate-in fade-in duration-200 pb-6 print:space-y-4 print:p-0">
       {/* Sample preview notice banner if active */}
       {previewMode && (
         <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-[#241c08] border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 flex items-center justify-between text-xs font-medium">
@@ -163,6 +178,8 @@ export const SmartResultsPage: React.FC = () => {
       <PageHeader
         title="Your Path Insights & Guidance"
         subtitle="Objective diagnostic analytics from your CTRL Quiz. See where your demonstrated technical aptitude and natural curiosities resonate across the three pathways."
+        titleClassName="text-3xl sm:text-4xl font-black"
+        subtitleClassName="text-xs sm:text-[13px]"
         backgroundImage={BACKGROUNDS.dashboardSkyKingdom}
         luniPose="celebrate"
         luniTitle="Great Work, Explorer!"
@@ -236,17 +253,20 @@ export const SmartResultsPage: React.FC = () => {
               {analysis.demonstratedStrengths.map((st, idx) => (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#131d33] border border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#182542] transition-colors"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#131d33] border border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#182542] transition-colors flex items-start gap-3"
                 >
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
-                      {st.title}
-                    </span>
-                    <TrackBadge code={st.track} size="sm" />
+                  <InsightCardSvg kind="strength" title={st.title} track={st.track} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                      <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
+                        {st.title}
+                      </span>
+                      <TrackBadge code={st.track} size="sm" />
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {st.description}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                    {st.description}
-                  </p>
                 </div>
               ))}
             </div>
@@ -265,24 +285,27 @@ export const SmartResultsPage: React.FC = () => {
               {analysis.growthOpportunities.map((op, idx) => (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#131d33] border border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#182542] transition-colors"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#131d33] border border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-[#182542] transition-colors flex items-start gap-3"
                 >
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
-                      {op.title}
-                    </span>
-                    <TrackBadge code={op.track} size="sm" />
+                  <InsightCardSvg kind="growth" title={op.title} track={op.track} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                      <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
+                        {op.title}
+                      </span>
+                      <TrackBadge code={op.track} size="sm" />
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
+                      {op.description}
+                    </p>
+                    <Link
+                      to={op.recommendedRoute}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      <span>Explore Track Modules</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
                   </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
-                    {op.description}
-                  </p>
-                  <Link
-                    to={op.recommendedRoute}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                  >
-                    <span>Explore Track Modules</span>
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
                 </div>
               ))}
             </div>
@@ -290,130 +313,78 @@ export const SmartResultsPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Level-by-Level Assessment Mastery Breakdown */}
-      <Card>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base">
-                Five-Level Assessment Breakdown
-              </h3>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Review how your understanding evolved across different question formats and cognitive tiers.
-            </p>
-          </div>
-        </div>
+      <FiveLevelBreakdown
+        levelPerformances={analysis.levelPerformances}
+        onReviewLevel={handleReviewLevel}
+      />
 
-          {analysis.levelPerformances.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-amber-50 dark:bg-[#241c08] border border-amber-200 dark:border-amber-800/60 text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
-            <strong className="block mb-1">Level breakdown unavailable.</strong>
-            This attempt was submitted before detailed answer tracking was introduced. Only track-level scores and the spotlight analysis above are available for this attempt.
-          </div>
-        ) : (
-        <div className="space-y-4">
-          {analysis.levelPerformances.map((lvl) => (
-            <div
-              key={lvl.level}
-              className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-[#131d33] flex flex-col md:flex-row md:items-center justify-between gap-4"
-            >
-              <div className="min-w-[240px]">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-6 h-6 rounded-lg bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center">
-                    {lvl.level}
-                  </span>
-                  <span className="font-extrabold text-sm text-slate-900 dark:text-slate-100">{lvl.name}</span>
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">Format: {lvl.questionType}</div>
-              </div>
+      <ResultsAnswerReview
+        analysis={analysis}
+        selectedLevel={selectedReviewLevel}
+        onLevelChange={setSelectedReviewLevel}
+      />
 
-              <div className="flex-1 max-w-md">
-                <div className="flex items-center justify-between text-xs mb-1 font-semibold">
-                  <span className="text-slate-600 dark:text-slate-300">
-                    {lvl.correct} of {lvl.total} correct
-                  </span>
-                  <span className="font-black text-slate-900 dark:text-slate-100">{lvl.percentage}%</span>
-                </div>
-                <ProgressBar
-                  value={lvl.percentage}
-                  variant={lvl.percentage >= 70 ? 'nt' : lvl.percentage >= 50 ? 'ba' : 'sm'}
-                  size="sm"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Strongest In:</span>
-                <TrackBadge code={lvl.leadingTrack} size="sm" />
-              </div>
-            </div>
-          ))}
-        </div>
-        )}
-      </Card>
-
-      <ResultsAnswerReview analysis={analysis} />
-
-      <AttemptComparisonPanel />
-
-      {state.quizAttempts.length > 1 && (
-        <ResultsAttemptHistory
-          attempts={state.quizAttempts}
-          selectedAttemptIndex={selectedAttemptIndex}
-          onSelectAttempt={setSelectedAttemptIndex}
+      {!previewMode && state.quizAttempts.length > 1 ? (
+        <ResultsShiftView
+          selectedAttemptId={activeAttempt.id}
+          onSelectAttempt={(attemptId) => {
+            const idx = state.quizAttempts.findIndex((item) => item.id === attemptId);
+            if (idx >= 0) setSelectedAttemptIndex(idx);
+          }}
+          onOpenPathCompare={handleProceedToCompare}
         />
+      ) : (
+        /* Action / Next Steps Bar for first-attempt or sample preview */
+        <Card className="bg-linear-to-r from-blue-50 via-indigo-50/90 to-violet-50 dark:from-slate-900 dark:via-[#111b36] dark:to-indigo-950 border-indigo-200/80! dark:border-indigo-900/70! text-slate-900 dark:text-white p-6 sm:p-7 rounded-3xl shadow-sm">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                Ready for the Next Chapter?
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
+                Compare your top tracks side-by-side in Path Compare to inspect curriculum subjects,
+                internship capstones, and alumni career paths!
+              </p>
+            </div>
+
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={handleProceedToCompare}
+                className="bg-white! hover:bg-blue-50/80! text-slate-800! border-indigo-200! hover:border-blue-300! shadow-2xs whitespace-nowrap dark:bg-white/10! dark:hover:bg-white/20! dark:text-white! dark:border-white/20!"
+                icon={<GitCompare className="w-4 h-4 text-blue-600 dark:text-blue-300" />}
+              >
+                Side-by-Side Comparison
+              </Button>
+
+              {state.quizAttempts.length < 3 ? (
+                <Link to="/quiz" className="shrink-0">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="whitespace-nowrap"
+                    icon={<RotateCcw className="w-4 h-4" />}
+                  >
+                    Retake Assessment ({state.quizAttempts.length + 1}/3)
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/alumni" className="shrink-0">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="whitespace-nowrap"
+                    icon={<ArrowRight className="w-4 h-4" />}
+                  >
+                    Read Alumni Stories
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        </Card>
       )}
-
-      {/* Action / Next Steps Bar */}
-      <Card className="bg-linear-to-r from-blue-50 via-indigo-50/90 to-violet-50 dark:from-slate-900 dark:via-[#111b36] dark:to-indigo-950 border-indigo-200/80! dark:border-indigo-900/70! text-slate-900 dark:text-white p-6 sm:p-7 rounded-3xl shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-1.5">
-            <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
-              Ready for the Next Chapter?
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-xl leading-relaxed">
-              Compare your top tracks side-by-side in Path Compare to inspect curriculum subjects,
-              internship capstones, and alumni career paths!
-            </p>
-          </div>
-
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
-            <Button
-              variant="outline"
-              size="md"
-              onClick={handleProceedToCompare}
-              className="bg-white! hover:bg-blue-50/80! text-slate-800! border-indigo-200! hover:border-blue-300! shadow-2xs whitespace-nowrap dark:bg-white/10! dark:hover:bg-white/20! dark:text-white! dark:border-white/20!"
-              icon={<GitCompare className="w-4 h-4 text-blue-600 dark:text-blue-300" />}
-            >
-              Side-by-Side Comparison
-            </Button>
-
-            {state.quizAttempts.length < 3 ? (
-              <Link to="/quiz" className="shrink-0">
-                <Button
-                  variant="primary"
-                  size="md"
-                  className="whitespace-nowrap"
-                  icon={<RotateCcw className="w-4 h-4" />}
-                >
-                  Retake Assessment ({state.quizAttempts.length + 1}/3)
-                </Button>
-              </Link>
-            ) : (
-              <Link to="/alumni" className="shrink-0">
-                <Button
-                  variant="primary"
-                  size="md"
-                  className="whitespace-nowrap"
-                  icon={<ArrowRight className="w-4 h-4" />}
-                >
-                  Read Alumni Stories
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </Card>
     </div>
   );
 };

@@ -46,7 +46,7 @@ try {
     const first = page.locator('.gem-card').first();
     await first.focus(); await page.keyboard.press('Enter');
     await dialog().waitFor();
-    assert.equal(await dialog().getByRole('heading').innerText(), "Peridot's Protocol");
+    assert.equal(await dialog().getByRole('heading').innerText(), "Sapphire's Protocol");
     assert.ok(await page.evaluate(() => document.querySelector('dialog').contains(document.activeElement)));
     for (let i=0;i<5;i++) await page.keyboard.press('Tab');
     assert.ok(await page.evaluate(() => document.querySelector('dialog').contains(document.activeElement)), 'Modal traps focus');
@@ -60,17 +60,24 @@ try {
   await page.setViewportSize({ width:1440, height:1000 });
   await page.getByRole('button',{ name:'Networking Technology', exact:true }).click();
   assert.equal(await page.locator('.gem-card').count(),5);
+  await page.getByLabel('Rarity', { exact:true }).selectOption('Rare');
+  assert.equal(await page.locator('.gem-card').count(),1);
   await page.getByLabel('Status', { exact:true }).selectOption('Unlocked');
   await page.getByRole('heading',{name:'No gemstones match these filters yet.'}).waitFor();
   await page.getByRole('button',{name:'View all achievements',exact:true}).click();
+  assert.equal(await page.locator('.gem-card').count(),20);
+  await page.getByLabel('Rarity', { exact:true }).selectOption('Legendary');
+  assert.equal(await page.locator('.gem-card').count(),1);
+  assert.equal(await page.locator('.gem-card-title').first().textContent(),'Your Own Universe');
+  await page.getByLabel('Rarity', { exact:true }).selectOption('All');
   await page.getByLabel('Sort by').selectOption('Name');
   const names = await page.locator('.gem-card-title').allTextContents();
   assert.deepEqual(names,[...names].sort((a,b)=>a.localeCompare(b)));
   await page.getByLabel('Sort by').selectOption('Rarity');
   assert.equal(await page.locator('.gem-card-title').first().textContent(),'Your Own Universe');
-  check('Category/status filters, empty reset, name and rarity sorting');
+  check('Category/status/rarity filters, empty reset, name and rarity sorting');
 
-  for (const [index,name] of [[0,"Peridot's Protocol"],[1,"Garnet's Foresight"],[2,"Pearl's Precision"]]) {
+  for (const [index,name] of [[0,"Sapphire's Protocol"],[1,"Amethyst's Foresight"],[2,"Emerald's Precision"]]) {
     await goto('/tracks');
     await page.getByRole('button',{name:'Explore Track',exact:true}).nth(index).click();
     await page.getByRole('button',{name:'Mark as Explored (+1 Gemstone)',exact:true}).click();
@@ -124,8 +131,8 @@ try {
   assert.equal((await saved()).achievementRecords.length,5);
   await goto('/results');
   assert.equal((await saved()).achievementRecords.length,5);
-  await page.getByLabel('I reviewed the differences between these completed attempts.').check();
-  await page.getByRole('button',{name:'Complete attempt comparison',exact:true}).click();
+  await page.getByRole('button',{name:'Reviewed track modules',exact:true}).click();
+  await page.getByRole('button',{name:'Save reflection',exact:true}).click();
   await closeCelebration('Beyond the Surface');
   assert.equal((await saved()).achievementRecords.length,6);
   assert.equal((await saved()).quizAttempts.length,2);
@@ -134,7 +141,8 @@ try {
   await goto('/');
   await page.getByText('View All (6/20 · 30%)',{exact:true}).waitFor();
   await goto('/achievements');
-  await page.getByText('6 of 20 gems collected · 30%',{exact:true}).waitFor();
+  await page.locator('.vault-total').getByText('6 / 20').waitFor();
+  await page.locator('.vault-total').getByText('30%',{exact:true}).waitFor();
   await page.reload();
   assert.equal((await saved()).achievementRecords.length,6);
   assert.equal(await dialog().count(),0);
@@ -155,7 +163,7 @@ try {
   const touchContext = await browser.newContext({viewport:{width:360,height:800},hasTouch:true,isMobile:true});
   const touchPage = await touchContext.newPage(); await touchPage.goto(base+'/achievements');
   await touchPage.locator('.gem-card').first().tap();
-  await touchPage.locator('dialog[open]').getByRole('heading',{name:"Peridot's Protocol"}).waitFor();
+  await touchPage.locator('dialog[open]').getByRole('heading',{name:"Sapphire's Protocol"}).waitFor();
   await touchPage.locator('dialog[open]').getByRole('button',{name:'Close achievement dialog'}).tap();
   assert.equal(await touchPage.locator('dialog[open]').count(),0);
   await touchContext.close();

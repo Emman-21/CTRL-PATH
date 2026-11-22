@@ -14,7 +14,6 @@ import {
   RotateCcw,
   Sparkles,
   Trophy,
-  Bell,
   ExternalLink,
 } from 'lucide-react';
 import { BACKGROUNDS, GEMSTONE_ASSETS, type GemstoneAsset } from '../assets/manifest';
@@ -29,7 +28,6 @@ import {
   SmTrackBadge,
 } from '../components/shared/PixelArt';
 import { useStudent } from '../context/StudentContext';
-import { useCommunity } from '../context/CommunityContext';
 import { studentProgress } from '../utils/studentControls';
 import { loadQuizSession } from '../utils/quizEngine';
 import { QUIZ_QUESTIONS } from '../data/quiz/quizQuestions';
@@ -76,7 +74,6 @@ const CrossroadsSignpostIllustration: React.FC = () => (
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { state: studentState, overallJourneyProgress, modulesExploredCount, nextActivity } = useStudent();
-  const { announcements } = useCommunity();
   const journey = studentProgress(studentState);
   const activeQuiz = loadQuizSession();
   const collection = achievementStats(studentState);
@@ -182,7 +179,7 @@ export const DashboardPage: React.FC = () => {
   }
 
   // Canonical fill order for remaining slots when fewer than 4 are unlocked:
-  // 1. First Spark, 2. Peridot's Protocol, 3. Garnet's Foresight, 4. Pearl's Precision
+  // 1. First Spark, 2. Sapphire's Protocol, 3. Amethyst's Foresight, 4. Aquamarine's Precision
   const defaultFillIds = [
     'special-first-spark',
     'nt-peridots-protocol',
@@ -1039,58 +1036,6 @@ export const DashboardPage: React.FC = () => {
             </Link>
           </div>
         </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 6. ANNOUNCEMENTS (ONE LINK PER CARD & SLIM EMPTY STATE)              */}
-      {/* ==================================================================== */}
-      <section className="bg-[var(--surface)] dark:bg-[#0f172a] rounded-2xl border border-[var(--border)] dark:border-slate-800 p-6 shadow-[var(--card-shadow)]">
-        {/* Header: The ONE link on the Announcements card */}
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--border-subtle)] dark:border-slate-800">
-          <div className="flex items-center gap-2 text-[var(--text)] dark:text-slate-100 font-black text-sm">
-            <Bell className="w-4 h-4 text-[var(--text-muted)] dark:text-slate-400" />
-            <span>Luminary Bulletin & Announcements</span>
-          </div>
-          <Link
-            to="/announcements"
-            className="text-xs font-bold text-[var(--text)] dark:text-slate-300 hover:text-[var(--accent-nt-text)] dark:hover:text-white hover:underline flex items-center gap-1.5 transition-colors"
-          >
-            {announcements.length > 0 && (
-              <span className="w-2 h-2 rounded-full bg-[var(--accent-nt)] dark:bg-slate-400 animate-pulse" />
-            )}
-            <span>View Full Bulletin</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {announcements.length > 0 ? (
-          <div className="space-y-2">
-            {announcements.slice(0, 2).map((item) => (
-              <div
-                key={item.id}
-                className="p-3 rounded-xl bg-[var(--surface-2)] dark:bg-slate-900/60 border border-[var(--border)] dark:border-slate-800/80 flex items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="px-2.5 py-0.5 rounded-md text-xs font-bold bg-[var(--surface)] dark:bg-slate-800 text-[var(--text)] dark:text-slate-300 border border-[var(--border)] dark:border-slate-700/80 shrink-0">
-                    {item.category}
-                  </span>
-                  <span className="text-sm font-semibold text-[var(--text)] dark:text-slate-200 truncate">
-                    {item.title}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 shrink-0 text-xs text-[var(--text-muted)] dark:text-slate-500 font-medium">
-                  <span>Recent notice</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          /* Slim one-line row when empty (NO duplicate link) */
-          <div className="p-3.5 rounded-xl bg-[var(--surface-2)] dark:bg-slate-900/40 border border-dashed border-[var(--border)] dark:border-slate-800 flex items-center gap-2.5 text-xs text-[var(--text-muted)] dark:text-slate-400 font-medium">
-            <Bell className="w-4 h-4 text-[var(--text-subtle)] shrink-0" />
-            <span>No announcements yet — official BSIT department notices will appear here.</span>
-          </div>
-        )}
       </section>
     </div>
   );

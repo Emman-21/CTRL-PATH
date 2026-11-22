@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Compass,
@@ -7,13 +7,14 @@ import {
   BarChart3,
   GitCompare,
   Users,
-  Bell,
   Trophy,
   Settings,
   X,
-  Sparkles,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 import { UniversityCrests } from '../shared/UniversityCrests';
+import { useStudent } from '../../context/StudentContext';
 
 export interface MobileNavProps {
   isOpen: boolean;
@@ -27,12 +28,13 @@ const NAV_ITEMS = [
   { name: 'Smart Results', path: '/results', icon: BarChart3 },
   { name: 'Path Compare', path: '/compare', icon: GitCompare },
   { name: 'Alumni Stories', path: '/alumni', icon: Users },
-  { name: 'Announcements', path: '/announcements', icon: Bell },
   { name: 'Achievements', path: '/achievements', icon: Trophy },
   { name: 'Control Center', path: '/control-center', icon: Settings },
 ];
 
 export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
+  const { authSession, signOutSession } = useStudent();
+  const navigate = useNavigate();
   const drawerRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -157,6 +159,32 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
               </NavLink>
             );
           })}
+
+          <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800">
+            {authSession ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  await signOutSession();
+                  onClose();
+                  navigate('/login');
+                }}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 shrink-0" />
+                <span>Sign out</span>
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                onClick={onClose}
+                className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-blue-600 hover:bg-blue-50"
+              >
+                <LogIn className="w-4 h-4 shrink-0" />
+                <span>Sign in</span>
+              </Link>
+            )}
+          </div>
         </nav>
 
         <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">

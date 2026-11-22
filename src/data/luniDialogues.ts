@@ -149,17 +149,12 @@ export const ROUTE_DIALOGUES: Record<string, LuniDialogueItem> = {
   '/alumni': {
     id: 'alumni-stories',
     title: 'Alumni Experiences',
-    message: 'Real alumni stories will appear here once they are available. You can keep exploring the three tracks in the meantime!',
+    message: "Everyone's journey is different, Luminary! Learn from real experiences, challenges, and advice shared by seniors and alumni.",
     state: 'curious',
     particle: 'sparkles',
     quickActions: [
       { label: 'Explore Tracks', route: '/tracks', iconName: 'compass', variant: 'primary' },
     ],
-  },
-  '/announcements': {
-    id: 'luminary-bulletin', title: 'The Luminary Bulletin',
-    message: 'Published updates will appear here when available. Check each source and date as you explore.',
-    state: 'pointing', particle: 'none', quickActions: [{label:'Open Bulletin',route:'/announcements',iconName:'arrow',variant:'primary'}],
   },
   '/control-center': {
     id: 'control-center',

@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { GEMSTONE_ASSETS, BACKGROUNDS } from '../src/assets/manifest';
+import { GEMSTONE_ASSETS, BACKGROUNDS, LUNI_POSES } from '../src/assets/manifest';
 import { INITIAL_STATE } from '../src/context/StudentContext';
-import { achievementStats, achievementProgress, evaluateAchievements, filterAchievements, isCompletedAttempt, withAchievementRecords } from '../src/utils/achievementRules';
+import { achievementCategoryColumns, achievementStats, achievementProgress, evaluateAchievements, filterAchievements, isCompletedAttempt, withAchievementRecords } from '../src/utils/achievementRules';
 import { loadStudentData, migrateStudentData, serializeStudent, STUDENT_STORAGE_KEY } from '../src/utils/achievementStorage';
 import { QUIZ_QUESTIONS } from '../src/data/quiz/quizQuestions';
 import type { QuizAttempt, StudentState } from '../src/types';
@@ -31,8 +31,11 @@ test('exactly 20 stable canonical IDs, rarities, categories and original PNG map
   assert.equal(new Set(GEMSTONE_ASSETS.map(g => g.achievementId)).size, 20);
   assert.deepEqual(GEMSTONE_ASSETS.map(g => g.rarity), [...Array(3).fill(['Common','Common','Uncommon','Rare','Epic']).flat(), 'Common','Rare','Uncommon','Epic','Legendary']);
   assert.deepEqual(GEMSTONE_ASSETS.map(g => g.achievementId), ['nt-peridots-protocol','nt-packet-pathfinder','nt-signal-keeper','nt-guardian-of-the-grid','nt-techno-gem','ba-garnets-foresight','ba-pattern-seeker','ba-data-detective','ba-oracle-of-numbers','ba-crystal-vision','sm-pearls-precision','sm-customer-champion','sm-workflow-weaver','sm-keeper-of-standards','sm-perfect-coordination','special-first-spark','special-crystal-collector','special-fusion-theory','special-beyond-the-surface','special-your-own-universe']);
+  assert.equal(GEMSTONE_ASSETS[0].name, "Sapphire's Protocol");
+  assert.equal(GEMSTONE_ASSETS[5].name, "Amethyst's Foresight");
+  assert.equal(GEMSTONE_ASSETS[10].name, "Emerald's Precision");
   for (const category of ['NT','BA','SM','Special']) assert.equal(GEMSTONE_ASSETS.filter(g => g.category === category).length, 5);
-  for (const path of [...GEMSTONE_ASSETS.map(g => g.url), BACKGROUNDS.achievementsCrystalGarden]) {
+  for (const path of [...GEMSTONE_ASSETS.map(g => g.url), BACKGROUNDS.achievementsCrystalGarden, ...Object.values(LUNI_POSES).map(p => p.url)]) {
     const png = readFileSync(`public${path}`);
     assert.equal(png.subarray(1,4).toString(), 'PNG');
     assert.ok(png.readUInt32BE(16) > 0 && png.readUInt32BE(20) > 0);
@@ -159,14 +162,35 @@ test('duplicate canonical records preserve oldest timestamp and acknowledgement;
   assert.equal(result.achievementRecords[0].unlockedAt, now);
   assert.equal(result.achievementRecords[0].celebrationAcknowledged, true);
 });
-test('category/status filters, empty states, name/rarity/recent sorting and shared stats', () => {
+test('category/status/rarity filters, empty states, name/rarity/recent sorting and shared stats', () => {
   const state = earned(fresh(), [1,6,16]);
   assert.equal(filterAchievements(state,'All','All','Collection order').length, 20);
   assert.equal(filterAchievements(state,'SM','Unlocked','Name').length, 0);
   assert.equal(filterAchievements(state,'NT','In Progress','Name')[0].id, 5);
-  assert.deepEqual(filterAchievements(state,'All','Unlocked','Name').map(g => g.id), [16,6,1]);
+  assert.deepEqual(filterAchievements(state,'All','Unlocked','Name').map(g => g.id), [6,16,1]);
   assert.equal(filterAchievements(state,'All','All','Rarity')[0].id, 20);
   assert.equal(filterAchievements(state,'All','All','Recently Unlocked').slice(0,3).every(g => [1,6,16].includes(g.id)), true);
+  assert.equal(filterAchievements(state,'All','All','Collection order','Common').length, 7);
+  assert.equal(filterAchievements(state,'All','All','Collection order','Uncommon').length, 4);
+  assert.equal(filterAchievements(state,'All','All','Collection order','Rare').length, 4);
+  assert.equal(filterAchievements(state,'All','All','Collection order','Epic').length, 4);
+  assert.deepEqual(filterAchievements(state,'All','All','Collection order','Legendary').map(g => g.id), [20]);
+  assert.deepEqual(filterAchievements(state,'All','Unlocked','Name','Common').map(g => g.id), [6,16,1]);
+  assert.equal(filterAchievements(state,'All','Unlocked','Collection order','Rare').length, 0);
   const stats = achievementStats(state); assert.equal(stats.unlocked,3); assert.equal(stats.percent,15); assert.equal(stats.categories.NT,1); assert.equal(stats.categories.Special,1);
   assert.equal(stats.locked + stats.inProgress + stats.unlocked, 20);
 });
+test('achievementCategoryColumns groups unlocked gemstones into NT, BA, SM, Special in order', () => {
+  const emptyCols = achievementCategoryColumns(fresh());
+  assert.deepEqual(emptyCols.map(c => c.category), ['NT', 'BA', 'SM', 'Special']);
+  assert.deepEqual(emptyCols.map(c => [c.unlockedCount, c.totalCount]), [[0, 5], [0, 5], [0, 5], [0, 5]]);
+  const state = earned(fresh(), [1, 16, 18]);
+  const cols = achievementCategoryColumns(state);
+  assert.equal(cols[0].unlockedCount, 1);
+  assert.deepEqual(cols[0].unlockedGems.map(x => x.gem.name), ["Sapphire's Protocol"]);
+  assert.equal(cols[1].unlockedCount, 0);
+  assert.equal(cols[2].unlockedCount, 0);
+  assert.equal(cols[3].unlockedCount, 2);
+  assert.deepEqual(cols[3].unlockedGems.map(x => x.gem.name), ['First Spark', 'Fusion Theory']);
+});
+

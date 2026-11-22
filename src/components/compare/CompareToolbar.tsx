@@ -1,28 +1,17 @@
 import React from 'react';
-import { Bookmark, BookmarkCheck, Printer } from 'lucide-react';
-import { Button } from '../shared/Button';
 import { Card } from '../shared/Card';
+import { NtTrackBadge, BaTrackBadge, SmTrackBadge } from '../shared/PixelArt';
 import { TRACKS_DATA } from '../../data/tracks';
 import type { TrackCode } from '../../types';
 
 interface CompareToolbarProps {
   selectedTracks: TrackCode[];
-  reviewedTracks: boolean;
-  isSaved: boolean;
   onToggleTrack: (code: TrackCode) => void;
-  onReviewChange: (reviewed: boolean) => void;
-  onPrint: () => void;
-  onSave: () => void;
 }
 
 export const CompareToolbar: React.FC<CompareToolbarProps> = ({
   selectedTracks,
-  reviewedTracks,
-  isSaved,
   onToggleTrack,
-  onReviewChange,
-  onPrint,
-  onSave,
 }) => (
   <Card className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white/95">
     <div>
@@ -48,56 +37,31 @@ export const CompareToolbar: React.FC<CompareToolbarProps> = ({
             <button
               key={code}
               onClick={() => onToggleTrack(code)}
-              className={`px-3.5 py-1.5 rounded-xl border text-xs font-extrabold transition-all flex items-center gap-2 ${
+              aria-pressed={active}
+              className={`pl-2 pr-3.5 py-1.5 rounded-xl border text-xs font-extrabold transition-all flex items-center gap-2 ${
                 active
                   ? activeStyles[code]
                   : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
-              <span className="w-5 h-5 rounded-md bg-white/20 flex items-center justify-center font-black">
-                {code}
+              <span
+                className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 overflow-hidden transition-all ${
+                  active ? 'ring-1 ring-white/75 shadow-2xs' : 'ring-1 ring-slate-200/80 dark:ring-slate-700/70'
+                }`}
+              >
+                {code === 'NT' ? (
+                  <NtTrackBadge size={24} className="shrink-0" />
+                ) : code === 'BA' ? (
+                  <BaTrackBadge size={24} className="shrink-0" />
+                ) : (
+                  <SmTrackBadge size={24} className="shrink-0" />
+                )}
               </span>
               <span>{track.name}</span>
             </button>
           );
         })}
       </div>
-    </div>
-
-    <div className="flex flex-wrap items-center gap-2.5">
-      <label className="w-full flex items-start gap-2 text-xs text-slate-600">
-        <input
-          type="checkbox"
-          checked={reviewedTracks}
-          onChange={(e) => onReviewChange(e.target.checked)}
-          className="mt-0.5 w-4 h-4"
-        />
-        I reviewed the curriculum, skills, and career differences for these tracks.
-      </label>
-      <Button
-        variant="outline"
-        size="md"
-        onClick={onPrint}
-        icon={<Printer className="w-4 h-4 text-slate-600" />}
-      >
-        Print Comparison
-      </Button>
-
-      <Button
-        variant="primary"
-        size="md"
-        onClick={onSave}
-        disabled={!reviewedTracks}
-        icon={
-          isSaved ? (
-            <BookmarkCheck className="w-4 h-4 text-emerald-300" />
-          ) : (
-            <Bookmark className="w-4 h-4" />
-          )
-        }
-      >
-        {isSaved ? 'Saved to Comparisons! 💎' : 'Save Comparison'}
-      </Button>
     </div>
   </Card>
 );

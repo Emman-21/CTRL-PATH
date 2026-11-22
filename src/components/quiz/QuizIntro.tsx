@@ -2,6 +2,7 @@ import React from 'react';
 import { Card } from '../shared/Card';
 import { Button } from '../shared/Button';
 import { LuniCharacter } from '../luni/LuniCharacter';
+import { NtTrackBadge, BaTrackBadge, SmTrackBadge } from '../shared/PixelArt';
 import { QUIZ_LEVELS } from '../../data/quiz/quizLevels';
 import { Sparkles, ArrowRight, RotateCcw } from 'lucide-react';
 
@@ -45,25 +46,34 @@ export const QuizIntro: React.FC<QuizIntroProps> = ({
 
         <p className="relative z-10 text-xs sm:text-sm text-slate-600 max-w-xl mx-auto leading-relaxed">
           Welcome, Luminary! This assessment is calibrated with an equal balance of{' '}
-          <strong className="inline-block whitespace-nowrap px-1.5 py-[1px] rounded-md bg-blue-100/80 text-blue-700 dark:bg-sky-400/20 dark:text-sky-300 dark:ring-1 dark:ring-sky-400/35 font-extrabold">
-            Networking Technology (33)
+          <strong className="inline-flex items-center gap-1.5 align-[-3px] whitespace-nowrap px-1.5 py-[2px] rounded-md bg-blue-100/80 text-blue-700 dark:bg-sky-400/20 dark:text-sky-300 dark:ring-1 dark:ring-sky-400/35 font-extrabold">
+            <span aria-hidden="true" className="inline-flex shrink-0">
+              <NtTrackBadge size={16} className="rounded-[4px]" />
+            </span>
+            <span>Networking Technology (33)</span>
           </strong>,{' '}
-          <strong className="inline-block whitespace-nowrap px-1.5 py-[1px] rounded-md bg-purple-100/80 text-purple-700 dark:bg-purple-400/20 dark:text-purple-300 dark:ring-1 dark:ring-purple-400/35 font-extrabold">
-            Business Analytics (33)
+          <strong className="inline-flex items-center gap-1.5 align-[-3px] whitespace-nowrap px-1.5 py-[2px] rounded-md bg-purple-100/80 text-purple-700 dark:bg-purple-400/20 dark:text-purple-300 dark:ring-1 dark:ring-purple-400/35 font-extrabold">
+            <span aria-hidden="true" className="inline-flex shrink-0">
+              <BaTrackBadge size={16} className="rounded-[4px]" />
+            </span>
+            <span>Business Analytics (33)</span>
           </strong>, and{' '}
-          <strong className="inline-block whitespace-nowrap px-1.5 py-[1px] rounded-md bg-emerald-100/80 text-emerald-700 dark:bg-emerald-400/20 dark:text-emerald-300 dark:ring-1 dark:ring-emerald-400/35 font-extrabold">
-            Service Management (33)
+          <strong className="inline-flex items-center gap-1.5 align-[-3px] whitespace-nowrap px-1.5 py-[2px] rounded-md bg-emerald-100/80 text-emerald-700 dark:bg-emerald-400/20 dark:text-emerald-300 dark:ring-1 dark:ring-emerald-400/35 font-extrabold">
+            <span aria-hidden="true" className="inline-flex shrink-0">
+              <SmTrackBadge size={16} className="rounded-[4px]" />
+            </span>
+            <span>Service Management (33)</span>
           </strong> questions to objectively
           illuminate your aptitudes and interests.
         </p>
 
         {/* Luni's Little Reminder */}
-        <div className="relative z-10 mt-6 p-4 rounded-2xl bg-linear-to-r from-blue-50/90 via-indigo-50/90 to-purple-50/90 dark:from-slate-800/95 dark:via-indigo-950/80 dark:to-slate-900/95 border border-indigo-100/90 dark:border-indigo-800/60 text-left flex items-start gap-4">
+        <div className="relative z-10 mt-6 p-4 rounded-2xl bg-linear-to-r from-blue-50/95 via-sky-50/90 to-blue-100/80 dark:from-slate-800/95 dark:via-blue-950/80 dark:to-slate-900/95 border border-blue-200/90 dark:border-blue-800/70 text-left flex items-start gap-4">
           <div className="shrink-0 mt-0.5">
             <LuniCharacter state="waving" size={48} animate={false} showParticles={false} />
           </div>
           <div>
-            <div className="text-xs font-black text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5 mb-0.5">
+            <div className="text-xs font-black text-blue-700 dark:text-blue-300 flex items-center gap-1.5 mb-0.5">
               <span>Luni's Little Reminder</span>
               <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
             </div>
@@ -89,7 +99,7 @@ export const QuizIntro: React.FC<QuizIntroProps> = ({
               >
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] font-black uppercase text-indigo-600">
+                    <span className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400">
                       Level {lvl.level}
                     </span>
                     <span className="text-[10px] font-semibold text-slate-400">{lvl.difficulty}</span>

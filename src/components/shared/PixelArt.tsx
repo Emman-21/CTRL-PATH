@@ -459,3 +459,31 @@ export const SmTrackBadge: React.FC<{ size?: number; className?: string }> = ({ 
     <text x="20" y="36" textAnchor="middle" fill="#FFFFFF" fontSize="9" fontWeight="900" letterSpacing="0.5">SM</text>
   </svg>
 );
+
+export const SpecialAchievementBadge: React.FC<{ size?: number; className?: string }> = ({ size = 40, className = '' }) => (
+  <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
+    <defs>
+      <linearGradient id="special-badge-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#F59E0B" />
+        <stop offset="100%" stopColor="#B45309" />
+      </linearGradient>
+    </defs>
+    <rect width="40" height="40" rx="10" fill="url(#special-badge-grad)" />
+    <circle cx="20" cy="20" r="15" stroke="#FEF3C7" strokeWidth="1" strokeDasharray="2 2" fill="none" />
+    {/* Constellation Accent Stars */}
+    <circle cx="11" cy="13" r="1.2" fill="#FEF08A" />
+    <circle cx="29" cy="13" r="1.2" fill="#FEF08A" />
+    <path d="M10 23 L11 21 L12 23 L14 24 L12 25 L11 27 L10 25 L8 24 Z" fill="#FDE68A" />
+    {/* Faceted Milestone Star Crest */}
+    <polygon
+      points="20,8 22.8,14 29.2,14.8 24.4,19.2 25.8,25.6 20,22.4 14.2,25.6 15.6,19.2 10.8,14.8 17.2,14"
+      fill="#FFFFFF"
+      stroke="#FEF3C7"
+      strokeWidth="0.8"
+      strokeLinejoin="round"
+    />
+    {/* Inner Crystal Core */}
+    <polygon points="20,13.5 22.6,17.5 20,21.5 17.4,17.5" fill="#F59E0B" />
+    <text x="20" y="36" textAnchor="middle" fill="#FFFFFF" fontSize="9" fontWeight="900" letterSpacing="0.5">SP</text>
+  </svg>
+);

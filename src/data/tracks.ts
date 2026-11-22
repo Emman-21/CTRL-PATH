@@ -731,8 +731,8 @@ export const TRACKS_DATA: Record<'NT' | 'BA' | 'SM', TrackInfo> = {
     ],
     introAchievement: {
       id: 1,
-      name: "Peridot's Protocol",
-      gemstoneUrl: '/assets/pictures/01_peridots_protocol_f55976cf.png',
+      name: "Sapphire's Protocol",
+      gemstoneUrl: '/assets/pictures/01_sapphires_protocol_v2.png',
     },
     keySubjects: [
       'Network Fundamentals & Architecture',
@@ -1844,8 +1844,8 @@ export const TRACKS_DATA: Record<'NT' | 'BA' | 'SM', TrackInfo> = {
     ],
     introAchievement: {
       id: 6,
-      name: "Garnet's Foresight",
-      gemstoneUrl: '/assets/pictures/06_garnets_foresight_de542d8b.png',
+      name: "Amethyst's Foresight",
+      gemstoneUrl: '/assets/pictures/06_amethysts_foresight_v2.png',
     },
     keySubjects: [
       'Analytics Modeling Lifecycle & RStudio Workflows',
@@ -2418,8 +2418,8 @@ export const TRACKS_DATA: Record<'NT' | 'BA' | 'SM', TrackInfo> = {
     ],
     introAchievement: {
       id: 11,
-      name: "Pearl's Precision",
-      gemstoneUrl: '/assets/pictures/11_pearls_precision_8d450275.png',
+      name: "Emerald's Precision",
+      gemstoneUrl: '/assets/pictures/11_aquamarines_precision_v2.png',
     },
     keySubjects: [
       'Outsourcing Fundamentals & Global Delivery Strategies',

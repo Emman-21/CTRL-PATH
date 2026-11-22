@@ -34,7 +34,7 @@ export const ResultsScorecards: React.FC<ResultsScorecardsProps> = ({ analysis }
             <div className="flex items-center gap-3">
               <NtTrackBadge size={40} className="shrink-0 rounded-xl shadow-xs" />
               <div>
-                <TrackBadge code="NT" />
+                <TrackBadge code="NT" compact />
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Blue Pathway</div>
               </div>
             </div>
@@ -77,7 +77,7 @@ export const ResultsScorecards: React.FC<ResultsScorecardsProps> = ({ analysis }
             <div className="flex items-center gap-3">
               <BaTrackBadge size={40} className="shrink-0 rounded-xl shadow-xs" />
               <div>
-                <TrackBadge code="BA" />
+                <TrackBadge code="BA" compact />
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Violet Pathway</div>
               </div>
             </div>
@@ -120,7 +120,7 @@ export const ResultsScorecards: React.FC<ResultsScorecardsProps> = ({ analysis }
             <div className="flex items-center gap-3">
               <SmTrackBadge size={40} className="shrink-0 rounded-xl shadow-xs" />
               <div>
-                <TrackBadge code="SM" />
+                <TrackBadge code="SM" compact />
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Green Pathway</div>
               </div>
             </div>

@@ -7,7 +7,6 @@ import {
   BarChart3,
   GitCompare,
   Users,
-  Bell,
   Trophy,
   Settings,
   Sparkles,
@@ -29,7 +28,6 @@ const NAV_ITEMS: NavItem[] = [
   { name: 'Smart Results', path: '/results', icon: BarChart3 },
   { name: 'Path Compare', path: '/compare', icon: GitCompare },
   { name: 'Alumni Stories', path: '/alumni', icon: Users },
-  { name: 'Announcements', path: '/announcements', icon: Bell },
   { name: 'Achievements', path: '/achievements', icon: Trophy },
   { name: 'Control Center', path: '/control-center', icon: Settings },
 ];

@@ -3,7 +3,7 @@ import React from 'react';
 export interface ProgressBarProps {
   value: number; // 0 to 100
   max?: number;
-  variant?: 'primary' | 'nt' | 'ba' | 'sm';
+  variant?: 'primary' | 'nt' | 'ba' | 'sm' | 'score-high' | 'score-mid' | 'score-low';
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
   className?: string;
@@ -30,6 +30,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
     nt: 'bg-blue-600',
     ba: 'bg-violet-600',
     sm: 'bg-emerald-600',
+    'score-high': 'bg-emerald-500',
+    'score-mid': 'bg-blue-600',
+    'score-low': 'bg-orange-500',
   };
 
   return (
@@ -39,6 +42,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
           className={`${sizeStyles[size]} ${barStyles[variant]} rounded-full transition-all duration-500 ease-out`}
           style={{ width: `${percentage}%` }}
           role="progressbar"
+          data-variant={variant}
           aria-valuenow={percentage}
           aria-valuemin={0}
           aria-valuemax={100}

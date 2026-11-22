@@ -75,3 +75,28 @@ export const logout = async () => {
   await signOut(auth);
   cachedAccessToken = null;
 };
+
+export const signInWithGoogleAccount = async (): Promise<{
+  email: string;
+  displayName: string;
+}> => {
+  const googleProvider = new GoogleAuthProvider();
+  googleProvider.setCustomParameters({ prompt: 'select_account' });
+  const result = await signInWithPopup(auth, googleProvider);
+  return {
+    email: result.user.email || '',
+    displayName: result.user.displayName || '',
+  };
+};
+
+export const firebaseSignOut = async () => {
+  try {
+    if (auth.currentUser) {
+      await signOut(auth);
+    }
+  } catch {
+    // Ignore Firebase sign-out errors when offline or unconfigured
+  }
+  cachedAccessToken = null;
+};
+

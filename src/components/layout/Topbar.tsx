@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Search,
-  Bell,
   ChevronDown,
   Compass,
   BookOpen,
@@ -13,6 +12,8 @@ import {
   ArrowRight,
   Sun,
   Moon,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 import { StudentAvatar } from '../control/ControlShared';
 import { useStudent } from '../../context/StudentContext';
@@ -32,7 +33,7 @@ interface SearchItem {
 }
 
 export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileNav }) => {
-  const { state, updatePreferences } = useStudent();
+  const { state, updatePreferences, authSession, signOutSession } = useStudent();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -110,13 +111,6 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileNav }) => {
       subtitle: 'Real BatStateU BSIT graduate experiences & advice',
       path: '/alumni',
       badge: 'Community',
-    },
-    {
-      type: 'page',
-      title: 'Announcements',
-      subtitle: 'Department orientations, cert vouchers, and TechFest',
-      path: '/announcements',
-      badge: 'Updates',
     },
     {
       type: 'page',
@@ -295,18 +289,9 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileNav }) => {
           {state.preferences.theme === 'dark' ? (
             <Sun className="w-4 h-4 text-amber-400 transition-transform duration-300" />
           ) : (
-            <Moon className="w-4 h-4 text-indigo-600 transition-transform duration-300" />
+            <Moon className="w-4 h-4 text-blue-600 transition-transform duration-300" />
           )}
         </button>
-
-        <Link
-          to="/announcements"
-          className="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 relative transition-colors"
-          aria-label="Open announcements"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-blue-600 rounded-full" />
-        </Link>
 
         {/* Student Profile Pill */}
         <Link
@@ -320,10 +305,35 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileNav }) => {
             <div className="text-xs font-bold text-slate-800 group-hover:text-blue-600 transition-colors max-w-36 truncate">
               {state.name}
             </div>
-            <div className="text-[10px] text-slate-400 -mt-0.5">Student</div>
+            <div className="text-[10px] text-slate-400 -mt-0.5 max-w-36 truncate">
+              {authSession ? authSession.email : 'Student'}
+            </div>
           </div>
           <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-colors hidden sm:block" />
         </Link>
+
+        {/* Auth Action: Sign In / Sign Out */}
+        {authSession ? (
+          <button
+            type="button"
+            onClick={async () => {
+              await signOutSession();
+              navigate('/login');
+            }}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700/80 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer whitespace-nowrap"
+          >
+            <LogOut className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            <span>Sign out</span>
+          </button>
+        ) : (
+          <Link
+            to="/login"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors whitespace-nowrap"
+          >
+            <LogIn className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            <span>Sign in</span>
+          </Link>
+        )}
       </div>
     </header>
   );

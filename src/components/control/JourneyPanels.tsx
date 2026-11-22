@@ -8,7 +8,9 @@ import { GEMSTONE_ASSETS } from '../../assets/manifest';
 import { TRACKS_DATA } from '../../data/tracks';
 import { ControlCard } from './ControlShared';
 import { AchievementMeter, GemstoneImage } from '../achievements/AchievementCard';
+import { NtTrackBadge, BaTrackBadge, SmTrackBadge } from '../shared/PixelArt';
 import { loadQuizSession } from '../../utils/quizEngine';
+import { AchievementCollectionPanel } from './AchievementCollectionPanel';
 
 export function JourneyOverview() {
   const {state}=useStudent();const p=studentProgress(state);const session=loadQuizSession();
@@ -40,16 +42,18 @@ export function QuizHistoryPanel() {
 }
 export function SmartResultsSummary() {
   const {state}=useStudent();const {latest,analysis}=studentProgress(state);
+  const trackLogo = {
+    NT: <NtTrackBadge size={56} className="rounded-2xl shadow-xs shrink-0" />,
+    BA: <BaTrackBadge size={56} className="rounded-2xl shadow-xs shrink-0" />,
+    SM: <SmTrackBadge size={56} className="rounded-2xl shadow-xs shrink-0" />,
+  };
   return <ControlCard title="Latest assessment summary" description="Knowledge demonstrated in your latest valid submission. Your academic pathway remains your choice.">
-    {latest&&analysis?<><div className="control-result-gems">{(['NT','BA','SM'] as const).map((track,i)=><div key={track} className={`gem-category-${track}`}><GemstoneImage gem={GEMSTONE_ASSETS[[4,9,14][i]]}/><h3>{CATEGORY_NAMES[track]}</h3><strong>{analysis.trackBreakdowns[track].percentage}%</strong></div>)}</div>
+    {latest&&analysis?<><div className="control-result-gems">{(['NT','BA','SM'] as const).map((track)=><div key={track} className={`gem-category-${track}`}>{trackLogo[track]}<h3>{CATEGORY_NAMES[track]}</h3><strong>{analysis.trackBreakdowns[track].percentage}%</strong></div>)}</div>
       <p>{analysis.isTie?`Highest demonstrated knowledge areas are tied: ${analysis.tiedTracks?.map(t=>CATEGORY_NAMES[t]).join(', ')}.`:`Highest demonstrated knowledge area: ${CATEGORY_NAMES[analysis.highestTrack]}.`}</p><Link className="vault-primary-button" to={`/results?attempt=${encodeURIComponent(latest.id)}`}>View full results</Link></>:<p className="community-small-empty">Complete an assessment to see your saved results here.</p>}
   </ControlCard>;
 }
 export function AchievementSummary() {
-  const {state}=useStudent();const {collection:c}=studentProgress(state);
-  return <ControlCard title="Achievement collection" description="Every gemstone celebrates progress. Opening the Control Center does not award achievements."><div className="control-summary-total"><strong>{c.unlocked} / 20</strong><span>{c.percent}% of your collection</span></div><AchievementMeter current={c.unlocked} total={20} label="Achievement collection"/><div className="control-metrics">{Object.entries(CATEGORY_NAMES).map(([key,name])=><div key={key}><strong>{c.categories[key]} / 5</strong><span>{name}</span></div>)}</div>
-    {c.recent.length>0?<div className="control-recent-gems">{c.recent.slice(0,5).map(({gem})=><Link key={gem.id} to="/achievements"><GemstoneImage gem={gem}/><span>{gem.name}</span></Link>)}</div>:<p>Your collection is waiting for its first discovery.</p>}
-    <Link className="vault-primary-button" to="/achievements">Open Achievement Vault</Link></ControlCard>;
+  return <AchievementCollectionPanel />;
 }
 export function SavedComparisons() {
   const {state,removeComparison}=useStudent();

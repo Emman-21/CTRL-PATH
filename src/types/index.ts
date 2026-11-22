@@ -155,6 +155,7 @@ export interface SavedComparison {
   date: string;
   tracks: TrackCode[];
   title: string;
+  selectedTopic?: import('../data/compareTopics').CompareTopicId;
 }
 
 export interface TrackReflection {

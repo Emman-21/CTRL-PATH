@@ -1,4 +1,5 @@
 import { GEMSTONE_ASSETS } from '../assets/manifest';
+import { isCompareTopicId } from '../data/compareTopics';
 import { TRACKS_DATA } from '../data/tracks';
 import type { StudentState } from '../types';
 import type { AchievementRecord } from '../types/achievements';
@@ -49,7 +50,7 @@ export function migrateStudentData(raw: unknown, defaults: StudentState): Studen
         )
       : [];
   }
-  state.savedComparisons=state.savedComparisons.map(c=>({...c,title:typeof c.title==='string'?c.title:'Saved comparison',tracks:[...new Set(c.tracks.filter(t=>['NT','BA','SM'].includes(t)))]}));
+  state.savedComparisons=state.savedComparisons.map(c=>({...c,title:typeof c.title==='string'?c.title:'Saved comparison',tracks:[...new Set(c.tracks.filter(t=>['NT','BA','SM'].includes(t)))],...(isCompareTopicId(c.selectedTopic)?{selectedTopic:c.selectedTopic}:{})}));
   state.comparisonSelection = Array.isArray(raw.comparisonSelection) ? [...new Set(raw.comparisonSelection.filter((t: string) => ['NT', 'BA', 'SM'].includes(t)))] as StudentState['comparisonSelection'] : [];
   const records = new Map<string, AchievementRecord>();
   const inputs = Array.isArray(raw.achievementRecords) ? raw.achievementRecords : [];

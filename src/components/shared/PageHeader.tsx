@@ -12,6 +12,8 @@ export interface PageHeaderProps {
   luniPose?: LuniPoseKey;
   luniQuote?: string;
   luniTitle?: string;
+  titleClassName?: string;
+  subtitleClassName?: string;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
@@ -23,6 +25,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   luniPose = 'wave',
   luniQuote = 'Keep exploring and you’ll discover amazing possibilities for your future! ✨',
   luniTitle = 'Hi there, Luminary!',
+  titleClassName = 'text-3xl sm:text-4xl font-black',
+  subtitleClassName = 'text-xs sm:text-[13px]',
 }) => {
   return (
     <div className="relative w-full rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs mb-8">
@@ -43,17 +47,17 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
       {/* Content */}
       <div className="relative z-10 px-6 py-7 sm:px-8 sm:py-8 flex flex-row items-start justify-between gap-4 sm:gap-6">
-        <div className="max-w-xl min-w-0 flex-1">
+        <div className="max-w-2xl min-w-0 flex-1">
           {badge && <div className="mb-2.5">{badge}</div>}
 
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+            <h1 className={`${titleClassName} text-slate-900 tracking-tight flex items-center gap-2`}>
               <span>{title}</span>
               <Sparkles className="w-5 h-5 text-amber-500 animate-sparkle-spin shrink-0" />
             </h1>
           </div>
 
-          <p className="mt-2 text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
+          <p className={`mt-2 ${subtitleClassName} text-slate-600 leading-relaxed font-normal`}>
             {subtitle}
           </p>
 
@@ -62,8 +66,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
         {/* Luni Guide Card with Speech Bubble */}
         <div className="shrink-0 flex items-start justify-end gap-3 self-start">
-          <div className="bg-white/95 backdrop-blur-md border border-indigo-100/90 rounded-2xl p-3.5 shadow-sm max-w-[240px] relative hidden lg:block">
-            <div className="text-xs font-bold text-indigo-700 mb-0.5">{luniTitle}</div>
+          <div className="bg-white/95 backdrop-blur-md border border-blue-200/90 dark:border-blue-800/70 rounded-2xl p-3.5 shadow-sm max-w-[240px] relative hidden lg:block">
+            <div className="text-xs font-bold text-blue-700 dark:text-blue-300 mb-0.5">{luniTitle}</div>
             <p className="text-xs text-slate-600 leading-snug">{luniQuote}</p>
             {/* Speech bubble arrow pointer */}
             <div className="absolute -right-2 top-9 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-l-8 border-l-white/95" />

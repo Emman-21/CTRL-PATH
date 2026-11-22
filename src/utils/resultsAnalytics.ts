@@ -12,6 +12,8 @@ export interface EvaluatedQuestion {
   correctDisplay: string;
 }
 
+export type ScoreBand = 'high' | 'moderate' | 'low';
+
 export interface LevelPerformance {
   level: number;
   name: string;
@@ -20,6 +22,84 @@ export interface LevelPerformance {
   total: number;
   percentage: number;
   leadingTrack: TrackCode;
+  weakestTrack: TrackCode;
+}
+
+export function getScoreBand(percentage: number): ScoreBand {
+  if (percentage >= 75) return 'high';
+  if (percentage >= 50) return 'moderate';
+  return 'low';
+}
+
+export interface InsightSegment {
+  text: string;
+  bold?: boolean;
+}
+
+const formatLevelHighlight = (lvl: LevelPerformance) => `${lvl.name} (${lvl.percentage}%)`;
+
+export function getFiveLevelInsightSegments(levels: LevelPerformance[]): InsightSegment[] {
+  if (levels.length === 0) {
+    return [
+      {
+        text: 'Detailed level diagnostics are unavailable because this submission predates question-level tracking.',
+      },
+    ];
+  }
+
+  const sortedDesc = [...levels].sort((a, b) => b.percentage - a.percentage || a.level - b.level);
+  const sortedAsc = [...levels].sort((a, b) => a.percentage - b.percentage || a.level - b.level);
+  const strongest = sortedDesc[0];
+  const weakest = sortedAsc[0];
+  const belowFifty = sortedAsc.filter((lvl) => lvl.percentage < 50);
+
+  if (strongest.percentage === weakest.percentage) {
+    return [
+      { text: 'Your accuracy held steady at ' },
+      { text: `${strongest.percentage}%`, bold: true },
+      { text: ' across all five assessment formats, showing balanced reasoning across tiers.' },
+    ];
+  }
+
+  if (belowFifty.length === 1) {
+    return [
+      { text: 'You performed strongest in ' },
+      { text: formatLevelHighlight(strongest), bold: true },
+      { text: ', while ' },
+      { text: formatLevelHighlight(belowFifty[0]), bold: true },
+      { text: ' scored below 50% and is the top priority to visit.' },
+    ];
+  }
+
+  if (belowFifty.length > 1) {
+    const segments: InsightSegment[] = [
+      { text: 'You performed strongest in ' },
+      { text: formatLevelHighlight(strongest), bold: true },
+      { text: ', while ' },
+    ];
+    belowFifty.forEach((lvl, idx) => {
+      if (idx > 0) {
+        segments.push({ text: idx === belowFifty.length - 1 ? ' and ' : ', ' });
+      }
+      segments.push({ text: formatLevelHighlight(lvl), bold: true });
+    });
+    segments.push({ text: ' scored below 50% and are the top priorities to visit.' });
+    return segments;
+  }
+
+  return [
+    { text: 'You performed strongest in ' },
+    { text: formatLevelHighlight(strongest), bold: true },
+    { text: ', while ' },
+    { text: formatLevelHighlight(weakest), bold: true },
+    { text: ' is your top area to sharpen next.' },
+  ];
+}
+
+export function getFiveLevelInsight(levels: LevelPerformance[]): string {
+  return getFiveLevelInsightSegments(levels)
+    .map((segment) => segment.text)
+    .join('');
 }
 
 export interface DetailedResultsAnalysis {
@@ -149,8 +229,21 @@ function synthesizeSampleQuestion(
   smPct: number
 ): EvaluatedQuestion {
   const targetScore = q.track === 'NT' ? ntPct : q.track === 'BA' ? baPct : smPct;
-  const pseudoScore = q.id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 100;
-  const isCorrect = pseudoScore <= targetScore;
+  const levelOffset: Record<number, number> = {
+    1: 18,
+    2: 10,
+    3: -8,
+    4: -38,
+    5: -10,
+  };
+  let hash = 2166136261;
+  for (let i = 0; i < q.id.length; i++) {
+    hash ^= q.id.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  const pseudoScore = (hash >>> 0) % 100;
+  const threshold = Math.min(95, Math.max(15, targetScore + (levelOffset[q.level] ?? 0)));
+  const isCorrect = pseudoScore < threshold;
 
   let studentDisplay = isCorrect ? 'Demonstrated Correct Understanding' : 'Alternative Response Given';
   let correctDisplay = '';
@@ -248,9 +341,28 @@ export function analyzeQuizAttempt(attempt: QuizAttempt): DetailedResultsAnalysi
           const baLvl = lvlQuestions.filter((eq) => eq.question.track === 'BA' && eq.isCorrect).length;
           const smLvl = lvlQuestions.filter((eq) => eq.question.track === 'SM' && eq.isCorrect).length;
 
+          const ntTotal = lvlQuestions.filter((eq) => eq.question.track === 'NT').length;
+          const baTotal = lvlQuestions.filter((eq) => eq.question.track === 'BA').length;
+          const smTotal = lvlQuestions.filter((eq) => eq.question.track === 'SM').length;
+
+          const trackAcc: Record<TrackCode, number> = {
+            NT: ntTotal > 0 ? ntLvl / ntTotal : 0,
+            BA: baTotal > 0 ? baLvl / baTotal : 0,
+            SM: smTotal > 0 ? smLvl / smTotal : 0,
+          };
+
           let leadingTrack: TrackCode = 'NT';
           if (baLvl >= ntLvl && baLvl >= smLvl) leadingTrack = 'BA';
           if (smLvl > ntLvl && smLvl > baLvl) leadingTrack = 'SM';
+
+          const weakestTrack = (['NT', 'BA', 'SM'] as TrackCode[])
+            .sort((a, b) => {
+              const diff = trackAcc[a] - trackAcc[b];
+              if (diff !== 0) return diff;
+              if (a === leadingTrack) return 1;
+              if (b === leadingTrack) return -1;
+              return 0;
+            })[0];
 
           return {
             level: lvl,
@@ -260,6 +372,7 @@ export function analyzeQuizAttempt(attempt: QuizAttempt): DetailedResultsAnalysi
             total: totalCount,
             percentage,
             leadingTrack,
+            weakestTrack,
           };
         })
       : [];

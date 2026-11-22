@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card } from '../components/shared/Card';
 import { Button } from '../components/shared/Button';
+import { NtTrackBadge, BaTrackBadge, SmTrackBadge } from '../components/shared/PixelArt';
 
 import { BACKGROUNDS } from '../assets/manifest';
 import { useStudent } from '../context/StudentContext';
@@ -32,6 +33,7 @@ import {
   getUnansweredQuestionIndices,
   isChapterComplete,
 } from '../utils/quizEngine';
+import { scrollViewportToTop } from '../utils/scrollTop';
 
 export const CtrlQuizPage: React.FC = () => {
   const { state: studentState, saveQuizAttempt, recordActivity } = useStudent();
@@ -59,6 +61,7 @@ export const CtrlQuizPage: React.FC = () => {
 
   // Sync answering stage with sessionStorage and window event for non-scrolling main layout
   useEffect(() => {
+    scrollViewportToTop();
     const isAnswering = flowStage === 'question';
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem('ctrl_quiz_answering', String(isAnswering));
@@ -298,12 +301,21 @@ export const CtrlQuizPage: React.FC = () => {
         <div className="relative z-10 max-w-5xl mx-auto w-full flex-1 min-h-0 flex flex-col justify-start space-y-3 sm:space-y-3.5">
           {/* Level & Question Number Navigator */}
           <div className="bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center md:justify-between gap-3 shrink-0">
-            <div className="shrink-0">
-              <div className="text-[11px] font-black uppercase text-indigo-600 tracking-wider">
-                Chapter {currentLevelNum}: {currentLevelMeta.typeTitle}
-              </div>
-              <div className="text-xs sm:text-sm font-black text-slate-900 mt-0.5">
-                Question {currentQIndex + 1} of {currentLevelQuestionIds.length}
+            <div className="shrink-0 flex items-center gap-3">
+              {activeQuestion.track === 'NT' ? (
+                <NtTrackBadge size={36} className="rounded-xl shadow-xs shrink-0" />
+              ) : activeQuestion.track === 'BA' ? (
+                <BaTrackBadge size={36} className="rounded-xl shadow-xs shrink-0" />
+              ) : (
+                <SmTrackBadge size={36} className="rounded-xl shadow-xs shrink-0" />
+              )}
+              <div>
+                <div className="text-[11px] font-black uppercase text-indigo-600 tracking-wider">
+                  Chapter {currentLevelNum}: {currentLevelMeta.typeTitle}
+                </div>
+                <div className="text-xs sm:text-sm font-black text-slate-900 mt-0.5">
+                  Question {currentQIndex + 1} of {currentLevelQuestionIds.length}
+                </div>
               </div>
             </div>
 

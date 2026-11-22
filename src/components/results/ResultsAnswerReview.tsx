@@ -13,18 +13,34 @@ import { TrackBadge } from '../shared/Badge';
 
 interface ResultsAnswerReviewProps {
   analysis: Pick<DetailedResultsAnalysis, 'answerReviewAvailable' | 'evaluatedQuestions'>;
+  selectedLevel?: number | 'ALL';
+  onLevelChange?: (level: number | 'ALL') => void;
 }
 
-export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({ analysis }) => {
+export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({
+  analysis,
+  selectedLevel,
+  onLevelChange,
+}) => {
   const [reviewTrackFilter, setReviewTrackFilter] = useState('ALL');
+  const [internalLevelFilter, setInternalLevelFilter] = useState<number | 'ALL'>(1);
   const [reviewStatusFilter, setReviewStatusFilter] = useState<'ALL' | 'CORRECT' | 'INCORRECT'>('ALL');
   const [reviewSearchQuery, setReviewSearchQuery] = useState('');
   const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null);
+
+  const reviewLevelFilter = selectedLevel ?? internalLevelFilter;
+  const setReviewLevelFilter = (lvl: number | 'ALL') => {
+    setInternalLevelFilter(lvl);
+    onLevelChange?.(lvl);
+  };
 
   const filteredQuestions = useMemo(
     () =>
       analysis.evaluatedQuestions.filter((item) => {
         if (reviewTrackFilter !== 'ALL' && item.question.track !== reviewTrackFilter) {
+          return false;
+        }
+        if (reviewLevelFilter !== 'ALL' && item.question.level !== reviewLevelFilter) {
           return false;
         }
         if (reviewStatusFilter === 'CORRECT' && !item.isCorrect) {
@@ -41,11 +57,11 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({ analys
         }
         return true;
       }),
-    [analysis.evaluatedQuestions, reviewTrackFilter, reviewStatusFilter, reviewSearchQuery],
+    [analysis.evaluatedQuestions, reviewTrackFilter, reviewLevelFilter, reviewStatusFilter, reviewSearchQuery],
   );
 
   return (
-    <Card>
+    <Card id="answer-review-section">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
         <div>
           <div className="flex items-center gap-2">
@@ -82,6 +98,28 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({ analys
                 onChange={(event) => setReviewSearchQuery(event.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs focus:outline-hidden focus:border-blue-500"
               />
+            </div>
+
+            <div
+              className="flex items-center gap-1 bg-slate-100 dark:bg-[#131d33] border border-transparent dark:border-slate-800 p-1 rounded-xl text-xs font-bold"
+              role="group"
+              aria-label="Filter answer review by level"
+            >
+              {([1, 2, 3, 4, 5] as const).map((lvl) => (
+                <button
+                  key={lvl}
+                  type="button"
+                  aria-pressed={reviewLevelFilter === lvl}
+                  onClick={() => setReviewLevelFilter(reviewLevelFilter === lvl ? 'ALL' : lvl)}
+                  className={`px-2 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                    reviewLevelFilter === lvl
+                      ? 'bg-white dark:bg-[#1e2d4d]! shadow-xs text-slate-900 dark:text-slate-100'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {`L${lvl}`}
+                </button>
+              ))}
             </div>
 
             <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#131d33] border border-transparent dark:border-slate-800 p-1 rounded-xl text-xs font-bold">

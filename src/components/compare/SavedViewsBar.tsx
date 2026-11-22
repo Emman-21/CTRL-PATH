@@ -20,7 +20,7 @@ export const SavedViewsBar: React.FC<SavedViewsBarProps> = ({
     {comparisons.map((comparison) => (
       <div
         key={comparison.id}
-        className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 font-medium shrink-0 transition-colors"
+        className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 hover:bg-slate-200 dark:hover:bg-slate-800! rounded-xl text-slate-700 font-medium shrink-0 transition-colors"
       >
         <button
           onClick={() => onLoad(comparison)}

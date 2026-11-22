@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../components/shared/Card';
 import { Button } from '../components/shared/Button';
 import { NtTrackBadge, BaTrackBadge, SmTrackBadge } from '../components/shared/PixelArt';
@@ -14,6 +14,7 @@ import { useStudent } from '../context/StudentContext';
 import { TrackCode, TrackModule, TrackSubject } from '../types';
 import { Link, useSearchParams } from 'react-router-dom';
 import { NetAcadTrackReader } from '../components/tracks/NetAcadTrackReader';
+import { scrollViewportToTop } from '../utils/scrollTop';
 import {
   Compass,
   CheckCircle2,
@@ -82,10 +83,23 @@ export const TrackExplorerPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (initialTrack) {
+    if (initialTrack && ['NT', 'BA', 'SM'].includes(initialTrack)) {
+      setActiveTrackCode(initialTrack as TrackCode);
+      setDetailTab('about');
       recordActivity('view-track-detail');
+    } else if (!initialTrack) {
+      setActiveTrackCode(null);
     }
   }, [initialTrack]);
+
+  const didMountTrackView = useRef(false);
+  useEffect(() => {
+    if (!didMountTrackView.current) {
+      didMountTrackView.current = true;
+      return;
+    }
+    scrollViewportToTop();
+  }, [activeTrackCode, detailTab]);
 
   // Save student reflection
   const handleSaveReflection = (code: TrackCode, values: TrackReflectionValues) => {
@@ -143,8 +157,8 @@ export const TrackExplorerPage: React.FC = () => {
 
           {/* Luni Greeting & Animated Sprite */}
           <div className="shrink-0 flex items-center md:items-end justify-end gap-3 self-end md:self-auto">
-            <div className="bg-white/95 backdrop-blur-md border border-indigo-100 rounded-2xl p-4 shadow-sm max-w-[240px] relative hidden sm:block">
-              <div className="text-xs font-black text-indigo-700 mb-0.5">
+            <div className="bg-white/95 backdrop-blur-md border border-blue-200 dark:border-blue-800/70 rounded-2xl p-4 shadow-sm max-w-[240px] relative hidden sm:block">
+              <div className="text-xs font-black text-blue-700 dark:text-blue-300 mb-0.5">
                 {activeTrackCode ? `${activeTrackCode} Pathway Guide` : 'Hi there, Explorer!'}
               </div>
               <p className="text-xs text-slate-600 leading-snug">
@@ -157,10 +171,19 @@ export const TrackExplorerPage: React.FC = () => {
 
             <div className="relative">
               <LuniSprite
-                pose={activeTrackCode === 'NT' ? 'point' : activeTrackCode === 'BA' ? 'curious' : activeTrackCode === 'SM' ? 'celebrate' : 'wave'}
-                size={90}
+                pose={
+                  activeTrackCode === 'NT'
+                    ? 'track_wifi'
+                    : activeTrackCode === 'BA'
+                    ? 'track_charts'
+                    : activeTrackCode === 'SM'
+                    ? 'track_files'
+                    : 'track_read'
+                }
+                size={112}
                 animate
                 glow
+                pixelated={false}
               />
             </div>
           </div>

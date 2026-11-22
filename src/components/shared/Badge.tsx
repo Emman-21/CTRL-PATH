@@ -36,7 +36,11 @@ export const Badge: React.FC<BadgeProps> = ({
   );
 };
 
-export const TrackBadge: React.FC<{ code: TrackCode; size?: 'sm' | 'md' }> = ({ code, size = 'md' }) => {
+export const TrackBadge: React.FC<{ code: TrackCode; size?: 'sm' | 'md'; compact?: boolean }> = ({
+  code,
+  size = 'md',
+  compact = false,
+}) => {
   const trackMap = {
     NT: {
       label: 'Networking Technology',
@@ -78,10 +82,10 @@ export const TrackBadge: React.FC<{ code: TrackCode; size?: 'sm' | 'md' }> = ({ 
   const item = trackMap[code];
 
   return (
-    <Badge variant={item.variant} size={size}>
+    <Badge variant={item.variant} size={size} className="whitespace-nowrap shrink-0">
       {item.icon}
       <span className="font-extrabold">{code}</span>
-      <span className="hidden sm:inline font-medium">· {item.label}</span>
+      {!compact && <span className="hidden sm:inline font-medium">· {item.label}</span>}
     </Badge>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AchievementUnlockCelebration } from '../shared/AchievementUnlockCelebration';
 import { StreakCelebrationModal } from '../streak/StreakCelebrationModal';
@@ -7,6 +7,9 @@ import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { MobileNav } from './MobileNav';
 import { LuniAssistantWidget } from '../luni/LuniAssistantWidget';
+import { scrollViewportToTop } from '../../utils/scrollTop';
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { state, storageWarning } = useStudent();
@@ -48,7 +51,19 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     return () => window.removeEventListener('ctrl_quiz_answering_changed', syncAnswering);
   }, []);
 
+  useIsomorphicLayoutEffect(() => {
+    if (location.hash) {
+      const target = document.getElementById(location.hash.slice(1));
+      if (target && typeof target.scrollIntoView === 'function') {
+        target.scrollIntoView({ behavior: 'auto', block: 'start' });
+        return;
+      }
+    }
+    scrollViewportToTop();
+  }, [location.pathname, location.search, location.hash]);
+
   const isQuizAnswering = location.pathname === '/quiz' && quizAnsweringActive;
+  const isResultsRoute = location.pathname === '/results';
 
   const isDark = state.preferences.theme === 'dark';
 
@@ -74,16 +89,17 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           className={
             isQuizAnswering
               ? 'flex-none h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)] overflow-hidden px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 max-w-7xl w-full mx-auto flex flex-col'
-              : 'flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-24'
+              : `flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto ${isResultsRoute ? 'pb-4' : 'pb-24'}`
           }
         >
           {storageWarning && <p role="status" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">{storageWarning}</p>}
           {children}
         </main>
+        {isResultsRoute && <LuniAssistantWidget docked />}
       </div>
 
       {/* Floating Luni Companion Widget & Modals */}
-      <LuniAssistantWidget />
+      {!isResultsRoute && <LuniAssistantWidget />}
       <AchievementUnlockCelebration />
       <StreakCelebrationModal />
     </div>

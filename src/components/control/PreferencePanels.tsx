@@ -1,35 +1,152 @@
 import { useState } from 'react';
+import { Download, Trash2 } from 'lucide-react';
 import { useStudent } from '../../context/StudentContext';
 import type { StudentPreferences } from '../../types';
+import { exportStudentData } from '../../utils/studentControls';
+import { AchievementDialog } from '../achievements/AchievementDialog';
 import { ControlCard } from './ControlShared';
+
 export function PreferencePanels() {
-  const {state,updatePreferences}=useStudent();const [message,setMessage]=useState('');
-  const change=(prefs:Partial<StudentPreferences>)=>{const result=updatePreferences(prefs);setMessage(result.message);};
-  const toggle=(key:keyof StudentPreferences,label:string,description:string)=><label className="control-setting" key={key}><span><strong>{label}</strong><small>{description}</small></span><input type="checkbox" checked={Boolean(state.preferences[key])} onChange={e=>change({[key]:e.target.checked})}/></label>;
-  return <><ControlCard title="Appearance and accessibility" description="Make your learning space comfortable. Your preferences apply across CTRL+PATH.">
-    <label className="control-setting">
-      <span>
-        <strong>Theme</strong>
-        <small>Choose between Light Mode and Celestial Dark Mode (Moonlit Sky).</small>
-      </span>
-      <select
-        aria-label="Theme"
-        value={state.preferences.theme || 'dark'}
-        onChange={e => change({ theme: e.target.value as 'light' | 'dark' })}
+  const { state, updatePreferences, resetAllData } = useStudent();
+  const [prefMessage, setPrefMessage] = useState('');
+  const [privacyMessage, setPrivacyMessage] = useState('');
+  const [confirm, setConfirm] = useState(false);
+
+  const change = (prefs: Partial<StudentPreferences>) => {
+    const result = updatePreferences(prefs);
+    setPrefMessage(result.message);
+  };
+
+  const exportData = () => {
+    try {
+      const data = exportStudentData(state, localStorage);
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
+      );
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ctrl-path-data-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      setPrivacyMessage('Your JSON export has been downloaded.');
+    } catch (error) {
+      setPrivacyMessage(
+        error instanceof Error
+          ? error.message
+          : 'The export could not be prepared. Your data has not changed.',
+      );
+    }
+  };
+
+  return (
+    <>
+      <ControlCard
+        title="Appearance & Assistant"
+        description="Customize your theme and Luni companion visibility."
       >
-        <option value="light">☀️ Light Theme</option>
-        <option value="dark">🌙 Dark Theme (Moonlit Sky)</option>
-      </select>
-    </label>
-    {toggle('reducedMotion','Reduced motion','Turn off interface animation. A system reduced-motion preference is also respected.')}
-    {toggle('highContrast','Higher contrast','Use darker text and stronger borders throughout the portal.')}
-    <label className="control-setting"><span><strong>Text size</strong><small>Increase interface and reading text.</small></span><select aria-label="Text size" value={state.preferences.textSize} onChange={e=>change({textSize:e.target.value as 'normal'|'large'})}><option value="normal">Normal</option><option value="large">Large</option></select></label>
-  </ControlCard><ControlCard title="Luni preferences" description="Luni uses scripted guidance. These settings control the existing companion.">
-    {toggle('luniEnabled','Show Luni assistant','Show or hide the floating companion across the app.')}
-    {toggle('luniAutoTips','Automatic Luni guidance','Show a guidance bubble when you open a page. You can still ask Luni manually.')}
-    {toggle('luniFloatingAnimation','Animate Luni','Allow gentle character animation when reduced motion is off.')}
-  </ControlCard><ControlCard title="Notification preferences" description="Only existing in-app features are available. No email, SMS, or push delivery is connected.">
-    {toggle('notifications','Achievement celebrations','Show a dismissible celebration when you earn a new gemstone. Your collection updates even when this is off.')}
-    <p className="control-description">Announcements are available in the Luminary Bulletin. Automatic announcement reminders are not available yet.</p>
-  </ControlCard><p role="status" className="control-feedback">{message}</p></>;
+        <label className="control-setting">
+          <span>
+            <strong>Theme</strong>
+            <small>Switch between Light Mode and Celestial Dark Mode.</small>
+          </span>
+          <select
+            aria-label="Theme"
+            value={state.preferences.theme || 'dark'}
+            onChange={(e) => change({ theme: e.target.value as 'light' | 'dark' })}
+          >
+            <option value="light">Light Theme</option>
+            <option value="dark">Dark Theme (Moonlit Sky)</option>
+          </select>
+        </label>
+
+        <label className="control-setting">
+          <span>
+            <strong>Show Luni assistant</strong>
+            <small>Show or hide the floating Luni companion across the app.</small>
+          </span>
+          <input
+            type="checkbox"
+            checked={Boolean(state.preferences.luniEnabled)}
+            onChange={(e) => change({ luniEnabled: e.target.checked })}
+          />
+        </label>
+        {prefMessage && (
+          <p role="status" className="control-feedback">
+            {prefMessage}
+          </p>
+        )}
+      </ControlCard>
+
+      <ControlCard
+        title="Privacy & Local Data"
+        description="Your progress is stored locally in this browser. Export a backup or delete your local data anytime."
+      >
+        <div className="control-actions settings-privacy-actions">
+          <button
+            type="button"
+            className="vault-primary-button settings-export-btn"
+            onClick={exportData}
+          >
+            <Download size={16} aria-hidden="true" />
+            <span>Export data</span>
+          </button>
+          <button
+            type="button"
+            className="control-danger-button"
+            onClick={() => {
+              setConfirm(true);
+              setPrivacyMessage('');
+            }}
+          >
+            <Trash2 size={16} aria-hidden="true" />
+            <span>Delete local data</span>
+          </button>
+        </div>
+
+        <p role="status" className="control-feedback">
+          {privacyMessage}
+        </p>
+
+        {confirm && (
+          <AchievementDialog
+            titleId="clear-data-title"
+            closeLabel="Cancel deleting local data"
+            onClose={() => setConfirm(false)}
+            reducedMotion={state.preferences.reducedMotion}
+          >
+            <div className="control-confirm">
+              <span className="vault-eyebrow">Privacy & Local Data</span>
+              <h2 id="clear-data-title">Delete your local CTRL+PATH data?</h2>
+              <p>
+                This permanently removes your saved profile, quiz attempts, gemstones,
+                comparisons, reflections, and preferences from this browser.
+              </p>
+              <div className="control-actions">
+                <button
+                  type="button"
+                  className="community-secondary-button"
+                  onClick={() => setConfirm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="control-danger-button"
+                  onClick={() => {
+                    const result = resetAllData();
+                    setPrivacyMessage(result.message);
+                    setConfirm(false);
+                  }}
+                >
+                  Delete local data
+                </button>
+              </div>
+            </div>
+          </AchievementDialog>
+        )}
+      </ControlCard>
+    </>
+  );
 }

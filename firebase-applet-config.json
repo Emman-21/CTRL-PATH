@@ -1,11 +1,11 @@
 {
-  "projectId": "itnt3108-classroom-sync",
-  "appId": "1:399711412111:web:0ff4b283621296add8f5fa",
-  "apiKey": "AIzaSyDZR8Mxq12vfGvveVYtZ7TLDe0-slDrSAE",
-  "authDomain": "itnt3108-classroom-sync.firebaseapp.com",
-  "storageBucket": "itnt3108-classroom-sync.firebasestorage.app",
-  "messagingSenderId": "399711412111",
+  "projectId": "itnt3108-block-system",
+  "appId": "1:675245148418:web:9bfc901726432200a85a1b",
+  "apiKey": "AIzaSyBXvxAvzNSlf5JQGyu0UsDUfFLXmr44Law",
+  "authDomain": "itnt3108-block-system.firebaseapp.com",
+  "storageBucket": "itnt3108-block-system.firebasestorage.app",
+  "messagingSenderId": "675245148418",
   "measurementId": "",
-  "oAuthClientId": "399711412111-s5ltj6gdaii92ia5e6qq4mcpfrr5akgh.apps.googleusercontent.com",
+  "oAuthClientId": "675245148418-taroft3rj23om8hqkmvmsmislv6iethj.apps.googleusercontent.com",
   "recaptchaSiteKey": ""
 }

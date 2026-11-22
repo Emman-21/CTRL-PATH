@@ -2,10 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
-import { ALUMNI_STORIES, ANNOUNCEMENTS } from '../src/data/communityData';
-import type { AlumniStory, Announcement } from '../src/types/community';
-import { publishedStories,filterStories,publishedAnnouncements,filterAnnouncements,displayDate,safeExternalLink } from '../src/utils/communitySelectors';
-import { AlumniStoryCard,AnnouncementCard } from '../src/components/community/CommunityCards';
+import { ALUMNI_STORIES } from '../src/data/communityData';
+import type { AlumniStory } from '../src/types/community';
+import { publishedStories,filterStories,displayDate,safeExternalLink } from '../src/utils/communitySelectors';
+import { AlumniStoryCard } from '../src/components/community/CommunityCards';
+import { StoryTopicIcon } from '../src/components/community/StoryTopicIcon';
 import { INITIAL_STATE } from '../src/context/StudentContext';
 import { migrateStudentData,serializeStudent,STUDENT_STORAGE_KEY } from '../src/utils/achievementStorage';
 import { validateProfile,profileValues,studentProgress,completeLearningModule,areAllTrackSubjectsCompleted,exportStudentData,clearStudentData,QUIZ_SESSION_KEY } from '../src/utils/studentControls';
@@ -17,12 +18,41 @@ import { TRACKS_DATA } from '../src/data/tracks';
 // are never imported by production content or presented as authentic evidence.
 const now=Date.parse('2026-11-04T10:00:00Z');
 const story:AlumniStory={id:'test-story',track:'NT',title:'Synthetic networking story',excerpt:'Fixture excerpt',experience:'Fixture experience',source:'Test fixture',approvedFields:['displayName'],displayName:'Test Contributor',organization:'Unapproved employer field',publicationConsent:true,publicationStatus:'published',verificationStatus:'verified',keywords:['routing'],featured:true};
-const notice:Announcement={id:'test-notice',title:'Synthetic notice',description:'Fixture description',content:'Fixture content',category:'Academic',source:'Test fixture',publicationStatus:'published',verificationStatus:'verified',publishedAt:'2026-11-03T10:00:00Z',pinned:false};
 const fresh=()=>structuredClone(INITIAL_STATE);
 class MemoryStorage implements Storage {
   values=new Map<string,string>();get length(){return this.values.size;}getItem(k:string){return this.values.get(k)??null;}setItem(k:string,v:string){this.values.set(k,v);}removeItem(k:string){this.values.delete(k);}key(i:number){return [...this.values.keys()][i]??null;}clear(){this.values.clear();}
 }
-test('production collections are honestly empty',()=>{assert.equal(ALUMNI_STORIES.length,0);assert.equal(ANNOUNCEMENTS.length,0);assert.deepEqual(publishedStories([]),[]);assert.deepEqual(publishedAnnouncements([]),[]);});
+test('published alumni collection includes verified consented student submissions',()=>{
+  assert.deepEqual(publishedStories([]),[]);
+  const published=publishedStories(ALUMNI_STORIES);
+  assert.equal(published.length,2);
+  const lance=published.find(s=>s.id==='lance-edward-dela-rosa');
+  assert.ok(lance);
+  assert.equal(lance.track,'NT');
+  assert.equal(lance.displayName,'Mr. Lance Edward V. Dela Rosa');
+  assert.equal(lance.currentRole,'IINTESS 4th Year Representative');
+  assert.equal(lance.organization,'AY: 2026-2027');
+  assert.deepEqual(lance.positions,['4th Year Representative, IINTESS 2026-2027']);
+  assert.equal(lance.profileImage,'/assets/aistudio/33b5e2c2-4b7a-46fe-abac-5b05af7fcf62_a05ea5b8.jpg');
+  assert.ok(lance.quote?.includes("Don't give up when the ping fails."));
+  const joeren=published.find(s=>s.id==='joeren-aguila');
+  assert.ok(joeren);
+  assert.equal(joeren.track,'BA');
+  assert.equal(joeren.displayName,'Mr. Joeren G. Aguila');
+  assert.equal(joeren.currentRole,'IINTESS Internal Vice President');
+  assert.equal(joeren.organization,'AY: 2026-2027');
+  assert.equal(joeren.positions?.length,4);
+  assert.ok(joeren.positions?.includes('OIC Secretary, IINTESS - 2026'));
+  assert.ok(joeren.positions?.includes('Assistant Secretary, IINTESS - 2025-2026'));
+  assert.ok(joeren.positions?.includes('Internal Vice President, IINTESS 2026-2027'));
+  assert.ok(joeren.positions?.includes('Committee Head on Environmental Protection Health and Sanitation, CICS-SC 2025-2027'));
+  assert.equal(joeren.profileImage,'/assets/aistudio/26b9e082-f0ac-44ae-9e84-c041d76463c5_fb12221a.jpg');
+  assert.ok(joeren.quote?.includes('Technology will never stop evolving, so never stop learning.'));
+  assert.ok(joeren.experience?.includes('Power BI and SAP Analytics Cloud'));
+  assert.ok(joeren.challenges?.includes('continuous learning curve'));
+  assert.ok(joeren.advice?.includes('never limit your learning'));
+  assert.equal(filterStories(published,'BA','power bi').length,1);
+});
 test('alumni requires verified publication and consent; optional personal fields are redacted',()=>{
   const records=publishedStories([story,{...story,id:'draft',publicationStatus:'draft'},{...story,id:'unverified',verificationStatus:'unverified'},{...story,id:'no-consent',publicationConsent:false},{...story,id:'future',publishedAt:'2027-01-01T00:00:00Z'}],now);
   assert.equal(records.length,1);assert.equal(records[0].displayName,'Test Contributor');assert.equal(records[0].organization,undefined);
@@ -34,23 +64,52 @@ test('combined case-insensitive alumni filtering searches only permitted title/n
   assert.equal(filterStories(records,'All','contributor').length,2);assert.equal(filterStories(records,'All','Unapproved employer').length,0);
   assert.equal(filterStories(publishedStories([{...story,approvedFields:[]}],now),'All','Contributor').length,0);
 });
-test('announcement publication excludes unverified, future, expired and invalid-expiry records',()=>{
-  const records=publishedAnnouncements([notice,{...notice,id:'expired',expiresAt:'2026-11-04T09:00:00Z'},{...notice,id:'invalid-expiry',expiresAt:'bad'},{...notice,id:'future',publishedAt:'2027-01-01T00:00:00Z'},{...notice,id:'draft',publicationStatus:'draft'},{...notice,id:'unverified',verificationStatus:'unverified'}],now);
-  assert.deepEqual(records.map(r=>r.id),['test-notice']);
-});
-test('pinned first, newest next; invalid dates and category/query combinations remain safe',()=>{
-  const records=publishedAnnouncements([notice,{...notice,id:'invalid',publishedAt:'not a date'},{...notice,id:'newest',publishedAt:'2026-11-04T09:00:00Z',category:'Events'},{...notice,id:'pinned',pinned:true,publishedAt:'2026-10-01T00:00:00Z'}],now);
-  assert.deepEqual(records.map(r=>r.id),['pinned','newest','test-notice','invalid']);
-  assert.equal(filterAnnouncements(records,'Events','SYNTHETIC').length,1);assert.equal(filterAnnouncements(records,'General','missing').length,0);
+test('external links and date formatting handle invalid values safely',()=>{
   assert.equal(displayDate('bad'),'Date unavailable');assert.equal(displayDate(undefined),'Date unavailable');
-});
-test('external links reject executable/credentialed/invalid destinations',()=>{
   assert.equal(safeExternalLink('javascript:alert(1)'),undefined);assert.equal(safeExternalLink('https://user:password@example.test'),undefined);assert.equal(safeExternalLink('not a URL'),undefined);
   assert.equal(safeExternalLink('https://example.test/approved'),'https://example.test/approved');
 });
-test('actual cards render only public metadata and real detail navigation',()=>{
-  const record=publishedStories([story],now)[0];const html=renderToStaticMarkup(<MemoryRouter><AlumniStoryCard story={record}/><AnnouncementCard announcement={notice}/></MemoryRouter>);
-  assert.ok(html.includes('/alumni/test-story'));assert.ok(html.includes('/announcements/test-notice'));assert.ok(html.includes('Test Contributor'));assert.ok(!html.includes('Unapproved employer'));
+test('actual cards render only public metadata, quotes, and real detail navigation',()=>{
+  const record=publishedStories([story],now)[0];const html=renderToStaticMarkup(<MemoryRouter><AlumniStoryCard story={record}/></MemoryRouter>);
+  assert.ok(html.includes('/alumni/test-story'));assert.ok(html.includes('Test Contributor'));assert.ok(!html.includes('Unapproved employer'));
+  const published=publishedStories(ALUMNI_STORIES);
+  const lance=published.find(s=>s.id==='lance-edward-dela-rosa')!;
+  const spotlightHtml=renderToStaticMarkup(<MemoryRouter><AlumniStoryCard story={lance} variant="spotlight"/></MemoryRouter>);
+  assert.ok(spotlightHtml.includes('Mr. Lance Edward V. Dela Rosa'));
+  assert.ok(spotlightHtml.includes('Networking Technology'));
+  assert.ok(spotlightHtml.includes('<svg'));
+  assert.ok(!spotlightHtml.includes('IINTESS 4th Year Representative'));
+  assert.ok(!spotlightHtml.includes('AY: 2026-2027'));
+  assert.ok(spotlightHtml.includes('Positions held'));
+  assert.ok(spotlightHtml.includes('4th Year Representative, IINTESS 2026-2027'));
+  assert.ok(spotlightHtml.includes("Request timed out"));
+  assert.ok(spotlightHtml.includes('Open full story view'));
+  assert.ok(!spotlightHtml.includes('Experience in Networking Technology'));
+  assert.ok(!spotlightHtml.includes('Source:'));
+  assert.ok(spotlightHtml.includes('/assets/aistudio/33b5e2c2-4b7a-46fe-abac-5b05af7fcf62_a05ea5b8.jpg'));
+  const joeren=published.find(s=>s.id==='joeren-aguila')!;
+  const joerenSpotlightHtml=renderToStaticMarkup(<MemoryRouter><AlumniStoryCard story={joeren} variant="spotlight"/></MemoryRouter>);
+  assert.ok(joerenSpotlightHtml.includes('Mr. Joeren G. Aguila'));
+  assert.ok(!joerenSpotlightHtml.includes('IINTESS Internal Vice President'));
+  assert.ok(!joerenSpotlightHtml.includes('AY: 2026-2027'));
+  assert.ok(joerenSpotlightHtml.includes('Internal Vice President, IINTESS 2026-2027'));
+  assert.ok(joerenSpotlightHtml.includes('OIC Secretary, IINTESS - 2026'));
+  assert.ok(joerenSpotlightHtml.includes('Assistant Secretary, IINTESS - 2025-2026'));
+  assert.ok(joerenSpotlightHtml.includes('Committee Head on Environmental Protection Health and Sanitation, CICS-SC 2025-2027'));
+  assert.ok(joerenSpotlightHtml.includes('Business Analytics'));
+  assert.ok(joerenSpotlightHtml.includes('gem-category-BA'));
+  assert.ok(joerenSpotlightHtml.includes('Technology will never stop evolving, so never stop learning.'));
+  assert.ok(joerenSpotlightHtml.includes('/alumni/joeren-aguila'));
+  assert.ok(joerenSpotlightHtml.includes('/assets/aistudio/26b9e082-f0ac-44ae-9e84-c041d76463c5_fb12221a.jpg'));
+  const quoteOnly=publishedStories([{id:'quote-only',track:'BA',title:'Quote only',quote:'Data tells a story.',approvedFields:['displayName'],displayName:'Quote Contributor',publicationConsent:true,publicationStatus:'published',verificationStatus:'verified'}],now);
+  assert.equal(quoteOnly.length,1);
+  const quoteOnlyHtml=renderToStaticMarkup(<MemoryRouter><AlumniStoryCard story={quoteOnly[0]} variant="spotlight"/></MemoryRouter>);
+  assert.ok(quoteOnlyHtml.includes('Data tells a story.'));
+  assert.ok(!quoteOnlyHtml.includes('Open full story view'));
+  for(const topic of ['experience','challenges','advice','skills','careerExperience','lessons'] as const){
+    const iconHtml=renderToStaticMarkup(<StoryTopicIcon topic={topic}/>);
+    assert.ok(iconHtml.includes('<svg')&&iconHtml.includes('community-topic-svg'));
+  }
 });
 test('profile validates display name, lengths, avatar and optional fields',()=>{
   const valid={...profileValues(fresh()),name:'Learner',avatarStyle:'initials' as const};assert.deepEqual(validateProfile(valid),{});

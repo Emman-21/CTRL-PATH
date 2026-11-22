@@ -105,6 +105,37 @@ export function achievementStats(state: StudentState) {
     recent: gems.filter(g => g.record).sort((a, b) => (b.record!.unlockedAt || '').localeCompare(a.record!.unlockedAt || '')) };
 }
 
+export const CATEGORY_ORDER = ['NT', 'BA', 'SM', 'Special'] as const;
+export type AchievementCategoryKey = typeof CATEGORY_ORDER[number];
+
+export interface AchievementCategoryColumn {
+  category: AchievementCategoryKey;
+  name: string;
+  unlockedCount: number;
+  totalCount: number;
+  unlockedGems: Array<{ gem: GemstoneAsset; record: AchievementRecord }>;
+}
+
+export function achievementCategoryColumns(state: StudentState): AchievementCategoryColumn[] {
+  const recordById = new Map(state.achievementRecords.map(r => [r.id, r]));
+  return CATEGORY_ORDER.map(category => {
+    const categoryGems = GEMSTONE_ASSETS.filter(g => g.category === category);
+    const unlockedGems = categoryGems
+      .map(gem => {
+        const record = recordById.get(gem.achievementId);
+        return record ? { gem, record } : null;
+      })
+      .filter((entry): entry is { gem: GemstoneAsset; record: AchievementRecord } => entry !== null);
+    return {
+      category,
+      name: CATEGORY_NAMES[category],
+      unlockedCount: unlockedGems.length,
+      totalCount: categoryGems.length,
+      unlockedGems,
+    };
+  });
+}
+
 /**
  * Canonical CTA mapping for gems that have a direct action destination.
  * Avoids scattered magic-number checks like `gem.id === 16`.
@@ -121,9 +152,10 @@ export function gemAction(gemId: number) {
   return GEM_ACTIONS[gemId] ?? DEFAULT_GEM_ACTION;
 }
 
-export function filterAchievements(state: StudentState, category: string, status: string, sort: string) {
+export function filterAchievements(state: StudentState, category: string, status: string, sort: string, rarity = 'All') {
   return GEMSTONE_ASSETS.filter(g => (category === 'All' || g.category === category) &&
-    (status === 'All' || achievementProgress(g, state).status === status)).sort((a, b) => {
+    (status === 'All' || achievementProgress(g, state).status === status) &&
+    (rarity === 'All' || g.rarity === rarity)).sort((a, b) => {
     if (sort === 'Name') return a.name.localeCompare(b.name);
     if (sort === 'Rarity') return RARITIES.indexOf(b.rarity) - RARITIES.indexOf(a.rarity) || a.id - b.id;
     if (sort === 'Recently Unlocked') return (achievementProgress(b, state).record?.unlockedAt || '').localeCompare(achievementProgress(a, state).record?.unlockedAt || '');

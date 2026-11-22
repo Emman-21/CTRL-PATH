@@ -10,7 +10,7 @@ import { useStudent } from '../../context/StudentContext';
 import { useLocation } from 'react-router-dom';
 import { Sparkles, MessageCircle, Minus, Volume2, VolumeX } from 'lucide-react';
 
-export const LuniAssistantWidget: React.FC = () => {
+export const LuniAssistantWidget: React.FC<{ docked?: boolean }> = ({ docked = false }) => {
   const { state: studentState, updatePreferences } = useStudent();
   const location = useLocation();
   const { stories } = useCommunity();
@@ -78,10 +78,7 @@ export const LuniAssistantWidget: React.FC = () => {
           : ROUTE_DIALOGUES['/alumni'].message,
       };
     }
-    const routeKey = location.pathname.startsWith('/announcements')
-      ? '/announcements'
-      : location.pathname;
-    return ROUTE_DIALOGUES[routeKey] || ROUTE_DIALOGUES['/'];
+    return ROUTE_DIALOGUES[location.pathname] || ROUTE_DIALOGUES['/'];
   };
 
   const activeDialogue = getActiveDialogue();
@@ -134,7 +131,11 @@ export const LuniAssistantWidget: React.FC = () => {
     <>
       <div
         data-luni-animated={studentState.preferences.luniFloatingAnimation !== false}
-        className="fixed bottom-6 right-6 z-40 flex flex-col items-end select-none"
+        className={
+          docked
+            ? 'relative z-30 flex flex-col items-end px-4 sm:px-6 lg:px-8 pb-6 max-w-7xl w-full mx-auto select-none'
+            : 'fixed bottom-6 right-6 z-40 flex flex-col items-end select-none'
+        }
       >
         {/* Floating Speech Bubble */}
         {showSpeechBubble && !isMinimized && !showFullPanel && (

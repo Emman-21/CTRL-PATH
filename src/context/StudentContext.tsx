@@ -1,10 +1,20 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { StudentState, TrackCode, QuizAttempt, SavedComparison, StudentPreferences } from '../types';
+import type { CompareTopicId } from '../data/compareTopics';
 
 import { validateProfile, studentProgress, completeLearningModule, areAllTrackSubjectsCompleted, clearStudentData, type ProfileValues, type SaveResult } from '../utils/studentControls';
 import { evaluateAchievements, eligibleAttemptPair, withAchievementRecords } from '../utils/achievementRules';
 import { loadStudentData, serializeStudent, STUDENT_STORAGE_KEY as STORAGE_KEY } from '../utils/achievementStorage';
 import { recordActivity } from '../utils/streakManager';
+import {
+  readAuthSession,
+  saveAuthSession,
+  clearAuthSession,
+  fallbackNameFromEmail,
+  type AuthProvider,
+  type AuthSession,
+} from '../utils/authSession';
+import { firebaseSignOut } from '../services/firebase';
 
 export const INITIAL_STATE: StudentState = {
   profileSchemaVersion: 1,
@@ -67,16 +77,31 @@ interface StudentContextType {
   clearComparisonSelection: () => void;
   saveTrackReflection: (track: TrackCode, reflection: Partial<import('../types').TrackReflection>) => SaveResult;
   acknowledgeAchievement: (id: string) => void;
-  completeAttemptComparison: (ids: [string, string]) => void;
+  completeAttemptComparison: (
+    ids: [string, string],
+    reflection?: { reasons?: string[]; note?: string },
+  ) => void;
   storageWarning: string;
   saveQuizAttempt: (attempt: Omit<QuizAttempt, 'id' | 'date'>) => void;
-  saveComparison: (tracks: TrackCode[], title: string, reviewed: boolean) => void;
+  saveComparison: (tracks: TrackCode[], title: string, reviewed: boolean, selectedTopic?: CompareTopicId) => void;
   removeComparison: (id: string) => void;
   updatePreferences: (prefs: Partial<StudentPreferences>) => SaveResult;
   updateProfile: (values: ProfileValues) => SaveResult;
   completeModule: (track: TrackCode, moduleId: string) => void;
   recordActivity: (actionDescription?: string) => void;
   resetAllData: () => SaveResult;
+  authSession: AuthSession | null;
+  completeAuthLogin: (params: {
+    email: string;
+    displayName?: string;
+    program?: string;
+    yearLevel?: string;
+    section?: string;
+    provider: AuthProvider;
+    keepSignedIn: boolean;
+    applyProfile?: boolean;
+  }) => void;
+  signOutSession: () => Promise<void>;
 }
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
@@ -85,6 +110,9 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [loaded] = useState(() => loadStudentData(localStorage, INITIAL_STATE));
   const [state, setState] = useState<StudentState>(loaded.state);
   const [storageWarning, setStorageWarning] = useState(loaded.warning);
+  const [authSession, setAuthSession] = useState<AuthSession | null>(() =>
+    typeof window !== 'undefined' ? readAuthSession(localStorage, sessionStorage) : null,
+  );
   // Flag to skip the sync-effect write when persistChange already wrote manually.
   const skipNextPersist = useRef(false);
 
@@ -236,7 +264,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
-  const saveComparison = (tracks: TrackCode[], title: string, reviewed: boolean) => {
+  const saveComparison = (tracks: TrackCode[], title: string, reviewed: boolean, selectedTopic?: CompareTopicId) => {
     // Normalize: deduplicate and sort so {NT,BA} matches {BA,NT}.
     const distinct = [...new Set(tracks.filter(t => ['NT', 'BA', 'SM'].includes(t)))].sort();
     if (!reviewed || distinct.length < 2) return;
@@ -247,18 +275,27 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       reviewedAt: new Date().toISOString(),
       tracks: distinct,
       title,
+      ...(selectedTopic ? { selectedTopic } : {}),
     };
 
     setState(prev => {
       // Reject if an equivalent comparison (same set of tracks) already exists.
-      const isDuplicate = prev.savedComparisons.some(existing => {
+      const existingIndex = prev.savedComparisons.findIndex(existing => {
         const existingTracks = [...new Set(existing.tracks)].sort();
         return (
           existingTracks.length === distinct.length &&
           existingTracks.every((t, i) => t === distinct[i])
         );
       });
-      if (isDuplicate) return prev;
+      if (existingIndex !== -1) {
+        if (!selectedTopic || prev.savedComparisons[existingIndex].selectedTopic === selectedTopic) {
+          return prev;
+        }
+        const updatedComparisons = prev.savedComparisons.map((item, idx) =>
+          idx === existingIndex ? { ...item, selectedTopic } : item,
+        );
+        return { ...prev, savedComparisons: updatedComparisons };
+      }
 
       return evaluateAchievements(
         { ...prev, savedComparisons: [comparison, ...prev.savedComparisons] },
@@ -267,12 +304,68 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
-  const completeAttemptComparison = (ids: [string, string]) => {
-    const comparison = { id: crypto.randomUUID(), attemptIds: ids, completedAt: new Date().toISOString() };
+  const completeAttemptComparison = (
+    ids: [string, string],
+    reflection?: { reasons?: string[]; note?: string },
+  ) => {
+    if (ids.length !== 2 || ids[0] === ids[1]) return;
+    const cleanReasons = Array.isArray(reflection?.reasons)
+      ? reflection.reasons
+          .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+          .slice(0, 6)
+      : undefined;
+    const cleanNote =
+      typeof reflection?.note === 'string' && reflection.note.trim().length > 0
+        ? reflection.note.trim().slice(0, 500)
+        : undefined;
+    const now = new Date().toISOString();
+
     setState(prev => {
-      if (!eligibleAttemptPair(prev, ids) || prev.attemptComparisons.some(c => ids.every(id => c.attemptIds.includes(id)))) return prev;
-      return evaluateAchievements({ ...prev, attemptComparisons: [...prev.attemptComparisons, comparison] },
-        { type: 'attempts-compared', comparisonId: comparison.id }, comparison.completedAt);
+      const existingIndex = prev.attemptComparisons.findIndex(c =>
+        ids.every(id => c.attemptIds.includes(id)),
+      );
+      if (existingIndex >= 0) {
+        const updated = prev.attemptComparisons.map((item, idx) =>
+          idx === existingIndex
+            ? {
+                ...item,
+                completedAt: now,
+                reasons: cleanReasons,
+                note: cleanNote,
+              }
+            : item,
+        );
+        return { ...prev, attemptComparisons: updated };
+      }
+
+      if (!eligibleAttemptPair(prev, ids)) {
+        const hasBoth = ids.every(id => prev.quizAttempts.some(a => a.id === id));
+        if (!hasBoth) return prev;
+        const legacyComparison = {
+          id: crypto.randomUUID(),
+          attemptIds: ids,
+          completedAt: now,
+          reasons: cleanReasons,
+          note: cleanNote,
+        };
+        return {
+          ...prev,
+          attemptComparisons: [...prev.attemptComparisons, legacyComparison],
+        };
+      }
+
+      const comparison = {
+        id: crypto.randomUUID(),
+        attemptIds: ids,
+        completedAt: now,
+        reasons: cleanReasons,
+        note: cleanNote,
+      };
+      return evaluateAchievements(
+        { ...prev, attemptComparisons: [...prev.attemptComparisons, comparison] },
+        { type: 'attempts-compared', comparisonId: comparison.id },
+        comparison.completedAt,
+      );
     });
   };
 
@@ -292,6 +385,75 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         ...(prefs.theme !== undefined ? { themeExplicit: prefs.themeExplicit ?? true } : {}),
       },
     });
+
+  const completeAuthLogin = (params: {
+    email: string;
+    displayName?: string;
+    program?: string;
+    yearLevel?: string;
+    section?: string;
+    provider: AuthProvider;
+    keepSignedIn: boolean;
+    applyProfile?: boolean;
+  }) => {
+    const email = params.email.trim();
+    const resolvedName =
+      (params.displayName || '').trim() ||
+      (state.name && state.name !== INITIAL_STATE.name
+        ? state.name
+        : fallbackNameFromEmail(email));
+
+    const nextSession: AuthSession = {
+      email,
+      displayName: resolvedName,
+      provider: params.provider,
+      signedInAt: new Date().toISOString(),
+      keepSignedIn: params.keepSignedIn,
+    };
+    saveAuthSession(
+      nextSession,
+      typeof window !== 'undefined' ? localStorage : undefined,
+      typeof window !== 'undefined' ? sessionStorage : undefined,
+    );
+    setAuthSession(nextSession);
+
+    const shouldUpdateName =
+      Boolean(params.applyProfile) ||
+      (Boolean(params.displayName?.trim()) && state.name === INITIAL_STATE.name);
+
+    const nextProfile: StudentState = {
+      ...state,
+      ...(shouldUpdateName && resolvedName ? { name: resolvedName.slice(0, 60) } : {}),
+      ...(params.applyProfile && params.program !== undefined
+        ? { program: params.program.trim().slice(0, 100) }
+        : {}),
+      ...(params.applyProfile && params.yearLevel !== undefined
+        ? { yearLevel: params.yearLevel.trim().slice(0, 60) }
+        : {}),
+      ...(params.applyProfile && params.section !== undefined
+        ? { section: params.section.trim().slice(0, 40) }
+        : {}),
+      profileSchemaVersion: 1,
+    };
+
+    if (
+      nextProfile.name !== state.name ||
+      nextProfile.program !== state.program ||
+      nextProfile.yearLevel !== state.yearLevel ||
+      nextProfile.section !== state.section
+    ) {
+      persistChange(nextProfile);
+    }
+  };
+
+  const signOutSession = async () => {
+    clearAuthSession(
+      typeof window !== 'undefined' ? localStorage : undefined,
+      typeof window !== 'undefined' ? sessionStorage : undefined,
+    );
+    setAuthSession(null);
+    await firebaseSignOut();
+  };
 
   const resetAllData = (): SaveResult => {
     const result=clearStudentData(localStorage,sessionStorage);
@@ -322,6 +484,9 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         completeModule,
         recordActivity,
         resetAllData,
+        authSession,
+        completeAuthLogin,
+        signOutSession,
       }}
     >
       {children}

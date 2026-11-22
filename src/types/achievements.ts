@@ -9,6 +9,8 @@ export interface AttemptComparison {
   id: string;
   attemptIds: [string, string];
   completedAt: string;
+  reasons?: string[];
+  note?: string;
 }
 
 export type AchievementEvent =

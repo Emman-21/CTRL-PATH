@@ -12,6 +12,7 @@ export interface LuniSpriteProps {
   animate?: boolean;
   alt?: string;
   glow?: boolean;
+  pixelated?: boolean;
 }
 
 export const LuniSprite: React.FC<LuniSpriteProps> = ({
@@ -22,6 +23,7 @@ export const LuniSprite: React.FC<LuniSpriteProps> = ({
   animate = true,
   alt,
   glow = false,
+  pixelated = true,
 }) => {
   const { state: studentState } = useStudent();
   const prefersReducedMotion =
@@ -53,7 +55,7 @@ export const LuniSprite: React.FC<LuniSpriteProps> = ({
       <img
         src={poseData.url}
         alt={alt || `Luni in ${poseData.name} pose: ${poseData.description}`}
-        className="w-full h-full object-contain pixelated pointer-events-none drop-shadow-sm"
+        className={`w-full h-full object-contain ${pixelated ? 'pixelated' : ''} pointer-events-none drop-shadow-sm`}
         loading="lazy"
       />
     </div>

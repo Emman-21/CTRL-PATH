@@ -3,6 +3,19 @@ import { CheckCircle2, Lock, Clock3 } from 'lucide-react';
 import type { GemstoneAsset } from '../../assets/manifest';
 import type { StudentState } from '../../types';
 import { achievementProgress, CATEGORY_NAMES } from '../../utils/achievementRules';
+import {
+  NtTrackBadge,
+  BaTrackBadge,
+  SmTrackBadge,
+  SpecialAchievementBadge,
+} from '../shared/PixelArt';
+
+function CategoryLogo({ category }: { category: GemstoneAsset['category'] }) {
+  if (category === 'NT') return <NtTrackBadge size={18} className="shrink-0" />;
+  if (category === 'BA') return <BaTrackBadge size={18} className="shrink-0" />;
+  if (category === 'SM') return <SmTrackBadge size={18} className="shrink-0" />;
+  return <SpecialAchievementBadge size={18} className="shrink-0" />;
+}
 
 export function GemstoneImage({ gem, status = 'Unlocked', large = false }: { gem: GemstoneAsset; status?: string; large?: boolean }) {
   const [failed, setFailed] = useState(false);
@@ -24,7 +37,11 @@ export function AchievementCard({ gem, state, onSelect }: { gem: GemstoneAsset; 
     <span className="gem-card-status"><Icon size={14} />{progress.record && !progress.record.celebrationAcknowledged ? 'Newly Unlocked' : progress.status}</span>
     <span className="gem-art-stage"><GemstoneImage gem={gem} status={progress.status} /></span>
     <span className={`rarity-badge rarity-${gem.rarity.toLowerCase()}`}>{gem.rarity}</span>
-    <span className="gem-card-title">{gem.name}</span><span className="gem-category-label">{CATEGORY_NAMES[gem.category]}</span>
+    <span className="gem-card-title">{gem.name}</span>
+    <span className="gem-category-label">
+      <span aria-hidden="true" className="gem-category-logo"><CategoryLogo category={gem.category} /></span>
+      <span>{CATEGORY_NAMES[gem.category]}</span>
+    </span>
     <span className="gem-description">{gem.description}</span>
     <span className="gem-requirement"><strong>To unlock</strong>{gem.requirement}</span>
     <span className="gem-card-bottom"><span className="gem-progress-label">{progress.current} / {progress.total} {progress.total > 1 ? 'milestones' : 'milestone'}</span>
