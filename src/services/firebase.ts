@@ -9,8 +9,13 @@ import {
 } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 
+const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+if (!apiKey) {
+  throw new Error('VITE_FIREBASE_API_KEY is required. Add it to .env.local before starting the app.');
+}
+
 // Reuse existing app instance if already initialized
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const app = getApps().length === 0 ? initializeApp({ ...firebaseConfig, apiKey }) : getApps()[0];
 export const auth = getAuth(app);
 
 export const provider = new GoogleAuthProvider();
