@@ -152,7 +152,7 @@ const PdfSlideCanvas: React.FC<PdfSlideCanvasProps> = ({
       style={{ aspectRatio: String(pageAspectRatio) }}
       className={`relative w-full ${isPortrait ? 'max-w-4xl mx-auto' : ''} rounded-lg overflow-hidden border ${
         isLight
-          ? 'bg-white border-slate-200/90 shadow-md'
+          ? 'bg-[var(--surface)] border-[var(--border)] shadow-md'
           : 'bg-[#070b14] border-slate-800/80 shadow-lg'
       }`}
     >
@@ -251,7 +251,7 @@ export const EmbeddedPdfPresentation: React.FC<EmbeddedPdfPresentationProps> = (
     return (
       <div
         className={`p-8 rounded-xl border text-center space-y-2 ${
-          isLight ? 'bg-white border-red-200' : 'bg-[#0d1424] border-red-900/50'
+          isLight ? 'bg-[var(--surface)] border-red-200' : 'bg-[#0d1424] border-red-900/50'
         }`}
       >
         <FileText className={`w-8 h-8 mx-auto ${isLight ? 'text-red-500' : 'text-red-400'}`} />
@@ -265,7 +265,7 @@ export const EmbeddedPdfPresentation: React.FC<EmbeddedPdfPresentationProps> = (
       <div
         className={`w-full min-h-[420px] rounded-xl border flex flex-col items-center justify-center gap-3 ${
           isLight
-            ? 'bg-white border-slate-200 text-slate-600 shadow-xs'
+            ? 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] shadow-xs'
             : 'bg-[#0d1424] border-slate-800 text-slate-400'
         }`}
       >

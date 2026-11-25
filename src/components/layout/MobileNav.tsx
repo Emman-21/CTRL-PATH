@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { UniversityCrests } from '../shared/UniversityCrests';
 import { useStudent } from '../../context/StudentContext';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export interface MobileNavProps {
   isOpen: boolean;
@@ -38,15 +39,13 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
   const drawerRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
+  useBodyScrollLock(isOpen);
+
   useEffect(() => {
     if (!isOpen) return;
 
     // Remember what had focus so we can restore it when the drawer closes.
     previousFocusRef.current = document.activeElement as HTMLElement | null;
-
-    // Lock background scroll while the drawer is open.
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
 
     // Move initial focus to the drawer's close button.
     const initialTarget = drawerRef.current?.querySelector<HTMLElement>(
@@ -84,7 +83,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
     document.addEventListener('keydown', handleKey);
 
     return () => {
-      document.body.style.overflow = originalOverflow;
       document.removeEventListener('keydown', handleKey);
       if (previousFocusRef.current?.isConnected) {
         previousFocusRef.current.focus();
@@ -109,9 +107,9 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
         role="dialog"
         aria-modal="true"
         aria-label="Main navigation menu"
-        className="relative w-72 max-w-[80vw] bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200"
+        className="relative w-72 max-w-[80vw] bg-[var(--surface)] dark:bg-[#0b1222] h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-left duration-200"
       >
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 pt-[calc(1rem+var(--safe-top))] border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img
               src="/assets/aistudio/894455811_1534282605544392_6561933623517659718_n_7d027482.jpg"
@@ -130,14 +128,14 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+            className="w-11 h-11 -mr-1.5 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             aria-label="Close navigation"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto" aria-label="Primary navigation">
+        <nav className="flex-1 p-3 space-y-2 overflow-y-auto" aria-label="Primary navigation">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
@@ -147,10 +145,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
                 end={item.path === '/'}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                  `min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 font-bold'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      ? 'bg-blue-50 dark:bg-[#111e3b] text-blue-700 dark:text-blue-300 font-bold'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#131d33]'
                   }`
                 }
               >
@@ -169,7 +167,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
                   onClose();
                   navigate('/login');
                 }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 cursor-pointer"
+                className="w-full min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#131d33] cursor-pointer"
               >
                 <LogOut className="w-4 h-4 shrink-0" />
                 <span>Sign out</span>
@@ -178,7 +176,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
               <Link
                 to="/login"
                 onClick={onClose}
-                className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-blue-600 hover:bg-blue-50"
+                className="min-h-11 flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-[#111e3b]"
               >
                 <LogIn className="w-4 h-4 shrink-0" />
                 <span>Sign in</span>
@@ -187,7 +185,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
           </div>
         </nav>
 
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
+        <div className="p-4 pb-[calc(1rem+var(--safe-bottom))] border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
           <UniversityCrests size="sm" gapClassName="gap-1.5" />
           <div className="min-w-0">
             <div className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">

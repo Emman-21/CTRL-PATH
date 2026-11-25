@@ -15,7 +15,7 @@ test('CompareReflectionCard includes dark mode gradient, border, textarea, and b
   );
 
   assert.ok(html.includes('My Reflection: NT'));
-  assert.ok(html.includes('from-white to-slate-50/60'));
+  assert.ok(html.includes('from-[var(--surface)] to-[var(--surface-raised)]'));
   assert.ok(html.includes('dark:from-[#0f172a] dark:to-[#0d1526]'));
   assert.ok(html.includes('dark:border-slate-800!'));
   assert.ok(html.includes('dark:bg-[#0a0f1d]'));

@@ -52,8 +52,8 @@ const TRACK_STYLES: Record<
     barLater: 'bg-violet-600 dark:bg-violet-500',
   },
   SM: {
-    text: 'text-emerald-600 dark:text-emerald-400',
-    barLater: 'bg-emerald-600 dark:bg-emerald-500',
+    text: 'text-emerald-700 dark:text-emerald-400',
+    barLater: 'bg-emerald-700 dark:bg-emerald-500',
   },
 };
 
@@ -303,7 +303,7 @@ export const ResultsShiftViewContent: React.FC<ResultsShiftViewContentProps> = (
                                   height: row.earlierScore === 0 ? '2px' : `${row.earlierScore}%`,
                                 }}
                               >
-                                <span className="absolute bottom-full mb-1 px-0.5 rounded bg-[#ffffff]/90 dark:bg-[#0f172a]/90 text-[10px] sm:text-[11px] font-bold text-slate-600 dark:text-slate-300 tabular-nums whitespace-nowrap pointer-events-none">
+                                <span className="absolute bottom-full mb-1 px-0.5 rounded bg-[var(--surface-90)] dark:bg-[#0f172a]/90 text-[10px] sm:text-[11px] font-bold text-slate-600 dark:text-slate-300 tabular-nums whitespace-nowrap pointer-events-none">
                                   {row.earlierScore}%
                                 </span>
                               </div>
@@ -320,7 +320,7 @@ export const ResultsShiftViewContent: React.FC<ResultsShiftViewContentProps> = (
                                 }}
                               >
                                 <span
-                                  className={`absolute bottom-full mb-1 px-0.5 rounded bg-[#ffffff]/90 dark:bg-[#0f172a]/90 text-[10px] sm:text-[11px] font-extrabold tabular-nums whitespace-nowrap pointer-events-none ${style.text}`}
+                                  className={`absolute bottom-full mb-1 px-0.5 rounded bg-[var(--surface-90)] dark:bg-[#0f172a]/90 text-[10px] sm:text-[11px] font-extrabold tabular-nums whitespace-nowrap pointer-events-none ${style.text}`}
                                 >
                                   {row.laterScore}%
                                 </span>
@@ -476,7 +476,7 @@ export const ResultsShiftViewContent: React.FC<ResultsShiftViewContentProps> = (
                 <button
                   type="button"
                   onClick={() => onSelectAttempt(attempt.id)}
-                  className={`min-h-[36px] px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer ${motionClass} ${focusRingClass} ${
+                  className={`min-h-11 md:min-h-[36px] px-3 md:px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer ${motionClass} ${focusRingClass} ${
                     isActiveView
                       ? 'text-slate-900 dark:text-slate-100 bg-[#f1f5f9] dark:bg-[#1a2744]'
                       : 'text-blue-600 dark:text-blue-400 hover:underline'

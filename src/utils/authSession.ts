@@ -20,6 +20,7 @@ export interface LocalAccountRecord {
 
 export const AUTH_SESSION_KEY = 'ctrl_path_auth_session_v1';
 export const AUTH_ACCOUNTS_KEY = 'ctrl_path_auth_accounts_v1';
+export const AUTH_GUEST_KEY = 'ctrl_path_guest_session_v1';
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 
@@ -196,3 +197,41 @@ export function clearAuthSession(
     // Ignore storage unavailability
   }
 }
+
+export function readGuestSession(session: Storage | undefined): boolean {
+  try {
+    return session?.getItem(AUTH_GUEST_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function saveGuestSession(active: boolean, session: Storage | undefined): void {
+  try {
+    if (active) {
+      session?.setItem(AUTH_GUEST_KEY, 'true');
+    } else {
+      session?.removeItem(AUTH_GUEST_KEY);
+    }
+  } catch {
+    // Ignore storage unavailability
+  }
+}
+
+export function hasPortalAccess(
+  authSession: AuthSession | null,
+  isGuest: boolean,
+  search?: string,
+): boolean {
+  if (authSession || isGuest) return true;
+  if (search) {
+    try {
+      const params = new URLSearchParams(search);
+      if (params.get('autostart') === '1') return true;
+    } catch {
+      // Ignore malformed query string
+    }
+  }
+  return false;
+}
+

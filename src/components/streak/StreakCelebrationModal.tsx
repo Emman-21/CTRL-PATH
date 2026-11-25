@@ -7,6 +7,7 @@ import {
   getCurrentWeekDays,
   loadStreakState,
 } from '../../utils/streakManager';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export interface LuniPoseProps {
   pose?: string;
@@ -19,7 +20,7 @@ export interface LuniPoseProps {
  * LuniPose component: Displays the pixel-art mascot and allows swapping poses easily.
  */
 export const LuniPose: React.FC<LuniPoseProps> = ({
-  size = 72,
+  size = 96,
   className = '',
 }) => {
   return (
@@ -28,9 +29,9 @@ export const LuniPose: React.FC<LuniPoseProps> = ({
       style={{ width: size, height: size }}
     >
       <img
-        src="/assets/aistudio/894455811_1534282605544392_6561933623517659718_n_7d027482.jpg"
-        alt="Luni, the CTRL+PATH mascot"
-        className="w-full h-full object-cover rounded-2xl shadow-sm border border-indigo-200/50 dark:border-indigo-800/50"
+        src="/assets/aistudio/luni_celebration_45aeaff1.png"
+        alt="Luni celebrating your streak"
+        className="w-full h-full object-contain drop-shadow-md"
         style={{ imageRendering: 'pixelated' }}
       />
     </div>
@@ -44,6 +45,8 @@ export const StreakCelebrationModal: React.FC = () => {
   const continueBtnRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const autoDismissTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useBodyScrollLock(isOpen);
 
   // Check prefers-reduced-motion
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -205,7 +208,7 @@ export const StreakCelebrationModal: React.FC = () => {
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-[calc(1rem+var(--safe-top))] pb-[calc(1rem+var(--safe-bottom))] overflow-hidden select-none"
         role="dialog"
         aria-modal="true"
         aria-label={`${detail.streakCount}-day streak celebration`}
@@ -230,17 +233,17 @@ export const StreakCelebrationModal: React.FC = () => {
           animate={reducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
           exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9, y: 15 }}
           transition={{ type: 'spring', damping: 22, stiffness: 300 }}
-          className={`relative w-full max-w-sm rounded-3xl p-6 sm:p-8 flex flex-col items-center text-center shadow-2xl z-10 border overflow-hidden ${
+          className={`relative w-full max-w-sm max-h-[90dvh] rounded-3xl p-6 sm:p-8 flex flex-col items-center text-center shadow-2xl z-10 border overflow-y-auto overflow-x-hidden ${
             detail.isMilestone
-              ? 'bg-linear-to-b from-amber-50 via-white to-orange-50 dark:from-[#131c36] dark:via-[#0e162b] dark:to-[#17142b] border-amber-300 dark:border-amber-500/50 shadow-orange-500/20'
-              : 'bg-white dark:bg-[#0e1526] border-slate-200 dark:border-slate-800 shadow-xl'
+              ? 'bg-linear-to-b from-amber-50 via-[var(--surface)] to-orange-50 dark:from-[#131c36] dark:via-[#0e162b] dark:to-[#17142b] border-amber-300 dark:border-amber-500/50 shadow-orange-500/20'
+              : 'bg-[var(--surface)] dark:bg-[#0e1526] border-[var(--border)] dark:border-slate-800 shadow-xl'
           }`}
         >
           {/* Close X Button */}
           <button
             type="button"
             onClick={handleClose}
-            className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="absolute top-2.5 right-2.5 md:top-4 md:right-4 w-11 h-11 md:w-auto md:h-auto md:p-1.5 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Close streak celebration"
           >
             <X className="w-5 h-5" />
@@ -327,7 +330,7 @@ export const StreakCelebrationModal: React.FC = () => {
                     }
               }
             >
-              <LuniPose size={68} />
+              <LuniPose size={96} />
             </motion.div>
           </div>
 
@@ -355,7 +358,7 @@ export const StreakCelebrationModal: React.FC = () => {
                       wd.isActive
                         ? 'bg-linear-to-br from-amber-400 to-orange-500 text-white shadow-xs'
                         : wd.isToday
-                        ? 'bg-white dark:bg-slate-800 border-2 border-orange-500 text-orange-500'
+                        ? 'bg-[var(--surface)] dark:bg-slate-800 border-2 border-orange-500 text-orange-600 dark:text-orange-400'
                         : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600'
                     }`}
                   >
@@ -376,7 +379,7 @@ export const StreakCelebrationModal: React.FC = () => {
               ref={continueBtnRef}
               type="button"
               onClick={handleClose}
-              className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm py-3 px-6 rounded-2xl transition-all cursor-pointer shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-full min-h-11 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm py-3 px-6 rounded-2xl transition-all cursor-pointer shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Continue
             </button>

@@ -26,6 +26,8 @@ import { NtTrackBadge, BaTrackBadge, SmTrackBadge } from '../shared/PixelArt';
 import { EmbeddedPdfPresentation } from './EmbeddedPdfPresentation';
 import { calculateReaderScrollProgress } from '../../utils/scrollProgress';
 import { getModuleNavSummary } from '../../utils/netAcadLayout';
+import { computeReaderScrollTop, isTypingElement } from '../../utils/keyboardNav';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 interface NetAcadTrackReaderProps {
   track: TrackInfo;
@@ -71,6 +73,8 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
   const { state, completeModule, updatePreferences } = useStudent();
   const isLight = state.preferences.theme === 'light';
   const [searchQuery, setSearchQuery] = useState('');
+
+  useBodyScrollLock(true);
 
   // Active subject passed from Track Explorer subject cards
   const availableSubjects = track.subjects && track.subjects.length > 0 ? track.subjects : [];
@@ -223,18 +227,89 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
     isResettingScrollRef.current = false;
   }, [currentModule?.id, hasEmbeddedPdf, pdfSlidesCount]);
 
-  // Allow Esc key to exit fullscreen presentation view or close mobile modules drawer
+  // Focus the main reading pane on initial mount & module change so keyboard scrolling works right away
   useEffect(() => {
-    if (!isPresentationFullscreen && !isMobileDrawerOpen) return;
+    const pane = contentScrollRef.current;
+    if (!pane) return;
+    // Wait a tick so modal transition doesn't steal focus
+    const timer = window.setTimeout(() => {
+      pane.focus({ preventScroll: true });
+    }, 30);
+    return () => window.clearTimeout(timer);
+  }, [currentModule?.id]);
+
+  // Keyboard navigation & scrolling inside NetAcadTrackReader
+  useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isMobileDrawerOpen) setIsMobileDrawerOpen(false);
-        if (isPresentationFullscreen) setIsPresentationFullscreen(false);
+        e.preventDefault();
+        if (isMobileDrawerOpen) {
+          setIsMobileDrawerOpen(false);
+          return;
+        }
+        if (isPresentationFullscreen) {
+          setIsPresentationFullscreen(false);
+          return;
+        }
+        onClose();
+        return;
+      }
+
+      if (isTypingElement(e.target)) return;
+
+      // Alt+ArrowLeft / Alt+ArrowRight switches modules cleanly
+      if (e.altKey && e.key === 'ArrowLeft') {
+        if (selectedModuleIndex > 0) {
+          e.preventDefault();
+          handleSelectModule(selectedModuleIndex - 1);
+        }
+        return;
+      }
+      if (e.altKey && e.key === 'ArrowRight') {
+        if (selectedModuleIndex < activeModules.length - 1) {
+          e.preventDefault();
+          handleSelectModule(selectedModuleIndex + 1);
+        }
+        return;
+      }
+
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      // Do not hijack Space/Enter on focused buttons/links, and allow Arrow keys inside scrollable pane or non-scroll buttons
+      const targetEl = e.target as HTMLElement | null;
+      const isFocusedButtonOrLink = Boolean(targetEl?.closest?.('button, a[href], summary, [role="button"]'));
+      if ((e.key === ' ' || e.key === 'Spacebar') && isFocusedButtonOrLink) return;
+
+      const pane = contentScrollRef.current;
+      if (!pane) return;
+
+      const nextTop = computeReaderScrollTop({
+        key: e.key,
+        shiftKey: e.shiftKey,
+        scrollTop: pane.scrollTop,
+        scrollHeight: pane.scrollHeight,
+        clientHeight: pane.clientHeight,
+      });
+
+      if (nextTop !== null) {
+        e.preventDefault();
+        pane.scrollTo({
+          top: nextTop,
+          behavior: state.preferences.reducedMotion ? 'auto' : 'smooth',
+        });
       }
     };
+
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isPresentationFullscreen, isMobileDrawerOpen]);
+  }, [
+    isPresentationFullscreen,
+    isMobileDrawerOpen,
+    onClose,
+    selectedModuleIndex,
+    activeModules.length,
+    state.preferences.reducedMotion,
+  ]);
 
   // Intersection Observer to detect which topic is currently in view
   useEffect(() => {
@@ -394,7 +469,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
     <div
       data-reader-theme={isLight ? 'light' : 'dark'}
       className={`fixed inset-0 z-50 flex flex-col overflow-hidden font-sans select-none animate-in fade-in duration-200 ${
-        isLight ? 'bg-slate-100 text-slate-900' : 'bg-[#0a0f1d] text-slate-100'
+        isLight ? 'bg-[var(--bg)] text-[var(--text)]' : 'bg-[#0a0f1d] text-slate-100'
       }`}
     >
       {/* ==================================================================== */}
@@ -402,9 +477,9 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
       {/* ==================================================================== */}
       {!(isPresentationFullscreen && hasEmbeddedPdf) && (
         <header
-          className={`h-14 sm:h-16 px-3 sm:px-6 flex items-center justify-between gap-2 shrink-0 z-20 border-b transition-colors ${
+          className={`h-[calc(3.5rem+var(--safe-top))] md:h-16 pt-[var(--safe-top)] md:pt-0 px-3 sm:px-6 flex items-center justify-between gap-2 shrink-0 z-20 border-b transition-colors ${
             isLight
-              ? 'bg-white border-slate-200'
+              ? 'bg-[var(--surface)] border-[var(--border)]'
               : 'bg-[#070b16] border-slate-800/90'
           }`}
         >
@@ -477,7 +552,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
             <button
               type="button"
               onClick={() => updatePreferences({ theme: isLight ? 'dark' : 'light' })}
-              className={`p-1.5 rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center border ${
+              className={`min-w-11 min-h-11 md:min-w-0 md:min-h-0 p-1.5 rounded-xl transition-colors cursor-pointer inline-flex items-center justify-center border ${
                 isLight
                   ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
                   : 'bg-slate-800/90 hover:bg-slate-700 text-amber-300 border-slate-700'
@@ -497,7 +572,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
               <button
                 type="button"
                 onClick={() => setIsPresentationFullscreen(true)}
-                className={`px-2 sm:px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1.5 text-xs font-bold border ${
+                className={`min-w-11 min-h-11 md:min-w-0 md:min-h-0 justify-center px-2 sm:px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer inline-flex items-center gap-1.5 text-xs font-bold border ${
                   isLight
                     ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
                     : 'bg-slate-800/90 hover:bg-slate-700 text-slate-100 border-slate-700'
@@ -514,7 +589,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className={`p-2 sm:px-3 sm:py-1.5 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold border border-transparent ${
+              className={`min-w-11 min-h-11 md:min-w-0 md:min-h-0 justify-center p-2 sm:px-3 sm:py-1.5 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold border border-transparent ${
                 isLight
                   ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 hover:border-slate-200'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800 hover:border-slate-700'
@@ -547,9 +622,9 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
             data-testid="netacad-mobile-modules-toggle"
             aria-expanded={isMobileDrawerOpen}
             aria-label={`Toggle modules list (${moduleNavSummary.currentNumber} of ${moduleNavSummary.totalCount}, ${currentModule?.status === 'in_preparation' ? 'Pending' : `${currentModuleProgress}% read`})`}
-            className={`relative overflow-hidden flex-1 min-w-0 flex items-center justify-between gap-2 px-3 pt-2 pb-2.5 rounded-xl border text-left transition-colors cursor-pointer ${
+            className={`relative overflow-hidden flex-1 min-w-0 min-h-11 flex items-center justify-between gap-2 px-3 pt-2 pb-2.5 rounded-xl border text-left transition-colors cursor-pointer ${
               isLight
-                ? 'bg-white border-slate-200 hover:bg-slate-100 text-slate-900 shadow-2xs'
+                ? 'bg-[var(--surface)] border-[var(--border)] hover:bg-[var(--surface-raised)] text-[var(--text)] shadow-2xs'
                 : 'bg-slate-900/90 border-slate-700/80 hover:bg-slate-800 text-slate-100'
             }`}
           >
@@ -610,15 +685,15 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
             </span>
           </button>
 
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-2 lg:gap-1 shrink-0">
             <button
               type="button"
               onClick={handlePrevModule}
               disabled={!moduleNavSummary.canGoPrev}
               aria-label="Previous module"
-              className={`p-2 rounded-xl border disabled:opacity-35 disabled:cursor-not-allowed transition-colors cursor-pointer ${
+              className={`min-w-11 min-h-11 lg:min-w-0 lg:min-h-0 flex items-center justify-center p-2 rounded-xl border disabled:opacity-35 disabled:cursor-not-allowed transition-colors cursor-pointer ${
                 isLight
-                  ? 'bg-white border-slate-200 hover:bg-slate-100 text-slate-700'
+                  ? 'bg-[var(--surface)] border-[var(--border)] hover:bg-[var(--surface-raised)] text-[var(--text)]'
                   : 'bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-200'
               }`}
             >
@@ -629,9 +704,9 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
               onClick={handleNextModule}
               disabled={!moduleNavSummary.canGoNext}
               aria-label="Next module"
-              className={`p-2 rounded-xl border disabled:opacity-35 disabled:cursor-not-allowed transition-colors cursor-pointer ${
+              className={`min-w-11 min-h-11 lg:min-w-0 lg:min-h-0 flex items-center justify-center p-2 rounded-xl border disabled:opacity-35 disabled:cursor-not-allowed transition-colors cursor-pointer ${
                 isLight
-                  ? 'bg-white border-slate-200 hover:bg-slate-100 text-slate-700'
+                  ? 'bg-[var(--surface)] border-[var(--border)] hover:bg-[var(--surface-raised)] text-[var(--text)]'
                   : 'bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-200'
               }`}
             >
@@ -666,14 +741,14 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
             isDesktopSidebarOpen ? 'lg:static lg:flex lg:w-80 xl:w-88 lg:shadow-none lg:z-10' : 'lg:hidden'
           } border-r flex-col shrink-0 select-none transition-colors ${
             isLight
-              ? 'bg-white border-slate-200'
+              ? 'bg-[var(--surface)] border-[var(--border)]'
               : 'bg-[#0c1222] border-slate-800/90'
           }`}
         >
           {/* Mobile Drawer Close Header */}
           <div
-            className={`lg:hidden px-3 py-2.5 border-b flex items-center justify-between ${
-              isLight ? 'border-slate-200 bg-white' : 'border-slate-800 bg-[#070b16]'
+            className={`lg:hidden px-3 py-2.5 pt-[calc(0.625rem+var(--safe-top))] border-b flex items-center justify-between ${
+              isLight ? 'border-[var(--border)] bg-[var(--surface)]' : 'border-slate-800 bg-[#070b16]'
             }`}
           >
             <span className={`text-xs font-black uppercase tracking-wider ${trackTheme.categoryText}`}>
@@ -683,7 +758,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
               type="button"
               onClick={() => setIsMobileDrawerOpen(false)}
               aria-label="Close modules list"
-              className={`p-1.5 rounded-lg cursor-pointer ${
+              className={`w-11 h-11 lg:w-auto lg:h-auto lg:p-1.5 flex items-center justify-center rounded-lg cursor-pointer ${
                 isLight ? 'text-slate-600 hover:bg-slate-100' : 'text-slate-300 hover:bg-slate-800'
               }`}
             >
@@ -731,7 +806,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
                 placeholder="Search modules & topics..."
                 className={`w-full rounded-lg pl-8 pr-3 py-1.5 text-xs border focus:outline-none transition-colors ${
                   isLight
-                    ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 focus:border-blue-400 focus:bg-white'
+                    ? 'bg-[var(--surface-raised)] border-[var(--border)] text-[var(--text)] placeholder-slate-400 focus:border-blue-400 focus:bg-[var(--surface)]'
                     : 'bg-slate-900 border-slate-800 text-slate-200 placeholder-slate-500 focus:border-slate-600'
                 }`}
               />
@@ -771,7 +846,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
                         const actualIdx = activeModules.findIndex((m) => m.id === mod.id);
                         handleSelectModule(actualIdx >= 0 ? actualIdx : modIdx);
                       }}
-                      className="w-full text-left p-2.5 flex items-center justify-between gap-2 cursor-pointer group"
+                      className="w-full min-h-11 lg:min-h-0 text-left p-2.5 flex items-center justify-between gap-2 cursor-pointer group"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -867,8 +942,10 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
         <main
           id="reader-main-scroll-pane"
           ref={contentScrollRef}
+          tabIndex={0}
+          aria-label={`${currentModule?.title || track.name} reading area. Use Up and Down arrow keys or Page Up and Page Down to scroll.`}
           onScroll={handleScroll}
-          className={`flex-1 flex flex-col relative select-text transition-colors [overflow-anchor:none] ${
+          className={`flex-1 flex flex-col relative select-text transition-colors [overflow-anchor:none] focus:outline-none ${
             hasEmbeddedPdf && pdfSlidesCount === 0 && !pdfLoadError
               ? 'overflow-y-hidden'
               : 'overflow-y-auto'
@@ -878,9 +955,9 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
           {isPresentationFullscreen && hasEmbeddedPdf && (
             <button
               onClick={() => setIsPresentationFullscreen(false)}
-              className={`fixed top-4 right-5 z-50 px-3.5 py-2 rounded-xl text-xs font-bold border shadow-2xl inline-flex items-center gap-2 cursor-pointer backdrop-blur-sm ${
+              className={`fixed top-[calc(1rem+var(--safe-top))] right-[calc(1.25rem+var(--safe-right))] z-50 min-h-11 md:min-h-0 px-3.5 py-2 rounded-xl text-xs font-bold border shadow-2xl inline-flex items-center gap-2 cursor-pointer backdrop-blur-sm ${
                 isLight
-                  ? 'bg-white/95 hover:bg-slate-50 text-slate-900 border-slate-200'
+                  ? 'bg-[var(--surface-95)] hover:bg-[var(--surface-raised)] text-[var(--text)] border-[var(--border)]'
                   : 'bg-slate-900/95 hover:bg-slate-800 text-white border-slate-700'
               }`}
               title="Exit Full Screen (Esc)"
@@ -894,7 +971,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
           {!(isPresentationFullscreen && hasEmbeddedPdf) && (
           <div
             className={`relative w-full min-h-[144px] sm:min-h-[180px] flex items-end overflow-hidden shrink-0 border-b ${
-              isLight ? 'border-slate-200 bg-white' : 'border-slate-800'
+              isLight ? 'border-[var(--border)] bg-[var(--surface)]' : 'border-slate-800'
             }`}
           >
             <img
@@ -907,14 +984,14 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
             <div
               className={`absolute inset-0 bg-gradient-to-t ${
                 isLight
-                  ? 'from-slate-100/95 via-white/40 to-transparent'
+                  ? 'from-[var(--bg)]/95 via-[var(--surface)]/40 to-transparent'
                   : 'from-[#0a0f1d] via-[#0a0f1d]/75 to-transparent'
               }`}
             />
             <div
               className={`absolute inset-0 bg-gradient-to-r ${
                 isLight
-                  ? 'from-white/95 via-white/80 via-55% to-transparent'
+                  ? 'from-[var(--surface-95)] via-[var(--surface-80)] via-55% to-transparent'
                   : 'from-[#0a0f1d]/92 via-[#0a0f1d]/55 to-transparent'
               }`}
             />
@@ -979,7 +1056,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
             {!hasEmbeddedPdf && (
             <section
               className={`p-6 rounded-2xl border shadow-md space-y-4 ${
-                isLight ? 'bg-white border-slate-200' : 'bg-[#0f172a] border-slate-800'
+                isLight ? 'bg-[var(--surface)] border-[var(--border)]' : 'bg-[#0f172a] border-slate-800'
               }`}
             >
               <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-wider ${trackTheme.accentText}`}>
@@ -1024,7 +1101,16 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
                           return (
                             <tr
                               key={top.id || idx}
+                              tabIndex={0}
+                              role="button"
+                              aria-label={`Jump to topic ${top.numberPrefix ? `${top.numberPrefix} ` : ''}${top.title}`}
                               onClick={() => handleScrollToTopic(top.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  handleScrollToTopic(top.id);
+                                }
+                              }}
                               className={`cursor-pointer transition-colors ${
                                 isCurrent
                                   ? trackTheme.tableRowActive
@@ -1107,7 +1193,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
                         <div
                           key={secIdx}
                           className={`p-6 rounded-2xl border shadow-sm space-y-4 ${
-                            isLight ? 'bg-white border-slate-200' : 'bg-[#0d1424] border-slate-800'
+                            isLight ? 'bg-[var(--surface)] border-[var(--border)]' : 'bg-[#0d1424] border-slate-800'
                           }`}
                         >
                           {/* Slide Title */}
@@ -1252,7 +1338,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
                   ) : (
                     <div
                       className={`p-6 rounded-2xl border space-y-3 ${
-                        isLight ? 'bg-white border-slate-200' : 'bg-[#0d1424] border-slate-800'
+                        isLight ? 'bg-[var(--surface)] border-[var(--border)]' : 'bg-[#0d1424] border-slate-800'
                       }`}
                     >
                       <p className={`text-xs sm:text-sm leading-relaxed ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
@@ -1273,7 +1359,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
             <div
               className={`p-6 sm:p-8 rounded-2xl border space-y-5 shadow-xl ${
                 isLight
-                  ? 'bg-white border-slate-200'
+                  ? 'bg-[var(--surface)] border-[var(--border)]'
                   : 'bg-gradient-to-br from-[#0c1322] to-[#111a30] border-slate-800'
               }`}
             >
@@ -1344,7 +1430,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
                     type="button"
                     onClick={handlePrevModule}
                     disabled={selectedModuleIndex === 0}
-                    className={`flex-1 sm:flex-initial justify-center px-3.5 py-2.5 sm:py-2 rounded-xl border disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+                    className={`flex-1 sm:flex-initial min-h-11 sm:min-h-0 justify-center px-3.5 py-2.5 sm:py-2 rounded-xl border disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
                       isLight
                         ? 'border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700'
                         : 'border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-300'
@@ -1358,7 +1444,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
                     type="button"
                     onClick={handleNextModule}
                     disabled={selectedModuleIndex === activeModules.length - 1}
-                    className={`flex-1 sm:flex-initial justify-center px-4 py-2.5 sm:py-2 rounded-xl ${trackTheme.completeBtn} disabled:opacity-40 disabled:cursor-not-allowed text-xs font-extrabold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-md`}
+                    className={`flex-1 sm:flex-initial min-h-11 sm:min-h-0 justify-center px-4 py-2.5 sm:py-2 rounded-xl ${trackTheme.completeBtn} disabled:opacity-40 disabled:cursor-not-allowed text-xs font-extrabold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-md`}
                   >
                     <span>Next Module</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1370,7 +1456,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
               <div
                 className={`p-3.5 sm:p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                   isLight
-                    ? 'bg-white border-slate-200 shadow-xs'
+                    ? 'bg-[var(--surface)] border-[var(--border)] shadow-xs'
                     : 'bg-[#0c1322] border-slate-800'
                 }`}
               >
@@ -1388,7 +1474,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
                     type="button"
                     onClick={handlePrevModule}
                     disabled={selectedModuleIndex === 0}
-                    className={`flex-1 sm:flex-initial justify-center px-3 py-2 sm:py-1.5 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
+                    className={`flex-1 sm:flex-initial min-h-11 sm:min-h-0 justify-center px-3 py-2 sm:py-1.5 rounded-lg border disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
                       isLight
                         ? 'border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700'
                         : 'border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-300'
@@ -1402,7 +1488,7 @@ export const NetAcadTrackReader: React.FC<NetAcadTrackReaderProps> = ({
                     type="button"
                     onClick={handleNextModule}
                     disabled={selectedModuleIndex === activeModules.length - 1}
-                    className={`flex-1 sm:flex-initial justify-center px-3.5 py-2 sm:py-1.5 rounded-lg ${trackTheme.completeBtn} disabled:opacity-40 disabled:cursor-not-allowed text-xs font-extrabold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-md`}
+                    className={`flex-1 sm:flex-initial min-h-11 sm:min-h-0 justify-center px-3.5 py-2 sm:py-1.5 rounded-lg ${trackTheme.completeBtn} disabled:opacity-40 disabled:cursor-not-allowed text-xs font-extrabold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-md`}
                   >
                     <span>Next Module</span>
                     <ArrowRight className="w-3.5 h-3.5" />

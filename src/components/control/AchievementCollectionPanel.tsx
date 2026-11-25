@@ -119,8 +119,8 @@ export function AchievementCollectionPanel() {
             </span>
             <h2 className="collection-shelf-heading">Recently Achieved Gemstones</h2>
           </div>
-          <p className="collection-shelf-total" aria-label={`${collection.unlocked} of 20 achievements unlocked`}>
-            <strong>{collection.unlocked} / 20</strong>
+          <p className="collection-shelf-total" aria-label={`${collection.unlocked} of ${GEMSTONE_ASSETS.length} achievements unlocked`}>
+            <strong>{collection.unlocked} / {GEMSTONE_ASSETS.length}</strong>
             <span>collected ({collection.percent}%)</span>
           </p>
         </div>

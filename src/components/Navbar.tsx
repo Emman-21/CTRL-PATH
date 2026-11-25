@@ -19,7 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentFolderId,
 }) => {
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--surface-95)] backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Brand */}
         <div className="flex items-center gap-3">
@@ -84,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={onSignOut}
-                className="p-2 sm:px-3 sm:py-1.5 rounded-lg text-slate-600 hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+                className="min-w-11 min-h-11 md:min-w-0 md:min-h-0 justify-center p-2 sm:px-3 sm:py-1.5 rounded-lg text-slate-600 hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 transition-colors flex items-center gap-1.5 text-xs font-medium cursor-pointer"
                 title="Sign out"
               >
                 <LogOut className="w-4 h-4" />

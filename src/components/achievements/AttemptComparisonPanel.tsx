@@ -19,7 +19,7 @@ export function AttemptComparisonPanel() {
     <p className="text-sm text-slate-600 dark:text-slate-300">Reflect on what changed. These scores are learning signals; your pathway is still your choice.</p>
     <div className="grid sm:grid-cols-2 gap-4">{[first, second].map((value, index) => <label key={index} className="text-sm font-bold text-slate-700 dark:text-slate-300">
       {index === 0 ? 'Earlier result' : 'Result to compare'}
-      <select className="block w-full mt-2 border border-slate-300 dark:border-slate-700 rounded-xl p-3 bg-white dark:bg-[#0a0f1d]" value={value} onChange={e => { (index === 0 ? setFirst : setSecond)(e.target.value); setReviewed(false); }}>
+      <select className="block w-full mt-2 border border-[var(--border)] dark:border-slate-700 rounded-xl p-3 bg-[var(--surface)] dark:bg-[#0a0f1d]" value={value} onChange={e => { (index === 0 ? setFirst : setSecond)(e.target.value); setReviewed(false); }}>
         {attempts.map(attempt => <option key={attempt.id} value={attempt.id}>Attempt {attempt.attemptNumber} — {attempt.date}</option>)}
       </select></label>)}</div>
     {eligible && a && b ? <>

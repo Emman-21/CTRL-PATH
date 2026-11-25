@@ -7,6 +7,7 @@ import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { MobileNav } from './MobileNav';
 import { LuniAssistantWidget } from '../luni/LuniAssistantWidget';
+import { LuniStateProvider } from '../../context/LuniStateContext';
 import { scrollViewportToTop } from '../../utils/scrollTop';
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
@@ -63,45 +64,54 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   }, [location.pathname, location.search, location.hash]);
 
   const isQuizAnswering = location.pathname === '/quiz' && quizAnsweringActive;
-  const isResultsRoute = location.pathname === '/results';
 
   const isDark = state.preferences.theme === 'dark';
 
   return (
-    <div
-      data-reduced-motion={state.preferences.reducedMotion}
-      className={`min-h-screen ${
-        isDark ? 'bg-[#0a0f1d] text-slate-100' : 'bg-transparent text-[var(--text)]'
-      } flex flex-col md:flex-row antialiased transition-colors duration-200`}
-    >
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block">
-        <Sidebar />
-      </div>
-
-      {/* Mobile Drawer */}
-      <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
-
-      {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col min-w-0 ${isQuizAnswering ? 'h-dvh max-h-dvh overflow-hidden' : ''}`}>
-        <Topbar onToggleMobileNav={() => setMobileNavOpen(true)} />
-        <main
-          className={
-            isQuizAnswering
-              ? 'flex-none h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)] overflow-hidden px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 max-w-7xl w-full mx-auto flex flex-col'
-              : `flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto ${isResultsRoute ? 'pb-4' : 'pb-24'}`
-          }
+    <LuniStateProvider>
+      <div
+        data-reduced-motion={state.preferences.reducedMotion}
+        className={`min-h-dvh ${
+          isDark ? 'bg-[#0a0f1d] text-slate-100' : 'bg-transparent text-[var(--text)]'
+        } flex flex-col md:flex-row antialiased transition-colors duration-200`}
+      >
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:px-4 focus:py-2.5 focus:rounded-xl focus:bg-blue-600 focus:text-white focus:text-xs focus:font-bold focus:shadow-lg focus:outline-2 focus:outline-offset-2 focus:outline-white"
         >
-          {storageWarning && <p role="status" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">{storageWarning}</p>}
-          {children}
-        </main>
-        {isResultsRoute && <LuniAssistantWidget docked />}
-      </div>
+          Skip to main content
+        </a>
 
-      {/* Floating Luni Companion Widget & Modals */}
-      {!isResultsRoute && <LuniAssistantWidget />}
-      <AchievementUnlockCelebration />
-      <StreakCelebrationModal />
-    </div>
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block">
+          <Sidebar />
+        </div>
+
+        {/* Mobile Drawer */}
+        <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
+
+        {/* Main Content Area */}
+        <div className={`flex-1 flex flex-col min-w-0 ${isQuizAnswering ? 'h-dvh max-h-dvh overflow-hidden' : ''}`}>
+          <Topbar onToggleMobileNav={() => setMobileNavOpen(true)} />
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className={
+              isQuizAnswering
+                ? 'flex-none h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)] overflow-hidden px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 max-w-7xl w-full mx-auto flex flex-col focus:outline-none'
+                : 'flex-1 p-4 sm:p-6 lg:p-8 pb-[calc(6.5rem+var(--safe-bottom)+var(--bottom-bar-h,0px))] md:pb-24 max-w-7xl w-full mx-auto focus:outline-none'
+            }
+          >
+            {storageWarning && <p role="status" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">{storageWarning}</p>}
+            {children}
+          </main>
+        </div>
+
+        {/* Floating Luni Companion Widget & Modals */}
+        <LuniAssistantWidget />
+        <AchievementUnlockCelebration />
+        <StreakCelebrationModal />
+      </div>
+    </LuniStateProvider>
   );
 };

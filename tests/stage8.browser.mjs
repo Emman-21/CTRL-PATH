@@ -41,9 +41,9 @@ try {
   await page.getByLabel('Display name',{exact:true}).fill(longName);await page.getByLabel('Program (optional)',{exact:true}).fill('BS Information Technology');
   await page.getByLabel('Section (optional)',{exact:true}).fill('First year section');
   await page.getByLabel('Short biography (optional)',{exact:true}).fill('Private interests saved in this browser.');
-  await page.getByRole('radio',{name:'Your initials'}).check();await page.getByRole('button',{name:'Save profile'}).click();
+  await page.getByRole('radio',{name:'Sleepy Luni'}).check();await page.getByRole('button',{name:'Save profile'}).click();
   await page.getByRole('button',{name:'Edit profile',exact:true}).waitFor();await page.reload();
-  assert.equal((await saved()).name,longName);assert.equal((await saved()).avatarStyle,'initials');
+  assert.equal((await saved()).name,longName);assert.equal((await saved()).avatarStyle,'sleepy-luni');
   assert.equal((await saved()).achievementRecords.length,0);
   check('Required profile validation, optional fields, avatar, save/reload and no accidental achievement awards');
 

@@ -24,13 +24,15 @@ export const QuizQuestionRenderer: React.FC<QuizQuestionRendererProps> = ({
     <div className="space-y-4">
       {/* Question Header & Prompt */}
       <div className="flex items-center justify-between gap-5">
-        <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+        <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
           {question.prompt}
         </h3>
         <div className="shrink-0 hidden sm:flex items-center justify-center p-2.5">
           <LuniCharacter
-            state="thinking"
-            size={56}
+            state="curious"
+            pose="curious"
+            motionOverride="float"
+            size={60}
             animate
             showParticles={false}
             hoverGlow={false}

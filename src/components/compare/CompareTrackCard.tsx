@@ -34,14 +34,14 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
   trackScore,
 }) => {
   const borderTheme = {
-    NT: 'border-blue-200 hover:border-blue-300',
-    BA: 'border-violet-200 hover:border-violet-300',
-    SM: 'border-emerald-200 hover:border-emerald-300',
+    NT: 'border-blue-200 dark:border-blue-900/70 hover:border-blue-300 dark:hover:border-blue-700',
+    BA: 'border-violet-200 dark:border-purple-900/70 hover:border-violet-300 dark:hover:border-purple-700',
+    SM: 'border-emerald-200 dark:border-emerald-900/70 hover:border-emerald-300 dark:hover:border-emerald-700',
   };
 
   return (
     <Card className={`flex flex-col space-y-6 border-2 transition-all ${borderTheme[code]}`}>
-      <div className="flex items-start justify-between pb-4 border-b border-slate-100">
+      <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-3">
           {code === 'NT' ? (
             <NtTrackBadge size={48} className="shrink-0 rounded-2xl shadow-xs" />
@@ -51,8 +51,8 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
             <SmTrackBadge size={48} className="shrink-0 rounded-2xl shadow-xs" />
           )}
           <div>
-            <h3 className="font-black text-slate-900 text-lg leading-tight">{track.name}</h3>
-            <p className="text-xs text-slate-500 mt-0.5">{track.tagline}</p>
+            <h3 className="font-black text-slate-900 dark:text-slate-100 text-lg leading-tight">{track.name}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{track.tagline}</p>
           </div>
         </div>
 
@@ -84,13 +84,13 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
         </div>
       </div>
 
-      <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+      <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0b1222]/90 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
         <div className="flex items-center justify-between text-xs font-bold">
-          <span className="text-slate-600 flex items-center gap-1.5">
-            <Trophy className="w-3.5 h-3.5 text-amber-500" />
+          <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+            <Trophy className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
             <span>Your Quiz Alignment:</span>
           </span>
-          <span className="font-black text-slate-900">
+          <span className="font-black text-slate-900 dark:text-slate-100">
             {trackScore !== null ? `${trackScore}%` : 'Not Taken'}
           </span>
         </div>
@@ -104,7 +104,7 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
         ) : (
           <Link
             to="/quiz"
-            className="text-[11px] font-bold text-blue-600 hover:underline block pt-1"
+            className="touch-target-44 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline block pt-1"
           >
             Take quiz to measure alignment →
           </Link>
@@ -113,14 +113,14 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
 
       <div>
         <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center gap-1.5">
-          <BookOpen className="w-3.5 h-3.5 text-slate-500" />
+          <BookOpen className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
           <span>Key Curriculum Subjects</span>
         </h4>
         <div className="flex flex-wrap gap-1.5">
           {track.keySubjects.map((subj, idx) => (
             <span
               key={idx}
-              className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200/60"
+              className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-[#131d33] text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200/60 dark:border-slate-700/80"
             >
               {subj}
             </span>
@@ -130,7 +130,7 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
 
       <div>
         <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center gap-1.5">
-          <Wrench className="w-3.5 h-3.5 text-slate-500" />
+          <Wrench className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
           <span>Technical Skills & Tools</span>
         </h4>
         <div className="flex flex-wrap gap-1.5">
@@ -140,7 +140,7 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
             .map((skill, idx) => (
               <span
                 key={idx}
-                className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-800 text-[11px] font-medium shadow-2xs"
+                className="px-2.5 py-1 rounded-md bg-[var(--surface)] dark:bg-[#131d33] border border-[var(--border)] dark:border-slate-700/80 text-[var(--text)] dark:text-slate-200 text-[11px] font-medium shadow-2xs"
               >
                 {skill}
               </span>
@@ -150,18 +150,18 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
 
       <div>
         <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center gap-1.5">
-          <Layers className="w-3.5 h-3.5 text-slate-500" />
+          <Layers className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
           <span>Real-World Hands-on Project</span>
         </h4>
         {track.realWorldApplications[0] && (
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-1.5">
-            <div className="font-extrabold text-slate-900">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#0b1222]/85 border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-1.5">
+            <div className="font-extrabold text-slate-900 dark:text-slate-100">
               {track.realWorldApplications[0].title}
             </div>
-            <p className="text-slate-600 text-[11px] leading-relaxed">
+            <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
               {track.realWorldApplications[0].scenario}
             </p>
-            <div className="text-[10px] text-slate-500 font-semibold pt-1 border-t border-slate-200/60">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold pt-1 border-t border-slate-200/60 dark:border-slate-700/80">
               Impact: {track.realWorldApplications[0].impact}
             </div>
           </div>
@@ -170,17 +170,17 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
 
       <div>
         <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center gap-1.5">
-          <Briefcase className="w-3.5 h-3.5 text-slate-500" />
+          <Briefcase className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
           <span>Sample Career Pathways</span>
         </h4>
         <div className="space-y-2">
           {track.possibleCareers.slice(0, 3).map((job, idx) => (
             <div
               key={idx}
-              className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 text-xs flex flex-col justify-between"
+              className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0b1222]/85 border border-slate-200/60 dark:border-slate-700/80 text-xs flex flex-col justify-between"
             >
-              <div className="font-bold text-slate-900">{job.title}</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">{job.description}</div>
+              <div className="font-bold text-slate-900 dark:text-slate-100">{job.title}</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{job.description}</div>
             </div>
           ))}
         </div>
@@ -188,27 +188,27 @@ export const CompareTrackCard: React.FC<CompareTrackCardProps> = ({
 
       <div>
         <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
-          <Users className="w-3.5 h-3.5 text-slate-500" />
+          <Users className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
           <span>Work Environment & Dynamics</span>
         </h4>
-        <div className="space-y-1.5 text-xs text-slate-600">
+        <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
           {track.workStyle.map((style, idx) => (
             <div key={idx} className="flex items-start gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mt-1.5" />
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 shrink-0 mt-1.5" />
               <span className="leading-snug">{style}</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="pt-2 border-t border-slate-100">
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
         <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-2.5">
           Best Fit For Students Who...
         </h4>
         <div className="space-y-2">
           {track.bestFitTraits.slice(0, 3).map((trait, idx) => (
-            <div key={idx} className="flex items-start gap-2 text-xs text-slate-700">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+            <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-200">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
               <span className="leading-snug">{trait}</span>
             </div>
           ))}

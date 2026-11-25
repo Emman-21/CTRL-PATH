@@ -9,6 +9,8 @@ import {
   isCompareTopicId,
 } from '../src/data/compareTopics';
 import { CompareMatrixBox } from '../src/components/compare/CompareMatrixBox';
+import { QuizLevelCompletion } from '../src/components/quiz/QuizLevelCompletion';
+import { StudentProvider } from '../src/context/StudentContext';
 import { TRACKS_DATA } from '../src/data/tracks';
 
 test('COMPARE_TOPICS maintains required order and pure keyboard/topic helpers work across boundaries', () => {
@@ -232,3 +234,75 @@ test('CompareMatrixBox surfaces rich info across curriculum, skills, projects, c
   assert.ok(bestFitHtml.includes(TRACKS_DATA.BA.bestFitTraits[3]));
   assert.ok(bestFitHtml.includes(TRACKS_DATA.SM.bestFitTraits[3]));
 });
+
+test('CompareMatrixBox and QuizLevelCompletion emit explicit celestial dark surfaces with no grey neutral backgrounds', () => {
+  const topics: Array<'subjects' | 'skills' | 'project' | 'careers' | 'workStyle'> = [
+    'subjects',
+    'skills',
+    'project',
+    'careers',
+    'workStyle',
+  ];
+
+  for (const topic of topics) {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <CompareMatrixBox
+          selectedTracks={['NT', 'BA', 'SM']}
+          selectedTopic={topic}
+          onSelectTopic={() => {}}
+          getTrackScore={() => 80}
+        />
+      </MemoryRouter>,
+    );
+    assert.ok(
+      html.includes('dark:bg-[#0b1222]/85'),
+      `Topic "${topic}" should include dark:bg-[#0b1222]/85 inner card surface`,
+    );
+    assert.ok(
+      !html.includes('bg-neutral-'),
+      `Topic "${topic}" should not emit neutral grey backgrounds`,
+    );
+    if (topic === 'skills' || topic === 'subjects' || topic === 'careers') {
+      assert.ok(
+        html.includes('dark:bg-[#131d33]'),
+        `Topic "${topic}" should include dark:bg-[#131d33] pills/badges`,
+      );
+    }
+    if (topic === 'project') {
+      assert.ok(html.includes('Additional Applied Scenarios'));
+      const scenariosIdx = html.indexOf('Additional Applied Scenarios');
+      const cardChunk = html.slice(Math.max(0, scenariosIdx - 220), scenariosIdx);
+      assert.ok(cardChunk.includes('dark:bg-[#0b1222]/85'));
+    }
+  }
+
+  const prevStorage = (globalThis as { localStorage?: Storage }).localStorage;
+  const store = new Map<string, string>();
+  (globalThis as { localStorage?: unknown }).localStorage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => { store.set(k, v); },
+    removeItem: (k: string) => { store.delete(k); },
+    clear: () => { store.clear(); },
+  };
+  let levelHtml = '';
+  try {
+    levelHtml = renderToStaticMarkup(
+      <MemoryRouter>
+        <StudentProvider>
+          <QuizLevelCompletion completedLevel={2} onContinue={() => {}} />
+        </StudentProvider>
+      </MemoryRouter>,
+    );
+  } finally {
+    if (prevStorage === undefined) {
+      delete (globalThis as { localStorage?: unknown }).localStorage;
+    } else {
+      (globalThis as { localStorage?: Storage }).localStorage = prevStorage;
+    }
+  }
+  assert.ok(!levelHtml.includes('bg-neutral-700'));
+  assert.ok(levelHtml.includes('dark:bg-[#172554]'));
+  assert.ok(levelHtml.includes('dark:bg-[#0b1222]/85'));
+});
+

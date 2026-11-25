@@ -53,7 +53,7 @@ export const FolderBar: React.FC<FolderBarProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs mb-6 space-y-4">
+    <div className="bg-[var(--surface)] dark:bg-[#0f172a] rounded-2xl border border-[var(--border)] dark:border-slate-800 p-4 sm:p-5 shadow-xs mb-6 space-y-4">
       {/* Top row: Folder URL/ID input */}
       <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2.5">
         <div className="relative flex-1">
@@ -65,7 +65,7 @@ export const FolderBar: React.FC<FolderBarProps> = ({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Paste Google Drive folder URL or ID..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-mono"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-raised)] text-[var(--text)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-[var(--surface)] transition-all font-mono"
           />
         </div>
 
@@ -125,13 +125,13 @@ export const FolderBar: React.FC<FolderBarProps> = ({
           </div>
 
           {/* View toggle */}
-          <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200/60">
+          <div className="flex items-center gap-2 md:gap-0 bg-slate-100 rounded-lg p-0.5 border border-slate-200/60">
             <button
               type="button"
               onClick={() => onViewModeChange('grid')}
-              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+              className={`min-w-11 min-h-11 md:min-w-0 md:min-h-0 flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer ${
                 viewMode === 'grid'
-                  ? 'bg-white text-blue-600 shadow-xs'
+                  ? 'bg-[var(--surface)] dark:bg-[#0f172a] text-blue-600 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
               title="Grid view"
@@ -141,9 +141,9 @@ export const FolderBar: React.FC<FolderBarProps> = ({
             <button
               type="button"
               onClick={() => onViewModeChange('table')}
-              className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+              className={`min-w-11 min-h-11 md:min-w-0 md:min-h-0 flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white text-blue-600 shadow-xs'
+                  ? 'bg-[var(--surface)] dark:bg-[#0f172a] text-blue-600 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
               title="List view"
@@ -157,7 +157,7 @@ export const FolderBar: React.FC<FolderBarProps> = ({
             type="button"
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer disabled:opacity-50"
+            className="min-w-11 min-h-11 md:min-w-0 md:min-h-0 flex items-center justify-center p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer disabled:opacity-50"
             title="Refresh folder contents"
           >
             <RotateCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />

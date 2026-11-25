@@ -22,19 +22,19 @@ export const DashboardQuizProgress: React.FC<DashboardQuizProgressProps> = ({
 }) => (
   <Card className="flex flex-col justify-between p-6">
     <div>
-      <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-        <div className="flex items-center gap-2 text-slate-900 font-black text-sm">
-          <BookOpen className="w-4 h-4 text-blue-600" />
+      <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100 font-black text-sm">
+          <BookOpen className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           <span>Current Quiz Progress</span>
         </div>
-        <Link to="/quiz" className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1">
+        <Link to="/quiz" className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1">
           <span>Continue where you left off</span>
           <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
       <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 flex items-start gap-4">
-        <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#0f172a] border border-blue-200 dark:border-blue-800/60 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-lg shadow-xs shrink-0">
+        <div className="w-12 h-12 rounded-xl bg-[var(--surface)] dark:bg-[#0f172a] border border-blue-200 dark:border-blue-800/60 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-lg shadow-xs shrink-0">
           <FileQuestion className="w-6 h-6 text-blue-600 dark:text-blue-400" />
         </div>
 

@@ -12,9 +12,11 @@ import {
   Users,
 } from 'lucide-react';
 import { useStudent } from '../../context/StudentContext';
+import { GEMSTONE_ASSETS } from '../../assets/manifest';
 import { TRACKS_DATA } from '../../data/tracks';
 import type { TrackCode } from '../../types';
 import { profileValues, validateProfile, PROFILE_LIMITS, studentProgress, type ProfileValues } from '../../utils/studentControls';
+import { AVATAR_OPTIONS } from '../../utils/avatarOptions';
 import { ControlCard, StudentAvatar, DiscardDialog } from './ControlShared';
 import { AchievementCollectionBoard } from './AchievementCollectionPanel';
 import { ProgressBar } from '../shared/ProgressBar';
@@ -23,6 +25,11 @@ import {
   BaTrackBadge,
   SmTrackBadge,
 } from '../shared/PixelArt';
+import { getEffectiveStreak, loadStreakState } from '../../utils/streakManager';
+import {
+  ProfileStreakHeatmapBox,
+  ProfileStreakSummary,
+} from '../streak/ProfileStreakWidget';
 
 export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void }) {
   const { state, updateProfile, authSession, signOutSession } = useStudent();
@@ -32,6 +39,11 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileValues, string>>>({});
   const [message, setMessage] = useState('');
   const [discard, setDiscard] = useState(false);
+  const [showStreakBox, setShowStreakBox] = useState(false);
+  const [streakSnapshot, setStreakSnapshot] = useState(() => ({
+    ...getEffectiveStreak(),
+    activeDates: loadStreakState().activeDates,
+  }));
   const dirty = editing && JSON.stringify(draft) !== JSON.stringify(profileValues(state));
 
   useEffect(() => {
@@ -39,6 +51,23 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
   }, [dirty, onDirty]);
 
   useEffect(() => () => onDirty(false), [onDirty]);
+
+  useEffect(() => {
+    const syncStreak = () => {
+      setStreakSnapshot({
+        ...getEffectiveStreak(),
+        activeDates: loadStreakState().activeDates,
+      });
+    };
+    window.addEventListener('ctrl_streak_updated', syncStreak);
+    window.addEventListener('ctrl_streak_celebrate', syncStreak);
+    window.addEventListener('storage', syncStreak);
+    return () => {
+      window.removeEventListener('ctrl_streak_updated', syncStreak);
+      window.removeEventListener('ctrl_streak_celebrate', syncStreak);
+      window.removeEventListener('storage', syncStreak);
+    };
+  }, []);
 
   const cancel = () => {
     setEditing(false);
@@ -65,60 +94,68 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
         <div className="control-profile-sections">
           {/* Identity Banner */}
           <div className="control-profile-banner">
-            <div className="control-profile">
-              <StudentAvatar name={state.name} style={state.avatarStyle} />
-              <div className="control-profile-meta">
-                <h3 className="control-profile-name">{state.name || 'Set up your profile'}</h3>
-                {(state.program || state.yearLevel || formattedSection) && (
-                  <div className="control-profile-chips">
-                    {state.program && (
-                      <span className="control-profile-chip">
-                        <GraduationCap size={14} aria-hidden="true" />
-                        <span>{state.program}</span>
-                      </span>
-                    )}
-                    {state.yearLevel && (
-                      <span className="control-profile-chip">
-                        <Calendar size={14} aria-hidden="true" />
-                        <span>{state.yearLevel}</span>
-                      </span>
-                    )}
-                    {formattedSection && (
-                      <span className="control-profile-chip">
-                        <Users size={14} aria-hidden="true" />
-                        <span>{formattedSection}</span>
-                      </span>
-                    )}
+            <div className="control-profile-banner-top">
+              <div className="control-profile">
+                <StudentAvatar name={state.name} style={state.avatarStyle} />
+                <div className="control-profile-meta">
+                  <h3 className="control-profile-name">{state.name || 'Set up your profile'}</h3>
+                  {(state.program || state.yearLevel || formattedSection) && (
+                    <div className="control-profile-chips">
+                      {state.program && (
+                        <span className="control-profile-chip">
+                          <GraduationCap size={14} aria-hidden="true" />
+                          <span>{state.program}</span>
+                        </span>
+                      )}
+                      {state.yearLevel && (
+                        <span className="control-profile-chip">
+                          <Calendar size={14} aria-hidden="true" />
+                          <span>{state.yearLevel}</span>
+                        </span>
+                      )}
+                      {formattedSection && (
+                        <span className="control-profile-chip">
+                          <Users size={14} aria-hidden="true" />
+                          <span>{formattedSection}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div className="control-profile-auth-row">
+                    <span className="control-profile-chip is-auth">
+                      {authSession ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            fill="#4285F4"
+                            d="M22.5 12.3c0-.8-.1-1.5-.2-2.2H12v4.3h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8.1z"
+                          />
+                          <path
+                            fill="#34A853"
+                            d="M12 23c3 0 5.4-1 7.2-2.7l-3.5-2.7c-1 .7-2.2 1-3.7 1-2.8 0-5.2-1.9-6-4.5H2.4v2.8A11 11 0 0 0 12 23z"
+                          />
+                          <path
+                            fill="#FBBC05"
+                            d="M6 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2.4a11 11 0 0 0 0 9.8z"
+                          />
+                          <path
+                            fill="#EA4335"
+                            d="M12 5.4c1.6 0 3 .6 4.1 1.6l3.1-3.1A11 11 0 0 0 2.4 7.1L6 9.9c.8-2.6 3.2-4.5 6-4.5z"
+                          />
+                        </svg>
+                      ) : (
+                        <ShieldCheck size={14} aria-hidden="true" />
+                      )}
+                      <span>{authSession ? `Signed in: ${authSession.email}` : 'Local profile'}</span>
+                    </span>
                   </div>
-                )}
-                <div className="control-profile-auth-row">
-                  <span className="control-profile-chip is-auth">
-                    {authSession ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-                        <path
-                          fill="#4285F4"
-                          d="M22.5 12.3c0-.8-.1-1.5-.2-2.2H12v4.3h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8.1z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 23c3 0 5.4-1 7.2-2.7l-3.5-2.7c-1 .7-2.2 1-3.7 1-2.8 0-5.2-1.9-6-4.5H2.4v2.8A11 11 0 0 0 12 23z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M6 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2.4a11 11 0 0 0 0 9.8z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 5.4c1.6 0 3 .6 4.1 1.6l3.1-3.1A11 11 0 0 0 2.4 7.1L6 9.9c.8-2.6 3.2-4.5 6-4.5z"
-                        />
-                      </svg>
-                    ) : (
-                      <ShieldCheck size={14} aria-hidden="true" />
-                    )}
-                    <span>{authSession ? `Signed in: ${authSession.email}` : 'Local profile'}</span>
-                  </span>
                 </div>
               </div>
+
+              <ProfileStreakSummary
+                streakCount={streakSnapshot.streakCount}
+                isExpanded={showStreakBox}
+                onToggle={() => setShowStreakBox((prev) => !prev)}
+              />
             </div>
 
             {state.biography && <p className="community-prose control-profile-bio">{state.biography}</p>}
@@ -157,6 +194,14 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
                 </Link>
               )}
             </div>
+
+            {showStreakBox && (
+              <ProfileStreakHeatmapBox
+                activeDates={streakSnapshot.activeDates}
+                streakCount={streakSnapshot.streakCount}
+                isActiveToday={streakSnapshot.isActiveToday}
+              />
+            )}
           </div>
 
           {/* Subsection 1: Achievement Collection */}
@@ -169,7 +214,7 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
                 <h3>Achievement Collection</h3>
               </div>
               <Link to="/achievements" className="community-text-link">
-                <span>Open Achievement Vault ({collection.unlocked}/20)</span>
+                <span>Open Achievement Vault ({collection.unlocked}/{GEMSTONE_ASSETS.length})</span>
                 <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </div>
@@ -321,19 +366,22 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
           </div>
           <fieldset className="control-avatar-options">
             <legend>Profile avatar</legend>
-            <p>No character avatar assets are available yet. Choose a neutral placeholder style.</p>
-            <div>
-              {(['neutral', 'initials'] as const).map((style) => (
-                <label key={style}>
+            <p>Choose a character avatar for your profile and top bar.</p>
+            <div className="control-avatar-grid">
+              {AVATAR_OPTIONS.map((option) => (
+                <label
+                  key={option.id}
+                  className={`control-avatar-option${draft.avatarStyle === option.id ? ' is-selected' : ''}`}
+                >
                   <input
                     type="radio"
                     name="avatarStyle"
-                    value={style}
-                    checked={draft.avatarStyle === style}
-                    onChange={() => setDraft({ ...draft, avatarStyle: style })}
+                    value={option.id}
+                    checked={draft.avatarStyle === option.id}
+                    onChange={() => setDraft({ ...draft, avatarStyle: option.id })}
                   />
-                  <StudentAvatar name={draft.name} style={style} />
-                  {style === 'neutral' ? 'Neutral profile' : 'Your initials'}
+                  <StudentAvatar name={draft.name} style={option.id} />
+                  <span>{option.label}</span>
                 </label>
               ))}
             </div>

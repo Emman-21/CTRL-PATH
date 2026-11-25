@@ -89,7 +89,7 @@ const TRACK_COLUMN_THEME: Record<
     headerSurface:
       'bg-emerald-50/75 dark:bg-[#0b2b22]/90! border-b border-emerald-200/70 dark:border-emerald-900/50!',
     exploreButton:
-      'text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 focus-visible:outline-emerald-500',
+      'text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 focus-visible:outline-emerald-500',
   },
 };
 
@@ -118,18 +118,18 @@ function renderTopicContent(
               {track.subjects.map((subj) => (
                 <div
                   key={subj.id}
-                  className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 dark:border-slate-700/80! space-y-1"
+                  className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0b1222]/85 border border-slate-200/80 dark:border-slate-700/80 space-y-1"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-extrabold text-slate-900">
+                    <span className="text-[11px] font-extrabold text-slate-900 dark:text-slate-100">
                       {subj.code}: {subj.title}
                     </span>
-                    <span className="text-[10px] font-semibold text-slate-500 shrink-0">
+                    <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
                       {subj.moduleCount} modules
                     </span>
                   </div>
                   {subj.subtitle && (
-                    <p className="text-[11px] text-slate-600 leading-snug">
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
                       {subj.subtitle}
                     </p>
                   )}
@@ -138,14 +138,14 @@ function renderTopicContent(
             </div>
           )}
           <div className="space-y-1.5">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Core Topic Areas
             </div>
             <div className="flex flex-wrap gap-1.5">
               {track.keySubjects.map((subj, idx) => (
                 <span
                   key={idx}
-                  className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200/60 dark:border-slate-700/80!"
+                  className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-[#131d33] text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200/60 dark:border-slate-700/80"
                 >
                   {subj}
                 </span>
@@ -168,16 +168,16 @@ function renderTopicContent(
             {featuredDomains.map((domain, idx) => (
               <div
                 key={idx}
-                className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 dark:border-slate-700/80! space-y-1.5"
+                className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0b1222]/85 border border-slate-200/80 dark:border-slate-700/80 space-y-1.5"
               >
-                <div className="text-[11px] font-bold text-slate-800 leading-snug">
+                <div className="text-[11px] font-bold text-slate-800 dark:text-slate-100 leading-snug">
                   {domain.category.replace(/\s*\([^)]*\)/g, '').trim()}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {domain.skills.slice(0, 2).map((skill, sIdx) => (
                     <span
                       key={sIdx}
-                      className="px-2 py-0.5 rounded-md bg-white border border-slate-200 dark:border-slate-700/80! text-slate-700 text-[11px] font-medium"
+                      className="px-2 py-0.5 rounded-md bg-[var(--surface)] dark:bg-[#131d33] border border-[var(--border)] dark:border-slate-700/80 text-[var(--text)] dark:text-slate-200 text-[11px] font-medium"
                     >
                       {skill}
                     </span>
@@ -187,7 +187,7 @@ function renderTopicContent(
             ))}
           </div>
           {remainingDomains > 0 && (
-            <div className="text-[11px] text-slate-500 font-medium">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
               +{remainingDomains} more competency {remainingDomains === 1 ? 'domain' : 'domains'} covered in Track Explorer
             </div>
           )}
@@ -205,27 +205,27 @@ function renderTopicContent(
             <span>Real-World Hands-on Project</span>
           </h4>
           {primaryApp && (
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 dark:border-slate-700/80! text-xs space-y-1.5">
-              <div className="font-extrabold text-slate-900">
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#0b1222]/85 border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-1.5">
+              <div className="font-extrabold text-slate-900 dark:text-slate-100">
                 {primaryApp.title}
               </div>
-              <p className="text-slate-600 text-[11px] leading-relaxed">
+              <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
                 {primaryApp.scenario}
               </p>
-              <div className="text-[10px] text-slate-500 font-semibold pt-1.5 border-t border-slate-200/60 dark:border-slate-700/80!">
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold pt-1.5 border-t border-slate-200/60 dark:border-slate-700/80">
                 Impact: {primaryApp.impact}
               </div>
             </div>
           )}
           {extraApps.length > 0 && (
-            <div className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-200/70 dark:border-slate-700/80! space-y-1.5">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            <div className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-[#0b1222]/85 border border-slate-200/70 dark:border-slate-700/80 space-y-1.5">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Additional Applied Scenarios
               </div>
               {extraApps.map((app, idx) => (
                 <div key={idx} className="text-[11px] leading-snug">
-                  <span className="font-bold text-slate-800">{app.title}:</span>{' '}
-                  <span className="text-slate-600">{app.impact}</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100">{app.title}:</span>{' '}
+                  <span className="text-slate-600 dark:text-slate-300">{app.impact}</span>
                 </div>
               ))}
             </div>
@@ -247,19 +247,19 @@ function renderTopicContent(
             {featuredCareers.map((job, idx) => (
               <div
                 key={idx}
-                className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 dark:border-slate-700/80! text-xs space-y-1"
+                className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0b1222]/85 border border-slate-200/60 dark:border-slate-700/80 text-xs space-y-1"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="font-bold text-slate-900">{job.title}</div>
+                  <div className="font-bold text-slate-900 dark:text-slate-100">{job.title}</div>
                   {job.level && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 shrink-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#131d33] text-slate-600 dark:text-slate-300 border border-transparent dark:border-slate-700/70 shrink-0">
                       {job.level === 'BEGINNER' ? 'Entry' : job.level === 'INTERMEDIATE' ? 'Mid' : 'Senior'}
                     </span>
                   )}
                 </div>
-                <div className="text-[11px] text-slate-500 leading-snug">{job.description}</div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">{job.description}</div>
                 {job.salaryRange && (
-                  <div className="text-[10px] font-semibold text-slate-600 pt-0.5">
+                  <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 pt-0.5">
                     Est. Salary: {job.salaryRange}
                   </div>
                 )}
@@ -267,7 +267,7 @@ function renderTopicContent(
             ))}
           </div>
           {remainingCareers > 0 && (
-            <div className="text-[11px] text-slate-500 font-medium">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
               +{remainingCareers} more career {remainingCareers === 1 ? 'role' : 'roles'} in Track Explorer
             </div>
           )}
@@ -282,16 +282,16 @@ function renderTopicContent(
             <Users className="w-3.5 h-3.5 text-slate-500" />
             <span>Work Environment & Dynamics</span>
           </h4>
-          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 dark:border-slate-700/80! space-y-1">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0b1222]/85 border border-slate-200/80 dark:border-slate-700/80 space-y-1">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Primary Focus
             </div>
-            <p className="text-[11px] text-slate-700 leading-relaxed">{track.focus}</p>
+            <p className="text-[11px] text-slate-700 dark:text-slate-200 leading-relaxed">{track.focus}</p>
           </div>
-          <div className="space-y-1.5 text-xs text-slate-600">
+          <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
             {track.workStyle.map((style, idx) => (
               <div key={idx} className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mt-1.5" />
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-500 shrink-0 mt-1.5" />
                 <span className="leading-snug">{style}</span>
               </div>
             ))}
@@ -361,7 +361,7 @@ export const CompareMatrixBox: React.FC<CompareMatrixBoxProps> = ({
   return (
     <div
       data-testid="compare-matrix-box"
-      className="rounded-2xl border border-slate-200 dark:border-slate-800! bg-white dark:bg-[#0f172a]! md:overflow-hidden shadow-xs print:overflow-visible print:border-slate-300"
+      className="rounded-2xl border border-[var(--border)] dark:border-slate-800! bg-[var(--surface)] dark:bg-[#0f172a]! md:overflow-hidden shadow-xs print:overflow-visible print:border-slate-300"
     >
       <div className="flex flex-col md:flex-row md:items-stretch print:block">
         {/* Left topic rail (desktop) / Sticky horizontal topic strip (under 768px) */}
@@ -369,7 +369,7 @@ export const CompareMatrixBox: React.FC<CompareMatrixBoxProps> = ({
           role="group"
           aria-label="Comparison topics"
           data-testid="compare-topic-rail"
-          className="sticky top-16 z-20 md:static flex flex-row overflow-x-auto md:overflow-visible md:flex-col md:w-60 lg:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800! divide-x md:divide-x-0 md:divide-y divide-slate-200 dark:divide-slate-800! bg-slate-50/95 backdrop-blur-md md:backdrop-blur-none md:bg-slate-50/70 dark:bg-[#0b1222]/95! md:dark:bg-[#0b1222]! rounded-t-2xl md:rounded-t-none print:hidden"
+          className="sticky top-16 z-20 md:static flex flex-row gap-2 md:gap-0 p-1.5 md:p-0 overflow-x-auto md:overflow-visible md:flex-col md:w-60 lg:w-64 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800! divide-x-0 md:divide-x-0 md:divide-y divide-slate-200 dark:divide-slate-800! bg-slate-50/95 backdrop-blur-md md:backdrop-blur-none md:bg-slate-50/70 dark:bg-[#0b1222]/95! md:dark:bg-[#0b1222]! rounded-t-2xl md:rounded-t-none print:hidden"
         >
           {COMPARE_TOPICS.map((topic, index) => {
             const isActive = selectedTopic === topic.id;
@@ -387,8 +387,8 @@ export const CompareMatrixBox: React.FC<CompareMatrixBoxProps> = ({
                 onKeyDown={(event) => handleTopicKeyDown(event, index)}
                 className={`min-h-[44px] px-4 py-3.5 text-left text-[11px] font-extrabold uppercase tracking-wider transition-colors duration-150 cursor-pointer whitespace-nowrap md:whitespace-normal shrink-0 md:shrink flex items-center gap-2.5 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-600 dark:focus-visible:outline-sky-400 ${
                   isActive
-                    ? 'bg-white dark:bg-[#16223e]! text-slate-900 dark:text-white! shadow-[inset_0_-2px_0_#2563eb] md:shadow-[inset_3px_0_0_#2563eb] dark:shadow-[inset_0_-2px_0_#38bdf8] dark:md:shadow-[inset_3px_0_0_#38bdf8]'
-                    : 'bg-transparent text-slate-500 dark:text-slate-400! hover:bg-white/70 dark:hover:bg-[#131d33]! hover:text-slate-900 dark:hover:text-white!'
+                    ? 'bg-[var(--surface)] dark:bg-[#16223e]! text-[var(--text)] dark:text-white! shadow-[inset_0_-2px_0_#2563eb] md:shadow-[inset_3px_0_0_#2563eb] dark:shadow-[inset_0_-2px_0_#38bdf8] dark:md:shadow-[inset_3px_0_0_#38bdf8]'
+                    : 'bg-transparent text-slate-500 dark:text-slate-400! hover:bg-[var(--surface-70)] dark:hover:bg-[#131d33]! hover:text-[var(--text)] dark:hover:text-white!'
                 }`}
               >
                 <Icon
@@ -427,7 +427,7 @@ export const CompareMatrixBox: React.FC<CompareMatrixBoxProps> = ({
               >
                 {/* Existing track header block (icon/logo, name, tagline, corner SVG, illustration, alignment) */}
                 <div className={`p-5 flex flex-col gap-3 md:min-h-[380px] ${columnTheme.headerSurface}`}>
-                  <div className="flex items-start pb-3 border-b border-slate-100">
+                  <div className="flex items-start pb-3 border-b border-slate-100 dark:border-slate-800/80">
                     <div className="flex items-center gap-3">
                       {code === 'NT' ? (
                         <NtTrackBadge size={48} className="shrink-0 rounded-2xl shadow-xs" />
@@ -437,10 +437,10 @@ export const CompareMatrixBox: React.FC<CompareMatrixBoxProps> = ({
                         <SmTrackBadge size={48} className="shrink-0 rounded-2xl shadow-xs" />
                       )}
                       <div>
-                        <h3 className="font-black text-slate-900 text-lg leading-tight">
+                        <h3 className="font-black text-slate-900 dark:text-slate-100 text-lg leading-tight">
                           {track.name}
                         </h3>
-                        <p className="text-xs text-slate-500 mt-0.5">{track.tagline}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{track.tagline}</p>
                       </div>
                     </div>
                   </div>
@@ -465,13 +465,13 @@ export const CompareMatrixBox: React.FC<CompareMatrixBoxProps> = ({
                     </div>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0b1222]/90 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-slate-600 flex items-center gap-1.5">
-                        <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                        <Trophy className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                         <span>Your Quiz Alignment:</span>
                       </span>
-                      <span className="font-black text-slate-900">
+                      <span className="font-black text-slate-900 dark:text-slate-100">
                         {trackScore !== null ? `${trackScore}%` : 'Not Taken'}
                       </span>
                     </div>
@@ -485,7 +485,7 @@ export const CompareMatrixBox: React.FC<CompareMatrixBoxProps> = ({
                     ) : (
                       <Link
                         to="/quiz"
-                        className="text-[11px] font-bold text-blue-600 hover:underline block pt-1"
+                        className="touch-target-44 text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline block pt-1"
                       >
                         Take quiz to measure alignment →
                       </Link>
@@ -531,7 +531,7 @@ export const CompareMatrixBox: React.FC<CompareMatrixBoxProps> = ({
                     <Link to="/tracks" className="block">
                       <button
                         type="button"
-                        className={`w-full py-1 px-0 bg-transparent text-xs font-bold flex items-center justify-between gap-2 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 rounded-md ${columnTheme.exploreButton}`}
+                        className={`w-full min-h-11 md:min-h-0 py-1 px-0 bg-transparent text-xs font-bold flex items-center justify-between gap-2 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 rounded-md ${columnTheme.exploreButton}`}
                       >
                         <span>Explore {code} Modules</span>
                         <ArrowRight className="w-3.5 h-3.5 shrink-0" />

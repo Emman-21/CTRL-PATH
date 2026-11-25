@@ -26,25 +26,25 @@ export const UniversityCrests: React.FC<UniversityCrestsProps> = ({
   return (
     <div className={`inline-flex items-center shrink-0 ${gapClassName} ${className}`}>
       <div
-        className={`${dimensionClass} rounded-full bg-[#ffffff] border border-slate-200/90 dark:border-slate-700/80 shadow-xs overflow-hidden flex items-center justify-center shrink-0`}
+        className={`${dimensionClass} rounded-full bg-[var(--surface-raised)] dark:bg-[#ffffff] border border-[var(--border)] dark:border-slate-700/80 shadow-xs overflow-hidden flex items-center justify-center shrink-0`}
         title={UNIVERSITY_LOGOS.bsuAlangilan.label}
       >
         <img
           src={UNIVERSITY_LOGOS.bsuAlangilan.url}
           alt={UNIVERSITY_LOGOS.bsuAlangilan.alt}
           referrerPolicy="no-referrer"
-          className="w-full h-full object-contain select-none"
+          className="w-full h-full object-contain select-none mix-blend-multiply dark:mix-blend-normal"
         />
       </div>
       <div
-        className={`${dimensionClass} rounded-full bg-[#ffffff] border border-slate-200/90 dark:border-slate-700/80 shadow-xs overflow-hidden flex items-center justify-center shrink-0`}
+        className={`${dimensionClass} rounded-full bg-[var(--surface-raised)] dark:bg-[#ffffff] border border-[var(--border)] dark:border-slate-700/80 shadow-xs overflow-hidden flex items-center justify-center shrink-0`}
         title={UNIVERSITY_LOGOS.cicsAlangilan.label}
       >
         <img
           src={UNIVERSITY_LOGOS.cicsAlangilan.url}
           alt={UNIVERSITY_LOGOS.cicsAlangilan.alt}
           referrerPolicy="no-referrer"
-          className="w-full h-full object-contain select-none"
+          className="w-full h-full object-contain select-none mix-blend-multiply dark:mix-blend-normal"
         />
       </div>
     </div>

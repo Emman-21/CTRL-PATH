@@ -63,7 +63,7 @@ export const ResultsScorecards: React.FC<ResultsScorecardsProps> = ({ analysis }
           <ProgressBar value={ntDisplay.progressValue} variant="nt" size="md" />
           <Link
             to="/tracks?track=NT"
-            className="text-xs font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800"
+            className="touch-target-44 text-xs font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800"
           >
             <span>Explore NT Modules</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -106,7 +106,7 @@ export const ResultsScorecards: React.FC<ResultsScorecardsProps> = ({ analysis }
           <ProgressBar value={baDisplay.progressValue} variant="ba" size="md" />
           <Link
             to="/tracks?track=BA"
-            className="text-xs font-bold text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800"
+            className="touch-target-44 text-xs font-bold text-violet-600 hover:text-violet-800 dark:text-violet-400 dark:hover:text-violet-300 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800"
           >
             <span>Explore BA Modules</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -125,7 +125,7 @@ export const ResultsScorecards: React.FC<ResultsScorecardsProps> = ({ analysis }
               </div>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{smDisplay.percentageText}</span>
+              <span className="text-2xl font-black text-emerald-700 dark:text-emerald-400">{smDisplay.percentageText}</span>
               <div className="text-[10px] text-slate-400 font-medium">
                 {smDisplay.rawText}
               </div>
@@ -149,7 +149,7 @@ export const ResultsScorecards: React.FC<ResultsScorecardsProps> = ({ analysis }
           <ProgressBar value={smDisplay.progressValue} variant="sm" size="md" />
           <Link
             to="/tracks?track=SM"
-            className="text-xs font-bold text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800"
+            className="touch-target-44 text-xs font-bold text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800"
           >
             <span>Explore SM Modules</span>
             <ArrowRight className="w-3.5 h-3.5" />

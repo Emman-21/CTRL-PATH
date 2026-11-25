@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { LuniCharacter } from './LuniCharacter';
 import { Sparkles, X } from 'lucide-react';
 import { useStudent } from '../../context/StudentContext';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export interface LuniCelebrationProps {
   isOpen: boolean;
@@ -37,6 +38,8 @@ export const LuniCelebration: React.FC<LuniCelebrationProps> = ({
     return () => clearTimeout(timer);
   }, [isOpen, autoDismissMs, onClose]);
 
+  useBodyScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   return (
@@ -44,13 +47,13 @@ export const LuniCelebration: React.FC<LuniCelebrationProps> = ({
       role="dialog"
       aria-live="polite"
       aria-label={title}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-[calc(1rem+var(--safe-top))] pb-[calc(1rem+var(--safe-bottom))] overflow-hidden bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-indigo-100 text-center flex flex-col items-center animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-sm max-h-[90dvh] overflow-y-auto bg-[var(--surface)] dark:bg-[#0f172a] rounded-3xl p-6 shadow-2xl border border-[var(--border)] dark:border-slate-800 text-center flex flex-col items-center animate-in zoom-in-95 duration-200">
         {/* Dismiss Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
+          className="absolute top-2.5 right-2.5 md:top-4 md:right-4 w-11 h-11 md:w-auto md:h-auto md:p-1 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
           aria-label="Dismiss celebration"
         >
           <X className="w-4 h-4" />
@@ -78,7 +81,7 @@ export const LuniCelebration: React.FC<LuniCelebrationProps> = ({
                 className="w-16 h-16 object-contain pixelated drop-shadow-md animate-bounce duration-1000"
               />
               {gemstoneName && (
-                <span className="text-[10px] font-black text-indigo-700 tracking-wide mt-1 uppercase">
+                <span className="text-[10px] font-black text-[var(--accent-ink)] dark:text-indigo-300 tracking-wide mt-1 uppercase">
                   {gemstoneName}
                 </span>
               )}
@@ -87,17 +90,17 @@ export const LuniCelebration: React.FC<LuniCelebrationProps> = ({
         </div>
 
         {/* Badge & Title */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-black uppercase tracking-wider mb-2">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 dark:bg-amber-950/50 dark:border-amber-800/70 dark:text-amber-200 text-xs font-black uppercase tracking-wider mb-2">
           <Sparkles className="w-3.5 h-3.5" />
           <span>{title}</span>
         </div>
 
-        <p className="text-xs text-slate-600 leading-relaxed max-w-xs">{message}</p>
+        <p className="text-xs text-[var(--text-muted)] dark:text-slate-300 leading-relaxed max-w-xs">{message}</p>
 
         <div className="mt-5 w-full">
           <button
             onClick={onClose}
-            className="w-full py-2.5 px-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95"
+            className="w-full min-h-11 md:min-h-0 py-2.5 px-4 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95"
           >
             Splendid, Luni! ✨
           </button>

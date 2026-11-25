@@ -167,7 +167,7 @@ test('SmartResultsPage Ready for the Next Chapter card styles cleanly for Light 
     assert.ok(html.includes('Ready for the Next Chapter?'));
     assert.ok(html.includes('from-blue-50 via-indigo-50/90 to-violet-50'));
     assert.ok(html.includes('dark:from-slate-900 dark:via-[#111b36] dark:to-indigo-950'));
-    assert.ok(html.includes('bg-white! hover:bg-blue-50/80! text-slate-800!'));
+    assert.ok(html.includes('bg-[var(--surface)]! hover:bg-blue-50/80! text-slate-800!'));
   } finally {
     if (previousStorage === undefined) {
       delete (globalThis as { localStorage?: Storage }).localStorage;
@@ -176,3 +176,154 @@ test('SmartResultsPage Ready for the Next Chapter card styles cleanly for Light 
     }
   }
 });
+
+test('ResultsSpotlight maps dominant track to Track Explorer Luni pose (NT -> track_wifi, BA -> track_charts, SM -> track_files, tie -> star_eyes)', async () => {
+  const { getResultsSpotlightLuniPose } = await import('../src/components/results/ResultsSpotlight');
+
+  assert.equal(getResultsSpotlightLuniPose({ isTie: false, highestTrack: 'NT' }), 'track_wifi');
+  assert.equal(getResultsSpotlightLuniPose({ isTie: false, highestTrack: 'BA' }), 'track_charts');
+  assert.equal(getResultsSpotlightLuniPose({ isTie: false, highestTrack: 'SM' }), 'track_files');
+  assert.equal(getResultsSpotlightLuniPose({ isTie: true, highestTrack: 'NT' }), 'star_eyes');
+
+  const previousStorage = (globalThis as { localStorage?: Storage }).localStorage;
+  const store = new Map<string, string>();
+  (globalThis as { localStorage?: Storage }).localStorage = {
+    get length() {
+      return store.size;
+    },
+    clear() {
+      store.clear();
+    },
+    getItem(key: string) {
+      return store.get(key) ?? null;
+    },
+    key(index: number) {
+      return Array.from(store.keys())[index] ?? null;
+    },
+    removeItem(key: string) {
+      store.delete(key);
+    },
+    setItem(key: string, value: string) {
+      store.set(key, String(value));
+    },
+  };
+
+  try {
+    const ntHtml = renderToStaticMarkup(
+      <StudentProvider>
+        <ResultsSpotlight analysis={analyzeQuizAttempt(SAMPLE_DEMO_ATTEMPT)} />
+      </StudentProvider>,
+    );
+    assert.ok(ntHtml.includes('/assets/pictures/luni_track_nt_wifi_v2.png'));
+
+    const baHtml = renderToStaticMarkup(
+      <StudentProvider>
+        <ResultsSpotlight
+          analysis={analyzeQuizAttempt({
+            ...SAMPLE_DEMO_ATTEMPT,
+            id: 'ba-top',
+            ntScore: 60,
+            baScore: 90,
+            smScore: 55,
+          })}
+        />
+      </StudentProvider>,
+    );
+    assert.ok(baHtml.includes('/assets/pictures/luni_track_ba_charts_v2.png'));
+
+    const smHtml = renderToStaticMarkup(
+      <StudentProvider>
+        <ResultsSpotlight
+          analysis={analyzeQuizAttempt({
+            ...SAMPLE_DEMO_ATTEMPT,
+            id: 'sm-top',
+            ntScore: 58,
+            baScore: 64,
+            smScore: 88,
+          })}
+        />
+      </StudentProvider>,
+    );
+    assert.ok(smHtml.includes('/assets/pictures/luni_track_sm_files_v2.png'));
+
+    const tieHtml = renderToStaticMarkup(
+      <StudentProvider>
+        <ResultsSpotlight
+          analysis={analyzeQuizAttempt({
+            ...SAMPLE_DEMO_ATTEMPT,
+            id: 'tie-top',
+            ntScore: 76,
+            baScore: 76,
+            smScore: 60,
+          })}
+        />
+      </StudentProvider>,
+    );
+    assert.ok(tieHtml.includes('/assets/pictures/14_star-eyes_739eb9c7.png'));
+  } finally {
+    if (previousStorage === undefined) {
+      delete (globalThis as { localStorage?: Storage }).localStorage;
+    } else {
+      (globalThis as { localStorage?: Storage }).localStorage = previousStorage;
+    }
+  }
+});
+
+test('SmartResultsPage displays the shock Luni image in PageHeader for both empty and populated states', () => {
+  const previousStorage = (globalThis as { localStorage?: Storage }).localStorage;
+  const store = new Map<string, string>();
+  (globalThis as { localStorage?: Storage }).localStorage = {
+    get length() {
+      return store.size;
+    },
+    clear() {
+      store.clear();
+    },
+    getItem(key: string) {
+      return store.get(key) ?? null;
+    },
+    key(index: number) {
+      return Array.from(store.keys())[index] ?? null;
+    },
+    removeItem(key: string) {
+      store.delete(key);
+    },
+    setItem(key: string, value: string) {
+      store.set(key, String(value));
+    },
+  };
+
+  try {
+    const emptyHtml = renderToStaticMarkup(
+      <MemoryRouter>
+        <StudentProvider>
+          <SmartResultsPage />
+        </StudentProvider>
+      </MemoryRouter>,
+    );
+    assert.ok(emptyHtml.includes('/assets/aistudio/luni_shock_1f8c7ebc.png'));
+
+    store.set(
+      STUDENT_STORAGE_KEY,
+      JSON.stringify({
+        quizAttempts: [SAMPLE_DEMO_ATTEMPT],
+      }),
+    );
+
+    const populatedHtml = renderToStaticMarkup(
+      <MemoryRouter>
+        <StudentProvider>
+          <SmartResultsPage />
+        </StudentProvider>
+      </MemoryRouter>,
+    );
+    assert.ok(populatedHtml.includes('/assets/aistudio/luni_shock_1f8c7ebc.png'));
+  } finally {
+    if (previousStorage === undefined) {
+      delete (globalThis as { localStorage?: Storage }).localStorage;
+    } else {
+      (globalThis as { localStorage?: Storage }).localStorage = previousStorage;
+    }
+  }
+});
+

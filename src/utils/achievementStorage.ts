@@ -4,6 +4,7 @@ import { TRACKS_DATA } from '../data/tracks';
 import type { StudentState } from '../types';
 import type { AchievementRecord } from '../types/achievements';
 import { evaluateAchievements, withAchievementRecords } from './achievementRules';
+import { normalizeAvatarStyle } from './avatarOptions';
 
 export const STUDENT_STORAGE_KEY = 'ctrl_path_student_data_v1';
 const object = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -17,10 +18,12 @@ export function migrateStudentData(raw: unknown, defaults: StudentState): Studen
   state.profileSchemaVersion=1;
   state.section=typeof raw.section==='string'?raw.section:'';
   state.biography=typeof raw.biography==='string'?raw.biography:'';
-  state.avatarStyle=raw.avatarStyle==='initials'?'initials':'neutral';
+  state.avatarStyle=normalizeAvatarStyle(raw.avatarStyle);
   state.explorationDates=object(raw.explorationDates)?Object.fromEntries(Object.entries(raw.explorationDates).filter(([key,value])=>['NT','BA','SM'].includes(key)&&date(value))):{};
   state.moduleCompletions=Array.isArray(raw.moduleCompletions)?raw.moduleCompletions.filter((m:unknown)=>object(m)&&typeof m.moduleId==='string'&&['NT','BA','SM'].includes(m.track)&&date(m.completedAt)).filter((m: {moduleId:string},i:number,all:{moduleId:string}[])=>all.findIndex(x=>x.moduleId===m.moduleId)===i):[];
   state.moduleCompletions=state.moduleCompletions.filter(m=>TRACKS_DATA[m.track].modules.some(module=>module.id===m.moduleId&&module.status==='available'));
+  state.readAlumniStories=Array.isArray(raw.readAlumniStories)?[...new Set(raw.readAlumniStories.filter((id:unknown):id is string=>typeof id==='string'&&id.trim().length>0))]:[];
+  state.maxStreakDays=typeof raw.maxStreakDays==='number'&&Number.isFinite(raw.maxStreakDays)&&raw.maxStreakDays>=0?Math.floor(raw.maxStreakDays):0;
   for (const key of ['name', 'university', 'program', 'yearLevel'] as const) {
     state[key] = typeof raw[key] === 'string' ? raw[key] : defaults[key];
   }

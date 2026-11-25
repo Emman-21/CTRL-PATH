@@ -80,7 +80,7 @@ export const DashboardNextStep: React.FC<DashboardNextStepProps> = ({ nextActivi
       </div>
     </Card>
 
-    <Card className="p-6 border-indigo-100 dark:border-indigo-950/80 bg-linear-to-br from-indigo-50/40 via-purple-50/30 to-white dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-[#0f172a] flex flex-col justify-between">
+    <Card className="p-6 border-indigo-100 dark:border-indigo-950/80 bg-linear-to-br from-indigo-50/40 via-purple-50/30 to-[var(--surface)] dark:from-indigo-950/40 dark:via-purple-950/30 dark:to-[#0f172a] flex flex-col justify-between">
       <div className="flex items-center gap-2 text-indigo-950 dark:text-indigo-200 font-black text-xs mb-2">
         <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-sparkle-spin" />
         <span>A little reminder from Luni...</span>
@@ -88,7 +88,7 @@ export const DashboardNextStep: React.FC<DashboardNextStepProps> = ({ nextActivi
 
       <div className="flex items-center gap-3 my-auto py-2">
         <div className="shrink-0">
-          <LuniSprite pose="sit" size={56} animate />
+          <LuniSprite pose="quiz_reminder" size={56} animate />
         </div>
         <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed italic">
           "Progress isn't about being perfect, it's about showing up. You're doing great! 🌙✨"

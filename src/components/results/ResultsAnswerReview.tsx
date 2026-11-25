@@ -101,7 +101,7 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({
             </div>
 
             <div
-              className="flex items-center gap-1 bg-slate-100 dark:bg-[#131d33] border border-transparent dark:border-slate-800 p-1 rounded-xl text-xs font-bold"
+              className="flex flex-wrap items-center gap-2 md:gap-1 bg-slate-100 dark:bg-[#131d33] border border-transparent dark:border-slate-800 p-1 rounded-xl text-xs font-bold"
               role="group"
               aria-label="Filter answer review by level"
             >
@@ -111,9 +111,9 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({
                   type="button"
                   aria-pressed={reviewLevelFilter === lvl}
                   onClick={() => setReviewLevelFilter(reviewLevelFilter === lvl ? 'ALL' : lvl)}
-                  className={`px-2 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                  className={`min-w-11 min-h-11 md:min-w-0 md:min-h-0 px-2 py-1 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     reviewLevelFilter === lvl
-                      ? 'bg-white dark:bg-[#1e2d4d]! shadow-xs text-slate-900 dark:text-slate-100'
+                      ? 'bg-[var(--surface)] dark:bg-[#1e2d4d]! shadow-xs text-slate-900 dark:text-slate-100'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
@@ -122,14 +122,14 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({
               ))}
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#131d33] border border-transparent dark:border-slate-800 p-1 rounded-xl text-xs font-bold">
+            <div className="flex flex-wrap items-center gap-2 md:gap-1.5 bg-slate-100 dark:bg-[#131d33] border border-transparent dark:border-slate-800 p-1 rounded-xl text-xs font-bold">
               {['ALL', 'NT', 'BA', 'SM'].map((track) => (
                 <button
                   key={track}
                   onClick={() => setReviewTrackFilter(track)}
-                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  className={`min-w-11 min-h-11 md:min-w-0 md:min-h-0 flex items-center justify-center px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                     reviewTrackFilter === track
-                      ? 'bg-white dark:bg-[#1e2d4d]! shadow-xs text-slate-900 dark:text-slate-100'
+                      ? 'bg-[var(--surface)] dark:bg-[#1e2d4d]! shadow-xs text-slate-900 dark:text-slate-100'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
@@ -138,12 +138,12 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({
               ))}
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#131d33] border border-transparent dark:border-slate-800 p-1 rounded-xl text-xs font-bold">
+            <div className="flex flex-wrap items-center gap-2 md:gap-1.5 bg-slate-100 dark:bg-[#131d33] border border-transparent dark:border-slate-800 p-1 rounded-xl text-xs font-bold">
               <button
                 onClick={() => setReviewStatusFilter('ALL')}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                className={`min-h-11 md:min-h-0 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   reviewStatusFilter === 'ALL'
-                    ? 'bg-white dark:bg-[#1e2d4d]! shadow-xs text-slate-900 dark:text-slate-100'
+                    ? 'bg-[var(--surface)] dark:bg-[#1e2d4d]! shadow-xs text-slate-900 dark:text-slate-100'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
@@ -151,9 +151,9 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({
               </button>
               <button
                 onClick={() => setReviewStatusFilter('CORRECT')}
-                className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                className={`min-h-11 md:min-h-0 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
                   reviewStatusFilter === 'CORRECT'
-                    ? 'bg-white dark:bg-[#1e2d4d]! shadow-xs text-emerald-700 dark:text-emerald-300'
+                    ? 'bg-[var(--surface)] dark:bg-[#1e2d4d]! shadow-xs text-emerald-700 dark:text-emerald-300'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
@@ -162,9 +162,9 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({
               </button>
               <button
                 onClick={() => setReviewStatusFilter('INCORRECT')}
-                className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                className={`min-h-11 md:min-h-0 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
                   reviewStatusFilter === 'INCORRECT'
-                    ? 'bg-white dark:bg-[#1e2d4d]! shadow-xs text-rose-700 dark:text-rose-300'
+                    ? 'bg-[var(--surface)] dark:bg-[#1e2d4d]! shadow-xs text-rose-700 dark:text-rose-300'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
@@ -187,13 +187,13 @@ export const ResultsAnswerReview: React.FC<ResultsAnswerReviewProps> = ({
                     key={item.question.id}
                     className={`rounded-2xl border transition-all ${
                       item.isCorrect
-                        ? 'border-slate-200 bg-white dark:bg-[#0f172a] dark:border-slate-800'
+                        ? 'border-[var(--border)] bg-[var(--surface)] dark:bg-[#0f172a] dark:border-slate-800'
                         : 'border-amber-200 bg-amber-50/20 dark:border-amber-800/50 dark:bg-[#1a1509]'
                     }`}
                   >
                     <button
                       onClick={() => setExpandedQuestionId(isExpanded ? null : item.question.id)}
-                      className="w-full p-4 flex items-start justify-between gap-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded-2xl transition-colors cursor-pointer"
+                      className="w-full min-h-11 p-4 flex items-start justify-between gap-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded-2xl transition-colors cursor-pointer"
                     >
                       <div className="flex items-start gap-3">
                         <div className="shrink-0 mt-0.5">

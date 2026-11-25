@@ -34,14 +34,14 @@ export function AchievementsPage() {
       <div className="vault-hero-guide">
         <img className="vault-floating-gem gem-one" src={GEMSTONE_ASSETS[0].url} alt="" />
         <img className="vault-floating-gem gem-two" src={GEMSTONE_ASSETS[9].url} alt="" />
-        <LuniSprite pose="celebrate" size={150} animate={false} />
+        <LuniSprite pose="celebrate" size={150} animate={false} staticCircle />
         <p>Welcome to your Achievement Vault, Luminary! Every gemstone represents a step forward in your journey!</p>
       </div>
     </section>
     <section className="vault-overview" aria-label="Collection progress">
       <div className="vault-total"><span className="vault-eyebrow"><Gem size={16} /> Your gemstone collection</span>
-        <div><strong>{stats.unlocked}<small> / 20</small></strong><b>{stats.percent}%</b></div>
-        <AchievementMeter current={stats.unlocked} total={20} label="Overall gemstone collection" />
+        <div><strong>{stats.unlocked}<small> / {stats.totalCount}</small></strong><b>{stats.percent}%</b></div>
+        <AchievementMeter current={stats.unlocked} total={stats.totalCount} label="Overall gemstone collection" />
         <p className="vault-total-breakdown">
           <span className="vault-stat-chip is-unlocked"><CheckCircle2 size={13} aria-hidden="true" /><strong>{stats.unlocked}</strong> unlocked</span>
           <span className="vault-stat-chip is-progress"><Clock3 size={13} aria-hidden="true" /><strong>{stats.inProgress}</strong> in progress</span>
@@ -59,17 +59,18 @@ export function AchievementsPage() {
           ) : (
             <SpecialAchievementBadge size={36} className="shrink-0" />
           );
+        const categoryTotal = stats.categoryTotals[key] ?? 5;
         return (
-          <button key={key} className={`gem-category-${key}`} aria-pressed={category === key} onClick={() => setCategory(prev => (prev === key ? 'All' : key))} aria-label={`Filter ${name}, ${stats.categories[key]} of 5 unlocked`}>
+          <button key={key} className={`gem-category-${key}`} aria-pressed={category === key} onClick={() => setCategory(prev => (prev === key ? 'All' : key))} aria-label={`Filter ${name}, ${stats.categories[key]} of ${categoryTotal} unlocked`}>
             {badge}
-            <strong>{stats.categories[key]} <small>/ 5</small></strong>
+            <strong>{stats.categories[key]} <small>/ {categoryTotal}</small></strong>
             <span>{key === 'Special' ? 'Special' : key}</span>
           </button>
         );
       })}</div>
     </section>
     <section id="gem-collection" className="vault-collection" aria-labelledby="collection-title">
-      <div className="vault-collection-heading"><div><span className="vault-eyebrow">Twenty gems. Your own pace.</span><h2 id="collection-title">Discover your collection</h2></div><span role="status" aria-live="polite">Showing {gems.length} of 20</span></div>
+      <div className="vault-collection-heading"><div><span className="vault-eyebrow">Twenty-five gems. Your own pace.</span><h2 id="collection-title">Discover your collection</h2></div><span role="status" aria-live="polite">Showing {gems.length} of {stats.totalCount}</span></div>
       <div className="vault-filters">
         <div className="vault-category-filters" role="group" aria-label="Achievement category">
           {[['All', 'All Achievements'], ...Object.entries(CATEGORY_NAMES)].map(([key, name]) => {

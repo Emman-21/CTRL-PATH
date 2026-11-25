@@ -49,9 +49,9 @@ export const Sidebar: React.FC = () => {
   }, []);
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200/90 flex flex-col h-screen sticky top-0 shrink-0 z-30 select-none">
+    <aside className="w-64 bg-[var(--surface)] dark:bg-[#0b1222] border-r border-[var(--border)] dark:border-slate-800/90 flex flex-col h-screen sticky top-0 shrink-0 z-30 select-none">
       {/* Brand Header */}
-      <div className="p-6 border-b border-slate-100 flex flex-col gap-1">
+      <div className="p-6 border-b border-slate-100 dark:border-slate-800/90 flex flex-col gap-1">
         <div className="flex items-center gap-3">
           <img
             src="/assets/aistudio/894455811_1534282605544392_6561933623517659718_n_7d027482.jpg"
@@ -66,7 +66,7 @@ export const Sidebar: React.FC = () => {
               <span className="font-black text-lg tracking-tight text-slate-900 dark:text-slate-100">PATH</span>
             </div>
             <div className="text-xs text-slate-400 font-medium tracking-wide">
-              Explore · Compare · Find Your Path
+              Choose Your Own Path
             </div>
           </div>
         </div>
@@ -84,8 +84,8 @@ export const Sidebar: React.FC = () => {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700 shadow-xs font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'bg-blue-50 dark:bg-[#111e3b] text-blue-700 dark:text-blue-300 shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#131d33]'
                 }`
               }
             >
@@ -93,12 +93,12 @@ export const Sidebar: React.FC = () => {
                 <>
                   <Icon
                     className={`w-4 h-4 shrink-0 transition-colors ${
-                      isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'
+                      isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200'
                     }`}
                   />
                   <span className="flex-1">{item.name}</span>
                   {isActive && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
                   )}
                 </>
               )}
@@ -115,7 +115,7 @@ export const Sidebar: React.FC = () => {
             alt=""
             className="w-full h-full object-cover pixelated opacity-30 dark:opacity-20"
           />
-          <div className="absolute inset-0 bg-linear-to-t from-white via-white/80 to-transparent dark:from-[#0d1424] dark:via-[#0d1424]/85 dark:to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-[var(--surface)] via-[var(--surface-80)] to-transparent dark:from-[#0d1424] dark:via-[#0d1424]/85 dark:to-transparent" />
         </div>
         <div className="relative z-10 text-center py-2 px-1">
           <UniversityCrests size="md" gapClassName="gap-2.5" className="mb-2 justify-center" />

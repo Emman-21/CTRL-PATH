@@ -160,12 +160,12 @@ export const SequencingRenderer: React.FC<SequencingRendererProps> = ({
         <span>
           Drag and drop steps from first (1) to last ({currentSteps.length}):
         </span>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           {!hasRecordedOrder && !disabled && (
             <button
               type="button"
               onClick={() => onChange([...currentSteps])}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/40 text-[11px] font-bold hover:bg-blue-100 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 min-h-11 md:min-h-0 px-3 md:px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/40 text-[11px] font-bold hover:bg-blue-100 transition-colors cursor-pointer"
             >
               <Check className="w-3 h-3" />
               <span>Confirm Order</span>
@@ -175,7 +175,7 @@ export const SequencingRenderer: React.FC<SequencingRendererProps> = ({
             type="button"
             onClick={handleReset}
             disabled={disabled}
-            className="flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
+            className="min-h-11 md:min-h-0 px-2 md:px-0 flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />
             <span>Reset Order</span>
@@ -209,10 +209,10 @@ export const SequencingRenderer: React.FC<SequencingRendererProps> = ({
               onKeyDown={(e) => handleKeyDown(e, idx)}
               className={`p-2.5 sm:p-3 rounded-2xl border-2 flex items-center justify-between gap-3 transition-all touch-none focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 ${
                 disabled
-                  ? 'border-slate-200 bg-[#ffffff] dark:border-slate-700/90 dark:bg-slate-900/90 cursor-default opacity-80'
+                  ? 'border-[var(--border)] bg-[var(--surface)] dark:border-slate-700/90 dark:bg-slate-900/90 cursor-default opacity-80'
                   : isDraggingThis
                   ? 'border-blue-500 bg-[#eff6ff] dark:border-blue-400 dark:bg-[#112247] shadow-lg ring-2 ring-blue-400/50 scale-[1.015] z-20 relative cursor-grabbing'
-                  : 'border-slate-200 bg-[#ffffff] hover:border-blue-300 dark:border-slate-700/90 dark:bg-slate-900/90 dark:hover:border-sky-400/70 shadow-2xs cursor-grab active:cursor-grabbing'
+                  : 'border-[var(--border)] bg-[var(--surface)] hover:border-blue-300 dark:border-slate-700/90 dark:bg-slate-900/90 dark:hover:border-sky-400/70 shadow-2xs cursor-grab active:cursor-grabbing'
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">

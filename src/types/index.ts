@@ -165,13 +165,25 @@ export interface TrackReflection {
   savedAt?: string;
 }
 
+export type AvatarStyle =
+  | 'wizard-cat'
+  | 'sleepy-luni'
+  | 'cool-luni'
+  | 'guardian-luni'
+  | 'fierce-luni'
+  | 'cheerful-luni'
+  | 'playful-luni'
+  | 'peace-luni';
+
 export interface StudentState {
   profileSchemaVersion: 1;
   section: string;
   biography: string;
-  avatarStyle: 'neutral' | 'initials';
+  avatarStyle: AvatarStyle;
   explorationDates: Partial<Record<TrackCode, string>>;
   moduleCompletions: { track: TrackCode; moduleId: string; completedAt: string }[];
+  readAlumniStories: string[];
+  maxStreakDays: number;
   achievementSchemaVersion: 2;
   achievementRecords: import('./achievements').AchievementRecord[];
   attemptComparisons: import('./achievements').AttemptComparison[];

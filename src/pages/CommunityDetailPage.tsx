@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 import { useCommunity } from '../context/CommunityContext';
+import { useStudent } from '../context/StudentContext';
 import { AlumniIdentity, AlumniStoryCard, TrackTagLogo } from '../components/community/CommunityCards';
 import { StoryTopicIcon, type StoryTopicKey } from '../components/community/StoryTopicIcon';
 import { CATEGORY_NAMES } from '../utils/achievementRules';
@@ -9,7 +11,14 @@ import { displayDate } from '../utils/communitySelectors';
 export function CommunityDetailPage({ kind: _kind }: { kind?: 'alumni' } = {}) {
   const { id } = useParams();
   const { stories, loading, error, retry } = useCommunity();
+  const { markAlumniStoryRead } = useStudent();
   const story = stories.find((s) => s.id === id);
+
+  useEffect(() => {
+    if (story?.id) {
+      markAlumniStoryRead(story.id);
+    }
+  }, [story?.id, markAlumniStoryRead]);
   const back = (
     <Link to="/alumni" className="community-text-link">
       <ArrowLeft size={16} />

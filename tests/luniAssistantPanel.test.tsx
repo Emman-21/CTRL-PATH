@@ -44,7 +44,7 @@ test('LuniAssistantPanel tab bar and quick prompt chips include dark mode surfac
     assert.ok(html.includes('border-slate-100 dark:border-slate-800'));
     assert.ok(
       html.includes(
-        'bg-white dark:bg-[#1a2744]! text-blue-700 dark:text-blue-300 dark:border dark:border-blue-500/30',
+        'bg-[var(--surface)] dark:bg-[#1a2744]! text-blue-700 dark:text-blue-300 dark:border dark:border-blue-500/30',
       ),
     );
     assert.ok(html.includes('dark:text-slate-400 dark:hover:text-slate-100'));

@@ -125,6 +125,19 @@ export const MatchingRenderer: React.FC<MatchingRendererProps> = ({
     didDragRef.current = false;
   }, [question.id]);
 
+  // Allow Escape to cancel an active term/definition selection
+  useEffect(() => {
+    if (!selectedSource) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setSelectedSource(null);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedSource]);
+
   // Reverse lookup: definition -> matched term index & term
   const matchByDef = useMemo(() => {
     const map: Record<string, { term: string; termIdx: number }> = {};
@@ -451,7 +464,7 @@ export const MatchingRenderer: React.FC<MatchingRendererProps> = ({
               type="button"
               onClick={handleReset}
               disabled={disabled}
-              className="flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
+              className="min-h-11 md:min-h-0 px-2 md:px-0 flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
             >
               <RotateCcw className="w-3 h-3" />
               <span className="md:hidden">Reset Matches</span>
@@ -473,7 +486,7 @@ export const MatchingRenderer: React.FC<MatchingRendererProps> = ({
               className={`p-2.5 rounded-xl border-2 transition-all flex flex-col gap-2 ${
                 isMatched
                   ? 'border-blue-500 bg-[#eff6ff] dark:border-blue-400 dark:bg-[#112247]'
-                  : 'border-slate-200 bg-[#ffffff] dark:border-slate-700/90 dark:bg-slate-900/90'
+                  : 'border-[var(--border)] bg-[var(--surface)] dark:border-slate-700/90 dark:bg-slate-900/90'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -495,7 +508,7 @@ export const MatchingRenderer: React.FC<MatchingRendererProps> = ({
                 disabled={disabled}
                 value={currentMatch}
                 onChange={(e) => handleMobileSelect(pair.term, e.target.value)}
-                className="w-full p-2.5 bg-[#ffffff] dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium"
+                className="w-full p-2.5 bg-[var(--surface)] dark:bg-slate-950 border border-[var(--border)] dark:border-slate-700 rounded-xl text-xs text-[var(--text)] dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-blue-500 font-medium"
                 aria-label={`Match definition for ${pair.term}`}
               >
                 <option value="">-- Choose matching definition --</option>
@@ -620,7 +633,7 @@ export const MatchingRenderer: React.FC<MatchingRendererProps> = ({
                       ? `${theme.cardLight} ${theme.cardDark} ${theme.ring}`
                       : isMatched
                       ? `${theme.cardLight} ${theme.cardDark}`
-                      : 'border-slate-200 bg-[#ffffff] hover:border-blue-300 text-slate-900 dark:border-slate-700/90 dark:bg-slate-900/90 dark:hover:border-sky-400/70 dark:text-slate-100'
+                      : 'border-[var(--border)] bg-[var(--surface)] hover:border-blue-300 text-[var(--text)] dark:border-slate-700/90 dark:bg-slate-900/90 dark:hover:border-sky-400/70 dark:text-slate-100'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -695,7 +708,7 @@ export const MatchingRenderer: React.FC<MatchingRendererProps> = ({
                       ? `${activeTheme.cardLight} ${activeTheme.cardDark} ${activeTheme.ring}`
                       : isMatched
                       ? `${activeTheme.cardLight} ${activeTheme.cardDark}`
-                      : 'border-slate-200 bg-[#ffffff] hover:border-blue-300 text-slate-700 dark:border-slate-700/90 dark:bg-slate-900/90 dark:hover:border-sky-400/70 dark:text-slate-200'
+                      : 'border-[var(--border)] bg-[var(--surface)] hover:border-blue-300 text-[var(--text)] dark:border-slate-700/90 dark:bg-slate-900/90 dark:hover:border-sky-400/70 dark:text-slate-200'
                   }`}
                 >
                   <span

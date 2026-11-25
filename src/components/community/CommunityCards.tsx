@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { UserRound, ArrowUpRight } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AlumniStory } from '../../types/community';
 import { CATEGORY_NAMES } from '../../utils/achievementRules';
 import { safeExternalLink } from '../../utils/communitySelectors';
@@ -20,6 +20,9 @@ export function AlumniIdentity({
   size?: 'md' | 'lg';
 }) {
   const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+  }, [story.profileImage]);
   const hasPositions = Boolean(story.positions && story.positions.length > 0);
   return (
     <div className={`community-identity ${size === 'lg' ? 'community-identity--lg' : ''}`}>
@@ -28,7 +31,7 @@ export function AlumniIdentity({
           src={story.profileImage}
           alt={`${story.displayName || 'Alumni contributor'} portrait`}
           onError={() => setFailed(true)}
-          loading="lazy"
+          loading={size === 'lg' ? 'eager' : 'lazy'}
         />
       ) : (
         <span className="neutral-avatar">

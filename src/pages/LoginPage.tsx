@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, Mail, Moon, Sun } from 'lucide-react';
 import { useStudent } from '../context/StudentContext';
 import { NtTrackBadge, BaTrackBadge, SmTrackBadge } from '../components/shared/PixelArt';
@@ -18,9 +18,12 @@ import { scrollViewportToTop } from '../utils/scrollTop';
 type LoginView = 'signin' | 'forgot' | 'sent' | 'signup' | 'name' | 'profile';
 
 export function LoginPage() {
-  const { state, updatePreferences, completeAuthLogin } = useStudent();
+  const { state, updatePreferences, completeAuthLogin, enterGuestSession, authSession, isGuest } = useStudent();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  const from = (location.state as { from?: string } | null)?.from;
+  const redirectTarget = from && from.startsWith('/') && from !== '/login' ? from : '/';
 
   const initialView: LoginView = searchParams.get('mode') === 'signup' ? 'signup' : 'signin';
   const [view, setView] = useState<LoginView>(initialView);
@@ -126,7 +129,7 @@ export function LoginPage() {
         applyProfile: Boolean(result.account),
       });
       setBusy(false);
-      navigate('/', { replace: true });
+      navigate(redirectTarget, { replace: true });
     }, 350);
   };
 
@@ -142,7 +145,7 @@ export function LoginPage() {
         provider: 'google',
         keepSignedIn,
       });
-      navigate('/', { replace: true });
+      navigate(redirectTarget, { replace: true });
     } catch (error: unknown) {
       const code =
         error && typeof error === 'object' && 'code' in error
@@ -214,7 +217,12 @@ export function LoginPage() {
       keepSignedIn: true,
       applyProfile: true,
     });
-    navigate('/', { replace: true });
+    navigate(redirectTarget, { replace: true });
+  };
+
+  const handleContinueAsGuest = () => {
+    enterGuestSession();
+    navigate(redirectTarget, { replace: true });
   };
 
   return (
@@ -244,13 +252,20 @@ export function LoginPage() {
         <div className="login-stars" aria-hidden="true" />
         <div className="login-stars b" aria-hidden="true" />
 
-        <Link to="/" className="login-brandrow" aria-label="CTRL+PATH Home">
+        <Link
+          to={authSession || isGuest ? '/' : '/login'}
+          onClick={() => {
+            if (!authSession && !isGuest) goSignin();
+          }}
+          className="login-brandrow"
+          aria-label="CTRL+PATH Home"
+        >
           <img src="/assets/login/ctrl-path-logo.png" alt="CTRL+PATH logo" />
           <div>
             <div className="login-brandtitle">
               CTRL <span>+</span> PATH
             </div>
-            <div className="login-brandsub">Explore · Compare · Find Your Path</div>
+            <div className="login-brandsub">Choose Your Own Path</div>
           </div>
         </Link>
 
@@ -314,7 +329,14 @@ export function LoginPage() {
       {/* FORM SIDE */}
       <div className="login-formside">
         <div className="login-formcol">
-          <Link to="/" className="login-mobbrand" aria-label="CTRL+PATH Home">
+          <Link
+            to={authSession || isGuest ? '/' : '/login'}
+            onClick={() => {
+              if (!authSession && !isGuest) goSignin();
+            }}
+            className="login-mobbrand"
+            aria-label="CTRL+PATH Home"
+          >
             <img src="/assets/login/ctrl-path-logo.png" alt="CTRL+PATH logo" />
             <div className="login-mobbrand-title">
               CTRL <span>+</span> PATH
@@ -339,6 +361,10 @@ export function LoginPage() {
                     <input
                       id="login-email"
                       type="email"
+                      inputMode="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       placeholder="you@g.batstate-u.edu.ph"
                       autoComplete="email"
                       value={liEmail}
@@ -444,7 +470,7 @@ export function LoginPage() {
 
                 <p className="login-switch">
                   New here, Explorer?{' '}
-                  <button type="button" className="login-inline-btn" onClick={goSignup}>
+                  <button type="button" className="login-inline-btn touch-target-44" onClick={goSignup}>
                     Create an account
                   </button>
                 </p>
@@ -464,6 +490,10 @@ export function LoginPage() {
                     <input
                       id="forgot-email"
                       type="email"
+                      inputMode="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       placeholder="you@g.batstate-u.edu.ph"
                       autoComplete="email"
                       value={forgotEmail}
@@ -536,6 +566,10 @@ export function LoginPage() {
                     <input
                       id="signup-email"
                       type="email"
+                      inputMode="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       placeholder="you@g.batstate-u.edu.ph"
                       autoComplete="email"
                       value={suEmail}
@@ -594,7 +628,7 @@ export function LoginPage() {
 
                 <p className="login-switch login-switch--signup">
                   Already have an account?{' '}
-                  <button type="button" className="login-inline-btn" onClick={goSignin}>
+                  <button type="button" className="login-inline-btn touch-target-44" onClick={goSignin}>
                     Sign in
                   </button>
                 </p>
@@ -714,6 +748,7 @@ export function LoginPage() {
                       <input
                         id="onboarding-sec"
                         type="text"
+                        autoComplete="off"
                         placeholder="e.g. 3101"
                         value={section}
                         onChange={(e) => setSection(e.target.value)}
@@ -741,9 +776,9 @@ export function LoginPage() {
 
           <p className="login-note">
             Your progress, gemstones and comparisons are saved to your account.{' '}
-            <Link to="/" className="login-guest-link">
+            <button type="button" className="login-guest-link touch-target-44" onClick={handleContinueAsGuest}>
               Continue as guest
-            </Link>
+            </button>
           </p>
 
           <div className="login-foot2">

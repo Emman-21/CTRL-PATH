@@ -1,28 +1,35 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { StudentState, TrackCode, QuizAttempt, SavedComparison, StudentPreferences } from '../types';
 import type { CompareTopicId } from '../data/compareTopics';
 
 import { validateProfile, studentProgress, completeLearningModule, areAllTrackSubjectsCompleted, clearStudentData, type ProfileValues, type SaveResult } from '../utils/studentControls';
 import { evaluateAchievements, eligibleAttemptPair, withAchievementRecords } from '../utils/achievementRules';
 import { loadStudentData, serializeStudent, STUDENT_STORAGE_KEY as STORAGE_KEY } from '../utils/achievementStorage';
-import { recordActivity } from '../utils/streakManager';
+import { recordActivity as recordStreakActivity } from '../utils/streakManager';
+import { DEFAULT_AVATAR_STYLE } from '../utils/avatarOptions';
 import {
   readAuthSession,
   saveAuthSession,
   clearAuthSession,
+  readGuestSession,
+  saveGuestSession,
   fallbackNameFromEmail,
   type AuthProvider,
   type AuthSession,
 } from '../utils/authSession';
+import { markLuniLoginGreetPending } from '../utils/luniLoginGreet';
+import { dispatchLuniWinkMilestone } from '../utils/luniWaveSprite';
 import { firebaseSignOut } from '../services/firebase';
 
 export const INITIAL_STATE: StudentState = {
   profileSchemaVersion: 1,
   section: '',
   biography: '',
-  avatarStyle: 'neutral',
+  avatarStyle: DEFAULT_AVATAR_STYLE,
   explorationDates: {},
   moduleCompletions: [],
+  readAlumniStories: [],
+  maxStreakDays: 0,
   achievementSchemaVersion: 2,
   achievementRecords: [],
   attemptComparisons: [],
@@ -88,9 +95,12 @@ interface StudentContextType {
   updatePreferences: (prefs: Partial<StudentPreferences>) => SaveResult;
   updateProfile: (values: ProfileValues) => SaveResult;
   completeModule: (track: TrackCode, moduleId: string) => void;
+  markAlumniStoryRead: (storyId: string) => void;
   recordActivity: (actionDescription?: string) => void;
   resetAllData: () => SaveResult;
   authSession: AuthSession | null;
+  isGuest: boolean;
+  enterGuestSession: () => void;
   completeAuthLogin: (params: {
     email: string;
     displayName?: string;
@@ -113,6 +123,9 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [authSession, setAuthSession] = useState<AuthSession | null>(() =>
     typeof window !== 'undefined' ? readAuthSession(localStorage, sessionStorage) : null,
   );
+  const [isGuest, setIsGuest] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? readGuestSession(sessionStorage) : false,
+  );
   // Flag to skip the sync-effect write when persistChange already wrote manually.
   const skipNextPersist = useRef(false);
 
@@ -128,6 +141,18 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setStorageWarning('Progress could not be saved in this browser. Keep this tab open and free browser storage before refreshing.');
     }
   }, [state, loaded.canPersist]);
+
+  const prevAchievementCountRef = useRef(state.achievementRecords.length);
+  const prevQuizCountRef = useRef(state.quizAttempts.length);
+  useEffect(() => {
+    const newAchievement = state.achievementRecords.length > prevAchievementCountRef.current;
+    const newQuiz = state.quizAttempts.length > prevQuizCountRef.current;
+    prevAchievementCountRef.current = state.achievementRecords.length;
+    prevQuizCountRef.current = state.quizAttempts.length;
+    if (newAchievement || newQuiz) {
+      dispatchLuniWinkMilestone();
+    }
+  }, [state.achievementRecords.length, state.quizAttempts.length]);
 
   const progress = studentProgress(state);
   const overallJourneyProgress = progress.journeyPercent;
@@ -145,10 +170,65 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return {ok:false,message:'Could not save in this browser. Your edits are still here; free browser storage and try again.'};
     }
   };
+  const recordActivity = useCallback((actionDescription?: string) => {
+    const res = recordStreakActivity(actionDescription);
+    if (res.streakCount > 0) {
+      setState((prev) => {
+        const nextMax = Math.max(prev.maxStreakDays || 0, res.streakCount);
+        const hasFlame = prev.achievementRecords.some((r) => r.id === 'special-steady-flame');
+        if (nextMax === (prev.maxStreakDays || 0) && (res.streakCount < 3 || hasFlame)) {
+          return prev;
+        }
+        const nextState = { ...prev, maxStreakDays: nextMax };
+        return res.streakCount >= 3 || nextMax >= 3
+          ? evaluateAchievements(nextState, { type: 'streak-updated', streakCount: res.streakCount })
+          : nextState;
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleStreakUpdated = (e: Event) => {
+      const streakCount = (e as CustomEvent<{ streakCount?: number }>).detail?.streakCount;
+      if (typeof streakCount === 'number' && streakCount > 0) {
+        setState((prev) => {
+          const nextMax = Math.max(prev.maxStreakDays || 0, streakCount);
+          const hasFlame = prev.achievementRecords.some((r) => r.id === 'special-steady-flame');
+          if (nextMax === (prev.maxStreakDays || 0) && (streakCount < 3 || hasFlame)) {
+            return prev;
+          }
+          const nextState = { ...prev, maxStreakDays: nextMax };
+          return streakCount >= 3 || nextMax >= 3
+            ? evaluateAchievements(nextState, { type: 'streak-updated', streakCount })
+            : nextState;
+        });
+      }
+    };
+    window.addEventListener('ctrl_streak_updated', handleStreakUpdated);
+    return () => window.removeEventListener('ctrl_streak_updated', handleStreakUpdated);
+  }, []);
+
+  const markAlumniStoryRead = useCallback((storyId: string) => {
+    if (!storyId) return;
+    setState((prev) => {
+      const existing = prev.readAlumniStories || [];
+      const hasStoryGem = prev.achievementRecords.some((r) => r.id === 'special-story-seeker');
+      if (existing.includes(storyId) && hasStoryGem) {
+        return prev;
+      }
+      const nextStories = existing.includes(storyId) ? existing : [...existing, storyId];
+      return evaluateAchievements(
+        { ...prev, readAlumniStories: nextStories },
+        { type: 'story-read', storyId },
+      );
+    });
+  }, []);
+
   const updateProfile = (values: ProfileValues): SaveResult => {
     if(Object.keys(validateProfile(values)).length) return {ok:false,message:'Please correct the profile fields.'};
     const clean=Object.fromEntries(Object.entries(values).map(([key,value])=>[key,value.trim()])) as ProfileValues;
-    return persistChange({...state,...clean,profileSchemaVersion:1});
+    const nextState=evaluateAchievements({...state,...clean,profileSchemaVersion:1},{type:'profile-updated'});
+    return persistChange(nextState);
   };
   const completeModule = (track: TrackCode, moduleId: string) => {
     recordActivity('module-completed');
@@ -232,7 +312,8 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const saveTrackReflection = (track: TrackCode, reflection: Partial<import('../types').TrackReflection>): SaveResult => {
     if(Object.values(reflection).some(value=>typeof value!=='string'||value.length>5000)) return {ok:false,message:'Use 5,000 characters or fewer for each reflection.'};
-    return persistChange({...state,reflections:{...state.reflections,[track]:{...state.reflections[track],...reflection,savedAt:new Date().toISOString()}}});
+    const nextState=evaluateAchievements({...state,reflections:{...state.reflections,[track]:{...state.reflections[track],...reflection,savedAt:new Date().toISOString()}}},{type:'reflection-saved',track});
+    return persistChange(nextState);
   };
 
   const updateTrackProgress = (track: TrackCode, progress: number) => {
@@ -415,6 +496,9 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       typeof window !== 'undefined' ? localStorage : undefined,
       typeof window !== 'undefined' ? sessionStorage : undefined,
     );
+    saveGuestSession(false, typeof window !== 'undefined' ? sessionStorage : undefined);
+    markLuniLoginGreetPending(typeof window !== 'undefined' ? sessionStorage : undefined);
+    setIsGuest(false);
     setAuthSession(nextSession);
 
     const shouldUpdateName =
@@ -446,12 +530,20 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const enterGuestSession = () => {
+    saveGuestSession(true, typeof window !== 'undefined' ? sessionStorage : undefined);
+    markLuniLoginGreetPending(typeof window !== 'undefined' ? sessionStorage : undefined);
+    setIsGuest(true);
+  };
+
   const signOutSession = async () => {
     clearAuthSession(
       typeof window !== 'undefined' ? localStorage : undefined,
       typeof window !== 'undefined' ? sessionStorage : undefined,
     );
+    saveGuestSession(false, typeof window !== 'undefined' ? sessionStorage : undefined);
     setAuthSession(null);
+    setIsGuest(false);
     await firebaseSignOut();
   };
 
@@ -482,9 +574,12 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updatePreferences,
         updateProfile,
         completeModule,
+        markAlumniStoryRead,
         recordActivity,
         resetAllData,
         authSession,
+        isGuest,
+        enterGuestSession,
         completeAuthLogin,
         signOutSession,
       }}

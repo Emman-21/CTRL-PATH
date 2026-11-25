@@ -48,7 +48,7 @@ const SCORE_BAND_CONFIG: Record<
   high: {
     barVariant: 'score-high',
     textClass: 'text-emerald-700 dark:text-emerald-300',
-    badgeBgClass: 'bg-emerald-600 text-white',
+    badgeBgClass: 'bg-emerald-700 text-white',
     radarFillClass: 'fill-emerald-600 dark:fill-emerald-400',
     label: 'Strong',
   },
@@ -62,7 +62,7 @@ const SCORE_BAND_CONFIG: Record<
   low: {
     barVariant: 'score-low',
     textClass: 'text-orange-700 dark:text-orange-300',
-    badgeBgClass: 'bg-orange-500 text-white',
+    badgeBgClass: 'bg-orange-700 text-white',
     radarFillClass: 'fill-orange-600 dark:fill-orange-400',
     label: 'Needs Review',
   },
@@ -381,7 +381,7 @@ export const FiveLevelBreakdown: React.FC<FiveLevelBreakdownProps> = ({
                           type="button"
                           onClick={() => onReviewLevel?.(lvl.level)}
                           aria-label={`Review this level: ${lvl.name}`}
-                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 dark:bg-orange-950/50 dark:hover:bg-orange-900/60 dark:text-orange-300 dark:border-orange-800/70 transition-colors cursor-pointer"
+                          className="inline-flex items-center justify-center gap-1.5 min-h-11 md:min-h-0 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 dark:bg-orange-950/50 dark:hover:bg-orange-900/60 dark:text-orange-300 dark:border-orange-800/70 transition-colors cursor-pointer"
                         >
                           <span>Review this level</span>
                           <ArrowRight className="w-3 h-3" />

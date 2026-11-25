@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Card } from '../components/shared/Card';
 import { Button } from '../components/shared/Button';
 import { NtTrackBadge, BaTrackBadge, SmTrackBadge } from '../components/shared/PixelArt';
@@ -33,6 +34,11 @@ import {
   getUnansweredQuestionIndices,
   isChapterComplete,
 } from '../utils/quizEngine';
+import {
+  isInteractiveControl,
+  isTypingElement,
+  resolveQuizShortcut,
+} from '../utils/keyboardNav';
 import { scrollViewportToTop } from '../utils/scrollTop';
 
 export const CtrlQuizPage: React.FC = () => {
@@ -54,10 +60,6 @@ export const CtrlQuizPage: React.FC = () => {
 
   // Final scoring result
   const [scoreResult, setScoreResult] = useState<QuizScoreResult | null>(null);
-
-  // Track whether First Spark existed BEFORE this submission, so we can
-  // distinguish "just unlocked" from "already had it" on the completion screen.
-  const [hadFirstSparkOnSubmit, setHadFirstSparkOnSubmit] = useState(false);
 
   // Sync answering stage with sessionStorage and window event for non-scrolling main layout
   useEffect(() => {
@@ -99,6 +101,9 @@ export const CtrlQuizPage: React.FC = () => {
   const isLastQuestionInChapter =
     currentLevelQuestionIds.length > 0 && currentQIndex === currentLevelQuestionIds.length - 1;
 
+  const location = useLocation();
+  const questionCardRef = useRef<HTMLDivElement | null>(null);
+  const didAutostartRef = useRef(false);
   const pillNavRef = useRef<HTMLDivElement | null>(null);
   const activePillRef = useRef<HTMLButtonElement | null>(null);
   const pillDragRef = useRef<{
@@ -119,6 +124,23 @@ export const CtrlQuizPage: React.FC = () => {
       });
     }
   }, [flowStage, currentLevelNum, currentQIndex]);
+
+  // Focus question card when entering or switching non-identification questions so keyboard shortcuts work right away
+  useEffect(() => {
+    if (flowStage !== 'question' || !activeQuestion || activeQuestion.type === 'identification') {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      const activeEl = document.activeElement;
+      const inBlockingOverlay = Boolean(
+        document.querySelector('[role="dialog"][aria-modal="true"], dialog[open]')
+      );
+      if (inBlockingOverlay) return;
+      if (activeEl?.closest?.('#topbar-search-results')) return;
+      questionCardRef.current?.focus({ preventScroll: true });
+    }, 20);
+    return () => window.clearTimeout(timer);
+  }, [flowStage, currentLevelNum, currentQIndex, activeQuestion?.id, activeQuestion?.type]);
 
   // Start new attempt
   const handleStartNewAttempt = () => {
@@ -226,12 +248,6 @@ export const CtrlQuizPage: React.FC = () => {
   const handleConfirmSubmit = () => {
     if (!session) return;
 
-    // Capture BEFORE saveQuizAttempt fires so we can detect a newly-unlocked First Spark
-    const hadBefore = studentState.achievementRecords.some(
-      (r) => r.id === 'special-first-spark'
-    );
-    setHadFirstSparkOnSubmit(hadBefore);
-
     // Calculate score
     const result = calculateQuizScores(session);
     setScoreResult(result);
@@ -258,14 +274,123 @@ export const CtrlQuizPage: React.FC = () => {
     setFlowStage('completed');
   };
 
+  const isActiveQuestionAnswered = activeQuestion
+    ? isQuestionAnswered(activeQuestion, session?.answers[activeQuestion.id])
+    : false;
+  const canProceedNext = !(isLastQuestionInChapter && !isCurrentChapterComplete);
+
+  // Optional ?autostart=1 support to jump past intro straight into preparation/active question
+  useEffect(() => {
+    if (didAutostartRef.current) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get('autostart') !== '1') return;
+    didAutostartRef.current = true;
+    if (flowStage === 'intro') {
+      if (session && !session.isCompleted) {
+        const hasSeenPrep = session.levelPrepSeen[session.currentLevel];
+        setFlowStage(hasSeenPrep ? 'question' : 'preparation');
+      } else if (studentState.quizAttempts.length < 3) {
+        const attemptNumber = studentState.quizAttempts.length + 1;
+        const newSession = initNewQuizSession(attemptNumber);
+        setSession(newSession);
+        setFlowStage('preparation');
+      }
+    }
+  }, [location.search, flowStage, session, studentState.quizAttempts.length]);
+
+  const handleGlobalQuizKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      // Do not intercept if a modal dialog or global Topbar search listbox is active
+      if (document.querySelector('[role="dialog"][aria-modal="true"], dialog[open]')) {
+        return;
+      }
+      if (document.getElementById('topbar-search-results')) {
+        return;
+      }
+
+      const target = e.target as HTMLElement | null;
+      const isTyping = isTypingElement(target);
+      const focusedOnButton = isInteractiveControl(target);
+
+      // Allow Enter to advance through intro, preparation, and level_complete checkpoints
+      if (flowStage === 'intro' || flowStage === 'preparation' || flowStage === 'level_complete') {
+        if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && !e.altKey && !isTyping && !focusedOnButton) {
+          if (flowStage === 'intro') {
+            if (session && !session.isCompleted) {
+              e.preventDefault();
+              handleResumeAttempt();
+            } else if (studentState.quizAttempts.length < 3) {
+              e.preventDefault();
+              handleStartNewAttempt();
+            }
+          } else if (flowStage === 'preparation') {
+            e.preventDefault();
+            handleBeginLevel();
+          } else if (flowStage === 'level_complete') {
+            e.preventDefault();
+            handleContinueToNextLevel();
+          }
+        }
+        return;
+      }
+
+      if (flowStage !== 'question' || !activeQuestion || !session) return;
+
+      const focusedOnAnswerOption = Boolean(target?.closest?.('[data-quiz-option-selected="true"]'));
+      const focusedOnSequencingStep = Boolean(target?.closest?.('[data-testid^="sequencing-step-"]'));
+
+      const action = resolveQuizShortcut({
+        key: e.key,
+        altKey: e.altKey,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        shiftKey: e.shiftKey,
+        question: activeQuestion,
+        currentValue: session.answers[activeQuestion.id],
+        isCurrentQuestionAnswered: isActiveQuestionAnswered,
+        canProceedNext,
+        hasPrevQuestion: currentQIndex > 0,
+        isTyping,
+        focusedOnButton,
+        focusedOnAnswerOption,
+        focusedOnSequencingStep,
+      });
+
+      if (action.type === 'select_answer') {
+        e.preventDefault();
+        handleAnswerChange(action.value);
+      } else if (action.type === 'next_question') {
+        e.preventDefault();
+        handleNextQuestion();
+      } else if (action.type === 'prev_question') {
+        e.preventDefault();
+        handlePrevQuestion();
+      }
+    },
+    [
+      flowStage,
+      activeQuestion,
+      session,
+      isActiveQuestionAnswered,
+      canProceedNext,
+      currentQIndex,
+      studentState.quizAttempts.length,
+    ]
+  );
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleGlobalQuizKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalQuizKeyDown);
+  }, [handleGlobalQuizKeyDown]);
+
   const isAnsweringStage = flowStage === 'question';
 
   return (
     <div
-      className={`relative flex flex-col justify-start rounded-3xl overflow-hidden transition-all duration-300 bg-slate-50 border border-slate-200/80 shadow-xs ${
+      className={`relative flex flex-col justify-start rounded-3xl overflow-hidden transition-all duration-300 bg-slate-50 dark:bg-[#0b1222] border border-slate-200/80 dark:border-slate-800 shadow-xs ${
         isAnsweringStage
           ? 'flex-1 min-h-0 p-4 sm:p-6'
-          : 'min-h-[82vh] p-4 sm:p-6 md:p-8'
+          : 'min-h-[82dvh] p-4 sm:p-6 md:p-8'
       }`}
     >
       {/* Background Cloudscape (Minimal to prevent distraction during assessment) */}
@@ -300,7 +425,7 @@ export const CtrlQuizPage: React.FC = () => {
       {flowStage === 'question' && activeQuestion && (
         <div className="relative z-10 max-w-5xl mx-auto w-full flex-1 min-h-0 flex flex-col justify-start space-y-3 sm:space-y-3.5">
           {/* Level & Question Number Navigator */}
-          <div className="bg-white/95 backdrop-blur-md px-5 py-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row md:items-center md:justify-between gap-3 shrink-0">
+          <div className="bg-[var(--surface-95)] dark:bg-[#0f172a]/95 backdrop-blur-md px-5 py-3 rounded-2xl border border-[var(--border)] dark:border-slate-800 shadow-2xs flex flex-col md:flex-row md:items-center md:justify-between gap-3 shrink-0">
             <div className="shrink-0 flex items-center gap-3">
               {activeQuestion.track === 'NT' ? (
                 <NtTrackBadge size={36} className="rounded-xl shadow-xs shrink-0" />
@@ -310,10 +435,10 @@ export const CtrlQuizPage: React.FC = () => {
                 <SmTrackBadge size={36} className="rounded-xl shadow-xs shrink-0" />
               )}
               <div>
-                <div className="text-[11px] font-black uppercase text-indigo-600 tracking-wider">
+                <div className="text-[11px] font-black uppercase text-indigo-600 dark:text-indigo-300 tracking-wider">
                   Chapter {currentLevelNum}: {currentLevelMeta.typeTitle}
                 </div>
-                <div className="text-xs sm:text-sm font-black text-slate-900 mt-0.5">
+                <div className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 mt-0.5">
                   Question {currentQIndex + 1} of {currentLevelQuestionIds.length}
                 </div>
               </div>
@@ -378,7 +503,7 @@ export const CtrlQuizPage: React.FC = () => {
                   el.scrollLeft += e.deltaY;
                 }
               }}
-              className="w-full md:w-auto min-w-0 max-w-full flex items-center flex-nowrap overflow-x-auto touch-pan-x select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden gap-1.5 py-1 px-1"
+              className="w-full md:w-auto min-w-0 max-w-full flex items-center flex-nowrap overflow-x-auto touch-pan-x select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden gap-2 md:gap-1.5 py-1 px-1"
               role="navigation"
               aria-label={`Chapter ${currentLevelNum} question selector`}
             >
@@ -400,13 +525,13 @@ export const CtrlQuizPage: React.FC = () => {
                     }}
                     aria-label={`Question ${qIdx + 1} (${answered ? 'Answered' : 'Unanswered'})`}
                     aria-current={isCurrent ? 'step' : undefined}
-                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-xs font-black transition-all cursor-pointer inline-flex items-center justify-center shrink-0 ${
+                    className={`w-11 h-11 md:w-8 md:h-8 rounded-lg text-xs font-black transition-all cursor-pointer inline-flex items-center justify-center shrink-0 ${
                       answered
                         ? 'bg-blue-600 border border-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:border-blue-400 dark:text-white dark:hover:bg-blue-500 shadow-2xs'
-                        : 'bg-[#ffffff] border border-blue-300 text-blue-700 hover:bg-blue-50 dark:bg-[#162344] dark:border-blue-400/70 dark:text-blue-300 dark:hover:bg-blue-500/25'
+                        : 'bg-[var(--surface)] border border-blue-300 text-blue-700 hover:bg-blue-50 dark:bg-[#162344] dark:border-blue-400/70 dark:text-blue-300 dark:hover:bg-blue-500/25'
                     } ${
                       isCurrent
-                        ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-white dark:ring-sky-300 dark:ring-offset-[#0f172a]'
+                        ? 'ring-2 ring-blue-400 ring-offset-1 ring-offset-[var(--surface)] dark:ring-sky-300 dark:ring-offset-[#0f172a]'
                         : ''
                     }`}
                   >
@@ -418,8 +543,12 @@ export const CtrlQuizPage: React.FC = () => {
           </div>
 
           {/* White Question Card */}
-          <Card padding="md" className="border-slate-200 shadow-sm relative flex flex-col justify-between min-h-0">
-            <div className="min-h-0 overflow-y-auto px-0.5 pt-0.5">
+          <Card padding="md" className="border-slate-200 dark:border-slate-800 shadow-sm relative flex flex-col justify-between min-h-0">
+            <div
+              ref={questionCardRef}
+              tabIndex={-1}
+              className="min-h-0 overflow-y-auto px-0.5 pt-0.5 focus:outline-hidden"
+            >
               <QuizQuestionRenderer
                 question={activeQuestion}
                 value={session?.answers[activeQuestion.id]}
@@ -435,13 +564,13 @@ export const CtrlQuizPage: React.FC = () => {
                     Answer all questions in Chapter {currentLevelNum} before proceeding ({unansweredIndices.length} remaining).
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-1">
+                <div className="flex flex-wrap items-center gap-2 md:gap-1">
                   {unansweredIndices.slice(0, 6).map((idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => handleJumpToChapterQuestion(idx)}
-                      className="px-2 py-0.5 rounded-md text-[11px] font-black bg-[#ffffff] border border-blue-300 text-blue-700 hover:bg-blue-100 dark:bg-[#162344] dark:border-blue-400/60 dark:text-blue-300 dark:hover:bg-blue-500/25 cursor-pointer"
+                      className="min-w-11 min-h-11 md:min-w-0 md:min-h-0 inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-black bg-[var(--surface)] border border-blue-300 text-blue-700 hover:bg-blue-100 dark:bg-[#162344] dark:border-blue-400/60 dark:text-blue-300 dark:hover:bg-blue-500/25 cursor-pointer"
                     >
                       #{idx + 1}
                     </button>
@@ -456,7 +585,7 @@ export const CtrlQuizPage: React.FC = () => {
             )}
 
             {/* Navigation Bar */}
-            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2 shrink-0">
+            <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -467,20 +596,27 @@ export const CtrlQuizPage: React.FC = () => {
                 Previous
               </Button>
 
-              <Button
-                variant="primary"
-                size="sm"
-                disabled={isLastQuestionInChapter && !isCurrentChapterComplete}
-                onClick={handleNextQuestion}
-                icon={<ArrowRight className="w-4 h-4" />}
-                iconPosition="right"
-              >
-                {isLastQuestionInChapter
-                  ? currentLevelNum === 5
-                    ? 'Submit Assessment'
-                    : `Complete Level ${currentLevelNum}`
-                  : 'Next Question'}
-              </Button>
+              <div className="flex items-center gap-2.5">
+                {isActiveQuestionAnswered && canProceedNext && (
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 dark:text-slate-400">
+                    Press <kbd className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300">Enter</kbd>
+                  </span>
+                )}
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={isLastQuestionInChapter && !isCurrentChapterComplete}
+                  onClick={handleNextQuestion}
+                  icon={<ArrowRight className="w-4 h-4" />}
+                  iconPosition="right"
+                >
+                  {isLastQuestionInChapter
+                    ? currentLevelNum === 5
+                      ? 'Submit Assessment'
+                      : `Complete Level ${currentLevelNum}`
+                    : 'Next Question'}
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
@@ -498,10 +634,6 @@ export const CtrlQuizPage: React.FC = () => {
       {flowStage === 'completed' && scoreResult && (
         <QuizCompletion
           scoreResult={scoreResult}
-          firstSparkUnlocked={
-            !hadFirstSparkOnSubmit &&
-            studentState.achievementRecords.some((r) => r.id === 'special-first-spark')
-          }
           onRetake={handleStartNewAttempt}
         />
       )}

@@ -4,6 +4,7 @@ import { achievementStats, evaluateAchievements, isCompletedAttempt } from './ac
 import { analyzeQuizAttempt } from './resultsAnalytics';
 import { QUIZ_QUESTIONS } from '../data/quiz/quizQuestions';
 import { TRACKS_DATA } from '../data/tracks';
+import { isAvatarStyle } from './avatarOptions';
 
 export type ProfileValues = Pick<StudentState,'name'|'program'|'yearLevel'|'section'|'biography'|'avatarStyle'>;
 export type SaveResult = { ok: boolean; message: string };
@@ -18,7 +19,7 @@ export function validateProfile(values:ProfileValues) {
     if(typeof values[field]!=='string'||values[field].trim().length>max) errors[field]=`Use ${max} characters or fewer.`;
   }
   if(!values.name?.trim()) errors.name='Enter a display name.';
-  if(!['neutral','initials'].includes(values.avatarStyle)) errors.avatarStyle='Choose an available avatar style.';
+  if(!isAvatarStyle(values.avatarStyle)) errors.avatarStyle='Choose an available avatar.';
   return errors;
 }
 export function validSubmittedAttempt(a:QuizAttempt) {
@@ -66,7 +67,8 @@ export function completeLearningModule(state:StudentState,track:TrackCode,module
     exploredTracks:allSubjectsDone?{...state.exploredTracks,[track]:true}:state.exploredTracks,
     explorationDates:allSubjectsDone?{...state.explorationDates,[track]:state.explorationDates[track]||now}:state.explorationDates,
   };
-  return allSubjectsDone?evaluateAchievements(nextState,{type:'track-explored',track},now):nextState;
+  const afterModule=evaluateAchievements(nextState,{type:'module-completed',track,moduleId},now);
+  return allSubjectsDone?evaluateAchievements(afterModule,{type:'track-explored',track},now):afterModule;
 }
 export const QUIZ_SESSION_KEY='ctrl_path_quiz_session_v1';
 export function isStudentStorageKey(key:string) {
@@ -74,7 +76,7 @@ export function isStudentStorageKey(key:string) {
 }
 export function exportStudentData(state:StudentState,storage:Storage,now=new Date().toISOString()) {
   // Explicit export allowlist: no unrelated storage, credentials, or unknown legacy fields.
-  const keys=['achievementSchemaVersion','achievementRecords','attemptComparisons','profileSchemaVersion','name','university','program','yearLevel','section','biography','avatarStyle','exploredTracks','explorationDates','trackProgress','moduleCompletions','currentQuizProgress','quizAttempts','savedComparisons','comparisonSelection','reflections','preferences'] as const;
+  const keys=['achievementSchemaVersion','achievementRecords','attemptComparisons','profileSchemaVersion','name','university','program','yearLevel','section','biography','avatarStyle','exploredTracks','explorationDates','trackProgress','moduleCompletions','readAlumniStories','maxStreakDays','currentQuizProgress','quizAttempts','savedComparisons','comparisonSelection','reflections','preferences'] as const;
   const persisted=serializeStudent(state);
   const student=Object.fromEntries(keys.map(key=>[key,persisted[key]]));
   let quizSession:Record<string,unknown>|null=null;
@@ -104,3 +106,9 @@ export function clearStudentData(storage:Storage,session:Storage):SaveResult {
     return {ok:false,message:restored?'Data could not be cleared. Existing records were restored.':'Clearing could not finish and some browser records may have been removed. The current session is still available; export it before closing.'};
   }
 }
+
+export function clampProgressPercent(percent:number):number {
+  if(!Number.isFinite(percent)) return 0;
+  return Math.min(100,Math.max(0,Math.round(percent)));
+}
+

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  buildStreakContributionGrid,
   getCalendarDayDifference,
   getCelebrationCopy,
   getCurrentWeekDays,
@@ -43,3 +44,35 @@ test('week days returns 7 days from Mon to Sun', () => {
   assert.equal(days.length, 7);
   assert.deepEqual(days.map(d => d.dayLetter), ['M', 'T', 'W', 'T', 'F', 'S', 'S']);
 });
+
+test('buildStreakContributionGrid builds GitHub-style Mon-Sun matrix with active and future flags', () => {
+  // 2026-11-23 is a Monday
+  const grid = buildStreakContributionGrid(
+    ['2026-11-23', '2026-11-21', '2026-11-01', '2026-11-25'], // 2026-11-25 is future -> excluded
+    26,
+    '2026-11-23'
+  );
+
+  assert.equal(grid.weeks.length, 26);
+  for (const week of grid.weeks) {
+    assert.equal(week.days.length, 7);
+  }
+
+  const lastWeek = grid.weeks[grid.weeks.length - 1];
+  // Monday 2026-11-23 should be row 0, active, and today
+  assert.equal(lastWeek.days[0].dateStr, '2026-11-23');
+  assert.equal(lastWeek.days[0].isToday, true);
+  assert.equal(lastWeek.days[0].isActive, true);
+  assert.equal(lastWeek.days[0].isFuture, false);
+
+  // Tuesday..Sunday in the same week should be marked future and inactive
+  for (let r = 1; r < 7; r++) {
+    assert.equal(lastWeek.days[r].isFuture, true);
+    assert.equal(lastWeek.days[r].isActive, false);
+  }
+
+  assert.equal(grid.activeDaysInRange, 3);
+  assert.equal(grid.totalActiveDays, 3);
+  assert.ok(grid.weeks.some((w) => w.monthLabel === 'Nov'));
+});
+

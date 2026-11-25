@@ -17,7 +17,8 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { BACKGROUNDS, GEMSTONE_ASSETS, type GemstoneAsset } from '../assets/manifest';
-import { DashboardLuniSprite } from '../components/dashboard/DashboardLuniSprite';
+import { RaritySparkles } from '../components/achievements/AchievementCard';
+import { DashboardLuniIdle } from '../components/dashboard/DashboardLuniIdle';
 import { UniversityCrests } from '../components/shared/UniversityCrests';
 import {
   NtPixelArt,
@@ -28,7 +29,7 @@ import {
   SmTrackBadge,
 } from '../components/shared/PixelArt';
 import { useStudent } from '../context/StudentContext';
-import { studentProgress } from '../utils/studentControls';
+import { clampProgressPercent, studentProgress } from '../utils/studentControls';
 import { loadQuizSession } from '../utils/quizEngine';
 import { QUIZ_QUESTIONS } from '../data/quiz/quizQuestions';
 import { QUIZ_LEVELS } from '../data/quiz/quizLevels';
@@ -74,6 +75,7 @@ const CrossroadsSignpostIllustration: React.FC = () => (
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { state: studentState, overallJourneyProgress, modulesExploredCount, nextActivity } = useStudent();
+  const overallProgressPercent = clampProgressPercent(overallJourneyProgress);
   const journey = studentProgress(studentState);
   const activeQuiz = loadQuizSession();
   const collection = achievementStats(studentState);
@@ -299,7 +301,10 @@ export const DashboardPage: React.FC = () => {
 
               <h1 className="text-2xl sm:text-4xl font-black text-[var(--text)] dark:text-slate-100 tracking-tight flex items-center gap-2">
                 <span>Welcome back, Luminary!</span>
-                <Sparkles className="w-6 h-6 text-amber-400 animate-sparkle-spin shrink-0" />
+                <Sparkles
+                  className="w-6 h-6 text-amber-400 animate-sparkle-spin shrink-0"
+                  style={{ animationDuration: '7s' }}
+                />
               </h1>
 
               <p className="mt-2 text-sm text-[var(--text-muted)] dark:text-slate-300 leading-relaxed font-normal">
@@ -315,15 +320,22 @@ export const DashboardPage: React.FC = () => {
                   <span>Overall Journey Progress</span>
                 </div>
                 <span className="text-base font-black text-[var(--accent-nt-text)] dark:text-blue-400">
-                  {overallJourneyProgress}%
+                  {overallProgressPercent}%
                 </span>
               </div>
 
               {/* Single Progress Bar in Hero */}
-              <div className="w-full bg-[var(--surface-2)] dark:bg-slate-800 h-3 rounded-full overflow-hidden border border-[var(--border-subtle)] dark:border-transparent">
+              <div
+                className="w-full bg-[var(--surface-2)] dark:bg-slate-800 h-3 rounded-full overflow-hidden border border-[var(--border-subtle)] dark:border-transparent"
+                role="progressbar"
+                aria-label="Overall Journey Progress"
+                aria-valuenow={overallProgressPercent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
                 <div
                   className="bg-[var(--accent-nt)] dark:bg-blue-500 h-full rounded-full transition-all duration-500 ease-out shadow-xs"
-                  style={{ width: `${Math.max(overallJourneyProgress > 0 ? 4 : 0, overallJourneyProgress)}%` }}
+                  style={{ width: `${overallProgressPercent}%` }}
                 />
               </div>
 
@@ -349,7 +361,7 @@ export const DashboardPage: React.FC = () => {
                   <div className="flex items-center gap-1.5">
                     <Trophy className="w-4 h-4 text-[var(--accent-ba-text)] dark:text-purple-400" />
                     <span>
-                      <strong className="text-[var(--text)] dark:text-slate-100 font-extrabold">{collection.unlocked}</strong> / 20 Gemstones
+                      <strong className="text-[var(--text)] dark:text-slate-100 font-extrabold">{collection.unlocked}</strong> / {GEMSTONE_ASSETS.length} Gemstones
                     </span>
                   </div>
                 </div>
@@ -396,7 +408,7 @@ export const DashboardPage: React.FC = () => {
                 <Link to={recommendedNextStep.route}>
                   <button
                     type="button"
-                    className="w-full sm:w-auto font-bold text-sm px-5 py-2.5 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-2 border border-[var(--border)] dark:border-slate-700 bg-[var(--surface)] dark:bg-slate-900/80 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-200 shadow-2xs"
+                    className="w-full sm:w-auto min-h-11 md:min-h-0 font-bold text-sm px-5 py-2.5 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-2 border border-[var(--border)] dark:border-slate-700 bg-[var(--surface)] dark:bg-slate-900/80 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-200 shadow-2xs"
                   >
                     <span>Continue Journey</span>
                     <ArrowRight className="w-4 h-4" />
@@ -420,7 +432,7 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             <div className="relative">
-              <DashboardLuniSprite size={148} animate glow />
+              <DashboardLuniIdle size={148} animate glow />
             </div>
           </div>
         </div>
@@ -464,7 +476,7 @@ export const DashboardPage: React.FC = () => {
           <Link to={recommendedNextStep.route} className="shrink-0 w-full sm:w-auto">
             <button
               type="button"
-              className="w-full sm:w-auto font-bold text-sm px-5 py-2.5 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-2 border border-[var(--border)] dark:border-slate-700 bg-[var(--surface)] dark:bg-slate-900/80 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-200 shadow-2xs"
+              className="w-full sm:w-auto min-h-11 md:min-h-0 font-bold text-sm px-5 py-2.5 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-2 border border-[var(--border)] dark:border-slate-700 bg-[var(--surface)] dark:bg-slate-900/80 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-200 shadow-2xs"
             >
               <span>{recommendedNextStep.buttonText}</span>
               <ArrowRight className="w-4 h-4" />
@@ -516,7 +528,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <Link
             to="/tracks"
-            className="text-xs font-bold text-[var(--text)] dark:text-slate-300 hover:text-[var(--accent-nt-text)] dark:hover:text-white hover:underline flex items-center gap-1 transition-colors"
+            className="touch-target-44 text-xs font-bold text-[var(--text)] dark:text-slate-300 hover:text-[var(--accent-nt-text)] dark:hover:text-white hover:underline flex items-center gap-1 transition-colors shrink-0"
           >
             <span>View Track Directory</span>
             <ChevronRight className="w-4 h-4" />
@@ -545,7 +557,7 @@ export const DashboardPage: React.FC = () => {
             <Link to="/results" className="shrink-0 w-full md:w-auto">
               <button
                 type="button"
-                className="w-full md:w-auto border border-[var(--border)] dark:border-slate-700 bg-[var(--surface)] dark:bg-slate-900/80 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-200 font-bold text-sm px-4 py-2.5 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-2 shadow-2xs"
+                className="w-full md:w-auto min-h-11 md:min-h-0 border border-[var(--border)] dark:border-slate-700 bg-[var(--surface)] dark:bg-slate-900/80 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-200 font-bold text-sm px-4 py-2.5 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-2 shadow-2xs"
               >
                 <span>View Smart Results</span>
                 <ExternalLink className="w-4 h-4" />
@@ -616,7 +628,7 @@ export const DashboardPage: React.FC = () => {
               <Link to="/tracks?track=NT" className="block">
                 <button
                   type="button"
-                  className="w-full border border-[var(--accent-nt)] hover:bg-[var(--accent-nt-tint)] text-[var(--accent-nt-text)] dark:border-blue-800/80 dark:hover:bg-blue-950/50 dark:text-blue-300 font-bold text-sm py-2 px-3 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-2xs"
+                  className="w-full min-h-11 md:min-h-0 border border-[var(--accent-nt)] hover:bg-[var(--accent-nt-tint)] text-[var(--accent-nt-text)] dark:border-blue-800/80 dark:hover:bg-blue-950/50 dark:text-blue-300 font-bold text-sm py-2 px-3 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-2xs"
                 >
                   <span>Explore NT Track</span>
                   <ChevronRight className="w-4 h-4" />
@@ -686,7 +698,7 @@ export const DashboardPage: React.FC = () => {
               <Link to="/tracks?track=BA" className="block">
                 <button
                   type="button"
-                  className="w-full border border-[var(--accent-ba)] hover:bg-[var(--accent-ba-tint)] text-[var(--accent-ba-text)] dark:border-purple-800/80 dark:hover:bg-purple-950/50 dark:text-purple-300 font-bold text-sm py-2 px-3 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-2xs"
+                  className="w-full min-h-11 md:min-h-0 border border-[var(--accent-ba)] hover:bg-[var(--accent-ba-tint)] text-[var(--accent-ba-text)] dark:border-purple-800/80 dark:hover:bg-purple-950/50 dark:text-purple-300 font-bold text-sm py-2 px-3 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-2xs"
                 >
                   <span>Explore BA Track</span>
                   <ChevronRight className="w-4 h-4" />
@@ -756,7 +768,7 @@ export const DashboardPage: React.FC = () => {
               <Link to="/tracks?track=SM" className="block">
                 <button
                   type="button"
-                  className="w-full border border-[var(--accent-sm)] hover:bg-[var(--accent-sm-tint)] text-[var(--accent-sm-text)] dark:border-emerald-800/80 dark:hover:bg-emerald-950/50 dark:text-emerald-300 font-bold text-sm py-2 px-3 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-2xs"
+                  className="w-full min-h-11 md:min-h-0 border border-[var(--accent-sm)] hover:bg-[var(--accent-sm-tint)] text-[var(--accent-sm-text)] dark:border-emerald-800/80 dark:hover:bg-emerald-950/50 dark:text-emerald-300 font-bold text-sm py-2 px-3 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 shadow-2xs"
                 >
                   <span>Explore SM Track</span>
                   <ChevronRight className="w-4 h-4" />
@@ -814,7 +826,7 @@ export const DashboardPage: React.FC = () => {
                   {/* Progress bar */}
                   <div className="w-full bg-[var(--surface)] dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-1.5 border border-[var(--border-subtle)] dark:border-transparent">
                     <div
-                      className="bg-[var(--accent-nt)] dark:bg-slate-300 h-full rounded-full transition-all duration-300"
+                      className="bg-[var(--accent-nt)] dark:bg-sky-400 h-full rounded-full transition-all duration-300"
                       style={{ width: `${isQuizCompleted ? 100 : quizPercent}%` }}
                     />
                   </div>
@@ -839,18 +851,18 @@ export const DashboardPage: React.FC = () => {
                         title={`Chapter ${ch.level}: ${ch.answered}/${ch.total} answered`}
                         className={`flex-1 min-w-[50px] p-1.5 rounded-xl border flex flex-col items-center gap-1 transition-all ${
                           ch.isCompleted
-                            ? 'bg-[var(--accent-nt-tint)] dark:bg-slate-800/70 border-[var(--accent-nt-border)] dark:border-slate-700 text-[var(--accent-nt-text)] dark:text-slate-200'
+                            ? 'bg-[var(--accent-nt-tint)] dark:bg-blue-950/55 border-[var(--accent-nt-border)] dark:border-blue-800/70 text-[var(--accent-nt-text)] dark:text-blue-200'
                             : isCurrent
-                            ? 'bg-[var(--surface)] dark:bg-[#0f172a] border-[var(--accent-nt)] dark:border-slate-500 ring-2 ring-[var(--accent-nt)]/25 dark:ring-slate-400/30 text-[var(--text)] dark:text-slate-100 shadow-[0_0_10px_rgba(59,91,219,0.15)]'
+                            ? 'bg-[var(--surface)] dark:bg-[#0f172a] border-[var(--accent-nt)] dark:border-sky-400/75 ring-2 ring-[var(--accent-nt)]/25 dark:ring-sky-400/25 text-[var(--text)] dark:text-slate-100 shadow-[0_0_10px_rgba(59,91,219,0.15)]'
                             : 'bg-[var(--surface)]/60 dark:bg-slate-900/40 border-[var(--border-subtle)] dark:border-slate-800 text-[var(--text-subtle)] dark:text-slate-500'
                         }`}
                       >
                         <div
                           className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-black ${
                             ch.isCompleted
-                              ? 'bg-[var(--accent-nt)] dark:bg-slate-200 text-white dark:text-slate-900'
+                              ? 'bg-[var(--accent-nt)] dark:bg-sky-500 text-white dark:text-slate-950'
                               : isCurrent
-                              ? 'bg-[var(--accent-nt-tint)] dark:bg-slate-700 text-[var(--accent-nt-text)] dark:text-slate-200'
+                              ? 'bg-[var(--accent-nt-tint)] dark:bg-blue-900/80 text-[var(--accent-nt-text)] dark:text-sky-200'
                               : 'bg-[var(--surface-2)] dark:bg-slate-800 text-[var(--text-subtle)] dark:text-slate-400'
                           }`}
                         >
@@ -879,13 +891,13 @@ export const DashboardPage: React.FC = () => {
                 : 'Free to take anytime'}
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {isQuizCompleted ? (
                 <>
                   <Link to="/results">
                     <button
                       type="button"
-                      className="border border-[var(--border)] dark:border-slate-700 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-200 font-bold text-sm px-4 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                      className="min-h-11 md:min-h-0 border border-[var(--border)] dark:border-slate-700 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-200 font-bold text-sm px-4 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                     >
                       <span>View Smart Results</span>
                       <ExternalLink className="w-4 h-4" />
@@ -895,7 +907,7 @@ export const DashboardPage: React.FC = () => {
                   <Link to="/quiz">
                     <button
                       type="button"
-                      className="border border-[var(--border)] dark:border-slate-700 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-300 font-bold text-sm px-3.5 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                      className="min-h-11 md:min-h-0 border border-[var(--border)] dark:border-slate-700 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-300 font-bold text-sm px-3.5 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                     >
                       <span>Review Answers</span>
                     </button>
@@ -905,7 +917,7 @@ export const DashboardPage: React.FC = () => {
                     <Link to="/quiz?retake=true">
                       <button
                         type="button"
-                        className="border border-[var(--border)] dark:border-slate-700 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text-muted)] dark:text-slate-400 font-bold text-sm px-3 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                        className="min-h-11 md:min-h-0 border border-[var(--border)] dark:border-slate-700 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text-muted)] dark:text-slate-400 font-bold text-sm px-3 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1 shadow-2xs"
                         title="Retake Quiz"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
@@ -918,7 +930,7 @@ export const DashboardPage: React.FC = () => {
                 <Link to={`/quiz${answeredCount > 0 ? `?level=${currentChapterNumber}` : ''}`}>
                   <button
                     type="button"
-                    className="border border-[var(--border)] dark:border-slate-700 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-200 font-bold text-sm px-4 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                    className="min-h-11 md:min-h-0 border border-[var(--border)] dark:border-slate-700 hover:bg-[var(--surface-2)] dark:hover:bg-slate-800 text-[var(--text)] dark:text-slate-200 font-bold text-sm px-4 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
                   >
                     <span>
                       {answeredCount === 0
@@ -947,37 +959,96 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* 4 Preview Gems matching Achievement Vault style */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {displayGems.map((item) => (
+            <div
+              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+              data-reduced-motion={studentState.preferences.reducedMotion}
+            >
+              {displayGems.map((item) => {
+                const category = item.gem.category;
+                const isSpecialCategory = category === 'Special';
+                const isEpic = item.gem.rarity === 'Epic';
+                const isLegendary = item.gem.rarity === 'Legendary';
+                const unlockedCardClass =
+                  category === 'Special'
+                    ? 'bg-linear-to-b from-yellow-50/90 via-amber-50/40 to-[var(--surface)] dark:from-yellow-950/45 dark:via-amber-950/20 dark:to-[#0f172a] border-yellow-300 dark:border-yellow-500/75 shadow-2xs'
+                    : category === 'NT'
+                    ? 'bg-linear-to-b from-blue-50/80 to-[var(--surface)] dark:from-blue-950/40 dark:to-[#0f172a] border-[var(--accent-nt-border)] dark:border-blue-800/80 shadow-2xs'
+                    : category === 'SM'
+                    ? 'bg-linear-to-b from-emerald-50/80 to-[var(--surface)] dark:from-emerald-950/40 dark:to-[#0f172a] border-[var(--accent-sm-border)] dark:border-emerald-800/80 shadow-2xs'
+                    : 'bg-linear-to-b from-violet-50/80 to-[var(--surface)] dark:from-violet-950/40 dark:to-[#0f172a] border-[var(--accent-ba-border)] dark:border-violet-800/80 shadow-2xs';
+                const lockedCardClass = isSpecialCategory
+                  ? 'bg-[var(--gem-locked-bg)] dark:bg-slate-900/50 border-[var(--gem-locked-border)] dark:border-yellow-800/50 border-t-2 border-t-yellow-400/80 dark:border-t-yellow-500/75'
+                  : category === 'NT'
+                  ? 'bg-[var(--gem-locked-bg)] dark:bg-slate-900/50 border-[var(--gem-locked-border)] dark:border-blue-800/50 border-t-2 border-t-blue-400/80 dark:border-t-blue-500/75'
+                  : category === 'BA'
+                  ? 'bg-[var(--gem-locked-bg)] dark:bg-slate-900/50 border-[var(--gem-locked-border)] dark:border-violet-800/50 border-t-2 border-t-violet-400/80 dark:border-t-violet-500/75'
+                  : 'bg-[var(--gem-locked-bg)] dark:bg-slate-900/50 border-[var(--gem-locked-border)] dark:border-emerald-800/50 border-t-2 border-t-emerald-400/80 dark:border-t-emerald-500/75';
+                const rarityGlowClass = isLegendary
+                  ? 'ring-1 ring-amber-400/45 dark:ring-amber-400/45 shadow-[0_0_20px_-6px_rgba(250,204,21,0.4)]'
+                  : isEpic
+                  ? 'ring-1 ring-purple-400/35 dark:ring-purple-500/35 shadow-[0_0_18px_-6px_rgba(168,85,247,0.35)]'
+                  : '';
+                const earnedBadgeClass =
+                  category === 'Special'
+                    ? 'text-yellow-800 dark:text-yellow-300 bg-yellow-100/90 dark:bg-yellow-950/85 border-yellow-300 dark:border-yellow-600/80'
+                    : category === 'NT'
+                    ? 'text-[var(--accent-nt-text)] dark:text-blue-300 bg-[var(--accent-nt-tint)] dark:bg-blue-950/80 border-[var(--accent-nt-border)] dark:border-blue-800/80'
+                    : category === 'SM'
+                    ? 'text-[var(--accent-sm-text)] dark:text-emerald-300 bg-[var(--accent-sm-tint)] dark:bg-emerald-950/80 border-[var(--accent-sm-border)] dark:border-emerald-800/80'
+                    : 'text-[var(--accent-ba-text)] dark:text-violet-300 bg-[var(--accent-ba-tint)] dark:bg-violet-950/80 border-[var(--accent-ba-border)] dark:border-violet-800/80';
+                const unlockedIdColorClass =
+                  category === 'Special'
+                    ? 'text-yellow-700 dark:text-yellow-300/85'
+                    : category === 'NT'
+                    ? 'text-blue-700 dark:text-blue-300/85'
+                    : category === 'BA'
+                    ? 'text-violet-700 dark:text-violet-300/85'
+                    : 'text-emerald-700 dark:text-emerald-300/85';
+                const trackLabelColorClass =
+                  category === 'Special'
+                    ? 'text-yellow-700 dark:text-yellow-300/90'
+                    : category === 'NT'
+                    ? 'text-blue-700 dark:text-blue-300/90'
+                    : category === 'BA'
+                    ? 'text-violet-700 dark:text-violet-300/90'
+                    : 'text-emerald-700 dark:text-emerald-300/90';
+
+                return (
                 <div
                   key={item.gem.achievementId}
                   title={item.isUnlocked ? `${item.gem.name} (Unlocked)` : `To unlock: ${item.gem.requirement}`}
-                  className={`p-3 rounded-2xl border transition-all flex flex-col items-center justify-between text-center select-none min-w-0 overflow-hidden ${
-                    item.isUnlocked
-                      ? 'bg-linear-to-b from-purple-50/70 to-white dark:from-purple-950/40 dark:to-[#0f172a] border-[var(--accent-ba-border)] dark:border-purple-800/80 shadow-2xs'
-                      : 'bg-[var(--gem-locked-bg)] dark:bg-slate-900/50 border-[var(--gem-locked-border)] dark:border-slate-800/80'
-                  }`}
+                  className={`relative px-2.5 py-3 rounded-2xl border transition-all flex flex-col items-center justify-between text-center select-none min-w-0 overflow-hidden ${
+                    item.isUnlocked ? unlockedCardClass : lockedCardClass
+                  } ${rarityGlowClass}`}
                 >
+                  {(isEpic || isLegendary) && (
+                    <RaritySparkles rarity={item.gem.rarity} unlocked={item.isUnlocked} />
+                  )}
+
                   {/* Top status indicator matching Vault card style */}
-                  <div className="w-full flex items-center justify-between gap-1 mb-1">
-                    <span className="text-xs font-semibold text-[var(--text-subtle)] dark:text-slate-500">
+                  <div className="relative z-10 w-full flex items-center justify-between gap-1 mb-1">
+                    <span className={`text-[11px] font-semibold shrink-0 ${
+                      item.isUnlocked
+                        ? unlockedIdColorClass
+                        : 'text-[var(--text-subtle)] dark:text-slate-500'
+                    }`}>
                       #{item.gem.id}
                     </span>
                     {item.isUnlocked ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-[var(--accent-ba-text)] dark:text-purple-300 bg-[var(--accent-ba-tint)] dark:bg-purple-950/80 px-2 py-0.5 rounded-md border border-[var(--accent-ba-border)] dark:border-purple-800/80">
-                        <Check className="w-3 h-3 stroke-[3]" />
+                      <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold px-1.5 py-0.5 rounded-md border whitespace-nowrap shrink-0 ${earnedBadgeClass}`}>
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
                         <span>Earned</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--text-muted)] dark:text-slate-400 bg-[var(--surface)] dark:bg-slate-800/90 px-2 py-0.5 rounded-md border border-[var(--border)] dark:border-slate-700/80">
-                        <Lock className="w-3 h-3" />
+                      <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-[var(--text-muted)] dark:text-slate-400 bg-[var(--surface)] dark:bg-slate-800/90 px-1.5 py-0.5 rounded-md border border-[var(--border)] dark:border-slate-700/80 whitespace-nowrap shrink-0">
+                        <Lock className="w-2.5 h-2.5" />
                         <span>Locked</span>
                       </span>
                     )}
                   </div>
 
                   {/* Gemstone Image */}
-                  <div className="w-14 h-14 flex items-center justify-center my-1 relative">
+                  <div className="relative z-10 w-14 h-14 flex items-center justify-center my-1">
                     <img
                       src={item.gem.url}
                       alt={item.gem.name}
@@ -989,29 +1060,30 @@ export const DashboardPage: React.FC = () => {
                   </div>
 
                   {/* Name: NOT truncated, allowed two lines */}
-                  <span className="text-xs font-bold text-[var(--text)] dark:text-slate-100 min-h-[2.5rem] flex items-center justify-center text-center break-words leading-tight w-full px-1">
+                  <span className="relative z-10 text-xs font-bold text-[var(--text)] dark:text-slate-100 min-h-[2.5rem] flex items-center justify-center text-center break-words leading-tight w-full px-0.5">
                     {item.gem.name}
                   </span>
 
                   {/* Bottom details: Rarity + Category or Unlock Date */}
-                  <div className="w-full mt-2 pt-2 border-t border-[var(--border-subtle)] dark:border-slate-800/80 flex flex-col items-center gap-1">
+                  <div className="relative z-10 w-full mt-2 pt-2 border-t border-[var(--border-subtle)] dark:border-slate-800/80 flex flex-col items-center gap-1">
                     <span
-                      className={`text-xs px-2.5 py-0.5 rounded-md font-bold text-center border ${
+                      className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md font-bold text-center border whitespace-nowrap ${
                         item.gem.rarity === 'Legendary'
                           ? 'bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/80'
                           : item.gem.rarity === 'Epic'
                           ? 'bg-purple-50 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/80'
                           : item.gem.rarity === 'Rare'
                           ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/80'
-                          : item.gem.rarity === 'Uncommon'
+                          : item.gem.rarity === 'Special'
                           ? 'bg-cyan-50 dark:bg-cyan-950/70 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800/80'
                           : 'bg-[var(--surface-2)] dark:bg-slate-800/90 text-[var(--text-muted)] dark:text-slate-300 border-[var(--border)] dark:border-slate-700/80'
                       }`}
                     >
-                      {item.gem.rarity}
+                      {(isEpic || isLegendary) && <Sparkles className="w-3 h-3 shrink-0" aria-hidden="true" />}
+                      <span>{item.gem.rarity}</span>
                     </span>
 
-                    <span className="text-xs text-[var(--text-muted)] dark:text-slate-400 truncate max-w-full font-medium">
+                    <span className={`text-[11px] truncate max-w-full font-medium ${trackLabelColorClass}`}>
                       {item.isUnlocked
                         ? item.unlockedText
                         : item.gem.category === 'Special'
@@ -1020,16 +1092,17 @@ export const DashboardPage: React.FC = () => {
                     </span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Card Footer: The ONE link per card to the Gemstone Vault */}
           <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] dark:border-slate-800 flex items-center justify-between text-xs text-[var(--text-muted)] dark:text-slate-400">
-            <span className="font-medium">{collection.unlocked} of 20 unlocked</span>
+            <span className="font-medium">{collection.unlocked} of {GEMSTONE_ASSETS.length} unlocked</span>
             <Link
               to="/achievements"
-              className="text-[var(--text)] dark:text-slate-300 hover:text-[var(--accent-ba-text)] dark:hover:text-white font-bold hover:underline flex items-center gap-1 transition-colors"
+              className="touch-target-44 text-[var(--text)] dark:text-slate-300 hover:text-[var(--accent-ba-text)] dark:hover:text-white font-bold hover:underline flex items-center gap-1 transition-colors"
             >
               <span>View All in Gemstone Vault</span>
               <ChevronRight className="w-3.5 h-3.5" />

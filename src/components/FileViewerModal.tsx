@@ -18,6 +18,7 @@ import { DriveFile } from '../types/drive';
 import { readFileContent, FileContentResult } from '../services/drive';
 import { formatBytes, formatDate } from '../utils/driveUtils';
 import { FileIcon } from './FileIcon';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 interface FileViewerModalProps {
   file: DriveFile | null;
@@ -34,6 +35,8 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
   const [content, setContent] = useState<FileContentResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  useBodyScrollLock(Boolean(file));
 
   useEffect(() => {
     if (!file || !accessToken) return;
@@ -104,12 +107,12 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 pt-[calc(0.75rem+var(--safe-top))] pb-[calc(0.75rem+var(--safe-bottom))] md:p-6 overflow-hidden bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-[var(--surface)] dark:bg-[#0f172a] rounded-2xl shadow-2xl border border-[var(--border)] dark:border-slate-800 w-full max-w-5xl h-[90dvh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3 bg-slate-50/60 flex-shrink-0">
+        <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between gap-3 bg-[var(--surface-raised)]/60 flex-shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 rounded-lg bg-white border border-slate-200 shadow-xs flex-shrink-0">
+            <div className="p-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] shadow-xs flex-shrink-0">
               <FileIcon mimeType={file.mimeType} fileName={file.name} className="w-5 h-5" />
             </div>
             <div className="min-w-0">
@@ -136,7 +139,7 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
                 href={file.webViewLink}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50/60 text-slate-700 hover:text-blue-700 text-xs font-medium transition-colors"
+                className="inline-flex items-center justify-center gap-1.5 min-w-11 min-h-11 md:min-w-0 md:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50/60 text-slate-700 hover:text-blue-700 text-xs font-medium transition-colors"
                 title="Open in Google Drive"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -147,8 +150,9 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
+              className="w-11 h-11 md:w-auto md:h-auto md:p-1.5 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
               title="Close modal (Esc)"
+              aria-label="Close file viewer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -188,7 +192,7 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
               {/* Plain text / Code / Exported Google Doc */}
               {content.type === 'text' && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between bg-white px-4 py-2 rounded-xl border border-slate-200">
+                  <div className="flex items-center justify-between bg-[var(--surface)] px-4 py-2 rounded-xl border border-[var(--border)]">
                     <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
                       <Code className="w-3.5 h-3.5 text-blue-500" />
                       <span>{content.text.split('\n').length} lines • {content.text.length.toLocaleString()} characters</span>
@@ -196,7 +200,7 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleCopy(content.text)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 min-h-11 md:min-h-0 px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-[var(--border)] transition-colors cursor-pointer"
                     >
                       {copied ? (
                         <>
@@ -211,7 +215,7 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
                       )}
                     </button>
                   </div>
-                  <pre className="p-4 sm:p-5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-mono text-slate-800 leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-[60vh]">
+                  <pre className="p-4 sm:p-5 bg-[var(--surface)] border border-[var(--border)] rounded-xl text-xs sm:text-sm font-mono text-[var(--text)] leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-[60dvh]">
                     {content.text || '(File is empty)'}
                   </pre>
                 </div>
@@ -222,7 +226,7 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
                 const parsed = parseCsv(content.text);
                 return (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between bg-white px-4 py-2 rounded-xl border border-slate-200 text-xs">
+                    <div className="flex items-center justify-between bg-[var(--surface)] px-4 py-2 rounded-xl border border-[var(--border)] text-xs">
                       <span className="font-medium text-slate-600 flex items-center gap-1.5">
                         <TableIcon className="w-3.5 h-3.5 text-emerald-600" />
                         <span>Showing {parsed.rows.length + 1} of {parsed.totalRows} rows</span>
@@ -230,7 +234,7 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
                       <button
                         type="button"
                         onClick={() => handleCopy(content.text)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 min-h-11 md:min-h-0 px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 border border-[var(--border)] transition-colors cursor-pointer"
                       >
                         {copied ? (
                           <>
@@ -246,7 +250,7 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
                       </button>
                     </div>
 
-                    <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-xs max-h-[60vh]">
+                    <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-x-auto shadow-xs max-h-[60dvh]">
                       <table className="w-full text-left text-xs border-collapse">
                         {parsed.header.length > 0 && (
                           <thead className="bg-slate-100 text-slate-700 sticky top-0 border-b border-slate-200">
@@ -280,18 +284,18 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
 
               {/* Images / PDF Blobs */}
               {content.type === 'blob' && (
-                <div className="flex items-center justify-center p-4 bg-white rounded-xl border border-slate-200 min-h-[400px]">
+                <div className="flex items-center justify-center p-4 bg-[var(--surface)] rounded-xl border border-[var(--border)] min-h-[400px]">
                   {content.mimeType.startsWith('image/') ? (
                     <img
                       src={content.blobUrl}
                       alt={file.name}
-                      className="max-h-[65vh] max-w-full rounded-lg object-contain shadow-xs"
+                      className="max-h-[65dvh] max-w-full rounded-lg object-contain shadow-xs"
                     />
                   ) : content.mimeType === 'application/pdf' ? (
                     <iframe
                       src={content.blobUrl}
                       title={file.name}
-                      className="w-full h-[65vh] rounded-lg border-0"
+                      className="w-full h-[65dvh] rounded-lg border-0"
                     />
                   ) : null}
                 </div>
@@ -299,7 +303,7 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
 
               {/* Unsupported / Native format banner */}
               {content.type === 'unsupported' && (
-                <div className="p-8 rounded-xl bg-white border border-slate-200 max-w-lg mx-auto my-12 text-center space-y-4 shadow-xs">
+                <div className="p-8 rounded-xl bg-[var(--surface)] border border-[var(--border)] max-w-lg mx-auto my-12 text-center space-y-4 shadow-xs">
                   <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
                     <FileIcon mimeType={file.mimeType} fileName={file.name} className="w-6 h-6" />
                   </div>
@@ -325,14 +329,14 @@ export const FileViewerModal: React.FC<FileViewerModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-slate-200 bg-white flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
+        <div className="px-5 py-3 border-t border-[var(--border)] bg-[var(--surface)] flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
           <div className="flex items-center gap-2">
             <span className="font-mono text-[11px] text-slate-400">ID: {file.id}</span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 font-medium transition-colors cursor-pointer"
+            className="min-h-11 md:min-h-0 px-4 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 font-medium transition-colors cursor-pointer"
           >
             Close
           </button>

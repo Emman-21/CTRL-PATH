@@ -83,7 +83,8 @@ export const PathComparePage: React.FC = () => {
         title="Compare Your Academic Pathways"
         subtitle="Explore detailed side-by-side matrices of subjects, day-to-day toolchains, career pathways, and project scenarios across the three BSIT specializations."
         backgroundImage={BACKGROUNDS.trackExplorerAcademy}
-        luniPose="point"
+        luniPose="path_compare"
+        luniPixelated={false}
         luniTitle="Compare with Clarity! ✨"
         luniQuote="Comparing tracks side by side illuminates where your strengths and interests truly align. There is no wrong choice — just the path where you will thrive! 🌙"
       />

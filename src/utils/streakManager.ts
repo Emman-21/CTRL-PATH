@@ -299,3 +299,122 @@ export const getCurrentWeekDays = (activeDates: string[] = []): WeekDayStatus[] 
 
   return weekDays;
 };
+
+export interface StreakContributionDay {
+  dateStr: string;
+  formattedDate: string;
+  isActive: boolean;
+  isToday: boolean;
+  isFuture: boolean;
+  monthIndex: number;
+  dayOfMonth: number;
+}
+
+export interface StreakContributionWeek {
+  weekIndex: number;
+  monthLabel: string | null;
+  days: StreakContributionDay[];
+}
+
+export interface StreakContributionGrid {
+  weeks: StreakContributionWeek[];
+  activeDaysInRange: number;
+  totalActiveDays: number;
+  todayStr: string;
+}
+
+const MONTH_SHORT_NAMES = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+] as const;
+
+const UTC_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'UTC',
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+});
+
+export const formatUtcDateString = (date: Date): string => {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+/**
+ * Builds a GitHub-style contribution grid covering the most recent `weekCount` weeks (Mon-Sun).
+ */
+export const buildStreakContributionGrid = (
+  activeDates: string[] = [],
+  weekCount = 26,
+  todayStr = getManilaDateString()
+): StreakContributionGrid => {
+  const safeWeeks = Math.max(1, Math.min(52, Math.floor(weekCount)));
+  const activeSet = new Set(activeDates.filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayStr));
+
+  const [ty, tm, td] = todayStr.split('-').map(Number);
+  const todayUtc = new Date(Date.UTC(ty, tm - 1, td));
+  const jsDay = todayUtc.getUTCDay(); // 0 = Sun, 1 = Mon ... 6 = Sat
+  const mondayOffset = jsDay === 0 ? -6 : 1 - jsDay;
+  const currentWeekMondayMs = Date.UTC(ty, tm - 1, td + mondayOffset);
+  const startMondayMs = currentWeekMondayMs - (safeWeeks - 1) * 7 * 86_400_000;
+
+  const weeks: StreakContributionWeek[] = [];
+  let activeDaysInRange = 0;
+
+  for (let w = 0; w < safeWeeks; w++) {
+    const days: StreakContributionDay[] = [];
+    let monthLabel: string | null = null;
+
+    for (let row = 0; row < 7; row++) {
+      const cellDate = new Date(startMondayMs + (w * 7 + row) * 86_400_000);
+      const dateStr = formatUtcDateString(cellDate);
+      const isFuture = dateStr > todayStr;
+      const isActive = !isFuture && activeSet.has(dateStr);
+      if (isActive) activeDaysInRange += 1;
+
+      const monthIndex = cellDate.getUTCMonth();
+      const dayOfMonth = cellDate.getUTCDate();
+
+      if (dayOfMonth === 1 && !isFuture) {
+        monthLabel = MONTH_SHORT_NAMES[monthIndex];
+      }
+
+      days.push({
+        dateStr,
+        formattedDate: UTC_DATE_FORMATTER.format(cellDate),
+        isActive,
+        isToday: dateStr === todayStr,
+        isFuture,
+        monthIndex,
+        dayOfMonth,
+      });
+    }
+
+    if (w === 0 && !monthLabel) {
+      // Label the very first column unless the second column already starts a new month cleanly.
+      const firstDay = days[0];
+      const nextWeekHasFirst = new Date(startMondayMs + 7 * 86_400_000);
+      const nextWeekEnds = new Date(startMondayMs + 13 * 86_400_000);
+      const nextStartsNewMonth = nextWeekHasFirst.getUTCMonth() !== nextWeekEnds.getUTCMonth() || nextWeekHasFirst.getUTCDate() === 1;
+      if (!nextStartsNewMonth || firstDay.dayOfMonth <= 15) {
+        monthLabel = MONTH_SHORT_NAMES[firstDay.monthIndex];
+      }
+    }
+
+    weeks.push({
+      weekIndex: w,
+      monthLabel,
+      days,
+    });
+  }
+
+  return {
+    weeks,
+    activeDaysInRange,
+    totalActiveDays: activeSet.size,
+    todayStr,
+  };
+};
+

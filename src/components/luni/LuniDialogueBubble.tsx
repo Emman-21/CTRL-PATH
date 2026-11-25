@@ -52,25 +52,25 @@ export const LuniDialogueBubble: React.FC<LuniDialogueBubbleProps> = ({
     <div
       role="region"
       aria-label="Luni Guidance"
-      className="relative w-76 sm:w-84 bg-white/95 backdrop-blur-xl rounded-2xl rounded-br-sm shadow-xl shadow-indigo-950/10 border border-indigo-200/80 p-3.5 sm:p-4 transition-all animate-in slide-in-from-bottom-2 duration-200 select-none"
+      className="relative w-[calc(100vw-24px-var(--safe-left)-var(--safe-right))] max-w-84 md:w-84 bg-[var(--surface-95)] dark:bg-[#0f172a]/95 backdrop-blur-xl rounded-2xl rounded-br-sm shadow-xl shadow-indigo-950/10 border border-[var(--border)] dark:border-[#1e293b] p-3.5 sm:p-4 transition-all animate-in slide-in-from-bottom-2 duration-200 select-none"
     >
       {/* Speech Bubble Little Tail pointer to Luni */}
-      <div className="absolute -bottom-2 right-6 w-4 h-4 bg-white border-r border-b border-indigo-200/80 transform rotate-45" />
+      <div className="absolute -bottom-2 right-6 w-4 h-4 bg-[var(--surface)] dark:bg-[#0f172a] border-r border-b border-[var(--border)] dark:border-[#1e293b] transform rotate-45" />
 
       {/* Header Bar */}
-      <div className="relative z-10 flex items-center justify-between pb-2 mb-2 border-b border-indigo-50">
+      <div className="relative z-10 flex items-center justify-between pb-2 mb-2 border-b border-[var(--border-subtle)] dark:border-slate-800">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-extrabold text-xs text-indigo-950 tracking-tight flex items-center gap-1">
+          <span className="font-extrabold text-xs text-[var(--text)] dark:text-indigo-200 tracking-tight flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-amber-500" />
             {dialogue.title}
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2 md:gap-1.5">
           <button
             onClick={onOpenPanel}
-            className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50/70 hover:bg-blue-100 px-2 py-0.5 rounded-lg transition-colors cursor-pointer"
+            className="inline-flex min-h-11 md:min-h-0 items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50/70 hover:bg-blue-100 px-3 md:px-2 md:py-0.5 rounded-lg transition-colors cursor-pointer"
             aria-label="Open Full Luni Guide"
           >
             <MessageSquare className="w-3 h-3" />
@@ -78,22 +78,22 @@ export const LuniDialogueBubble: React.FC<LuniDialogueBubbleProps> = ({
           </button>
           <button
             onClick={onDismiss}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+            className="w-11 h-11 md:w-auto md:h-auto flex items-center justify-center text-slate-400 hover:text-slate-600 md:p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
             aria-label="Close speech bubble"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4 md:w-3.5 md:h-3.5" />
           </button>
         </div>
       </div>
 
       {/* Speech Message */}
-      <p className="relative z-10 text-xs text-slate-700 leading-relaxed font-medium">
+      <p className="relative z-10 text-xs text-[var(--text)] dark:text-slate-200 leading-relaxed font-medium">
         {dialogue.message}
       </p>
 
       {/* Quick Action Navigation Pills */}
       {dialogue.quickActions && dialogue.quickActions.length > 0 && (
-        <div className="relative z-10 mt-3 pt-2.5 border-t border-indigo-50/80 dark:border-slate-800/90 flex flex-wrap gap-1.5">
+        <div className="relative z-10 mt-3 pt-2.5 border-t border-indigo-50/80 dark:border-slate-800/90 flex flex-wrap gap-2 md:gap-1.5">
           {dialogue.quickActions.map((action, idx) => (
             <button
               key={idx}
@@ -101,7 +101,7 @@ export const LuniDialogueBubble: React.FC<LuniDialogueBubbleProps> = ({
                 navigate(action.route);
                 onDismiss();
               }}
-              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${getActionColor(
+              className={`min-h-11 md:min-h-0 px-3 md:px-2.5 py-2 md:py-1 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${getActionColor(
                 action.variant
               )}`}
             >

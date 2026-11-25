@@ -17,10 +17,12 @@ const check = name => { checks.push(name); console.log(`PASS ${name}`); };
 const saved = () => page.evaluate(key => JSON.parse(localStorage.getItem(key)), key);
 const goto = async route => { await page.goto(`${base}${route}`); await page.locator('main').waitFor(); };
 const dialog = () => page.locator('dialog[open]');
+const toast = () => page.getByTestId('achievement-toast');
 async function closeCelebration(name) {
-  await dialog().getByRole('heading', { name, exact: true }).waitFor();
-  await dialog().getByRole('button', { name: 'Continue exploring' }).click();
-  await dialog().waitFor({ state: 'detached' });
+  await toast().getByRole('heading', { name, exact: true }).waitFor();
+  assert.equal(await dialog().count(), 0);
+  await toast().getByRole('button', { name: 'Dismiss achievement notification' }).click();
+  await toast().waitFor({ state: 'detached' });
 }
 await mkdir('.test-artifacts', { recursive: true });
 try {
@@ -81,11 +83,12 @@ try {
     await goto('/tracks');
     await page.getByRole('button',{name:'Explore Track',exact:true}).nth(index).click();
     await page.getByRole('button',{name:'Mark as Explored (+1 Gemstone)',exact:true}).click();
-    await dialog().getByRole('heading',{name,exact:true}).waitFor();
+    await toast().getByRole('heading',{name,exact:true}).waitFor();
+    assert.equal(await dialog().count(), 0);
     if (index===0) {
       await page.screenshot({path:'.test-artifacts/celebration.png'});
       await page.reload();
-      assert.equal(await dialog().count(),0);
+      assert.equal(await toast().count(),0);
     } else await closeCelebration(name);
     assert.equal((await saved()).achievementRecords.length,index+1);
   }

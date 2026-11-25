@@ -18,17 +18,17 @@ export const QuizPreparation: React.FC<QuizPreparationProps> = ({
 
   return (
     <div className="max-w-2xl mx-auto w-full space-y-6 animate-in fade-in duration-200">
-      <Card padding="lg" className="border-indigo-100 shadow-xl relative overflow-hidden">
+      <Card padding="lg" className="border-indigo-100 dark:border-indigo-950/80 shadow-xl relative overflow-hidden">
         {/* Soft Background Tint */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-linear-to-bl from-blue-400/10 to-transparent rounded-full blur-2xl pointer-events-none" />
 
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-black uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-transparent dark:border-blue-800/70 text-xs font-black uppercase tracking-wider mb-2">
               <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-sparkle-spin" />
               <span>Chapter {levelMeta.level} Preparation</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
               {levelMeta.name}
             </h2>
             <div className="text-xs font-bold text-blue-600 dark:text-sky-300 mt-0.5">
@@ -37,20 +37,20 @@ export const QuizPreparation: React.FC<QuizPreparationProps> = ({
           </div>
 
           <div className="shrink-0 hidden sm:block">
-            <LuniCharacter state="pointing" size={68} animate={false} hoverCircle />
+            <LuniCharacter state="happy" pose="quiz_cheer" size={68} animate={false} hoverCircle />
           </div>
         </div>
 
         {/* Overview & Instructions */}
-        <div className="space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
+        <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
           <p>{levelMeta.description}</p>
 
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-            <div className="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0b1222]/85 border border-slate-200/80 dark:border-slate-800 space-y-2">
+            <div className="font-extrabold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
               <BookOpen className="w-3.5 h-3.5 text-blue-600 dark:text-sky-300" />
               <span>Instructions</span>
             </div>
-            <p className="text-xs text-slate-600 leading-normal">{levelMeta.instructions}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-normal">{levelMeta.instructions}</p>
           </div>
 
           {/* Topics Covered */}
@@ -60,7 +60,7 @@ export const QuizPreparation: React.FC<QuizPreparationProps> = ({
             </div>
             <div className="space-y-1.5">
               {levelMeta.keyTopics.map((topic, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                <div key={idx} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200 font-medium">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                   <span>{topic}</span>
                 </div>
@@ -80,7 +80,7 @@ export const QuizPreparation: React.FC<QuizPreparationProps> = ({
           </div>
         </div>
 
-        <div className="mt-8 pt-4 border-t border-slate-100 flex justify-end">
+        <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
           <Button
             variant="primary"
             size="md"

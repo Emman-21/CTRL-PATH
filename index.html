@@ -2,7 +2,7 @@
 <html lang="en" class="dark" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
     <script>
       try {
         var raw = localStorage.getItem('ctrl_path_student_data_v1');
@@ -12,8 +12,10 @@
         document.documentElement.dataset.theme = theme;
         if (theme === 'dark') {
           document.documentElement.classList.add('dark');
+          document.documentElement.style.backgroundColor = '#070c18';
         } else {
           document.documentElement.classList.remove('dark');
+          document.documentElement.style.backgroundColor = '#F3F4FA';
         }
       } catch (e) {}
     </script>

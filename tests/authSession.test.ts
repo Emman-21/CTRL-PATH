@@ -1,15 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  AUTH_GUEST_KEY,
   AUTH_SESSION_KEY,
   authenticateLocalAccount,
   clearAuthSession,
   fallbackNameFromEmail,
   firstNameFrom,
+  hasPortalAccess,
   isValidEmail,
   readAuthSession,
+  readGuestSession,
   registerLocalAccount,
   saveAuthSession,
+  saveGuestSession,
   validateFullName,
   validateSignInFields,
   validateSignUpFields,
@@ -111,3 +115,30 @@ test('session persistence respects keepSignedIn storage selection and clearing',
   clearAuthSession(local, session);
   assert.equal(readAuthSession(local, session), null);
 });
+
+test('guest session persistence and portal access gate default to login first', () => {
+  const session = new MemoryStorage();
+  assert.equal(readGuestSession(session), false);
+  assert.equal(hasPortalAccess(null, false), false);
+  assert.equal(hasPortalAccess(null, false, '?tab=overview'), false);
+  assert.equal(hasPortalAccess(null, false, '?autostart=1'), true);
+
+  saveGuestSession(true, session);
+  assert.equal(session.getItem(AUTH_GUEST_KEY), 'true');
+  assert.equal(readGuestSession(session), true);
+  assert.equal(hasPortalAccess(null, true), true);
+
+  saveGuestSession(false, session);
+  assert.equal(session.getItem(AUTH_GUEST_KEY), null);
+  assert.equal(readGuestSession(session), false);
+
+  const authSession = {
+    email: 'juan@g.batstate-u.edu.ph',
+    displayName: 'Juan Dela Cruz',
+    provider: 'email' as const,
+    signedInAt: '2026-11-20T00:00:00.000Z',
+    keepSignedIn: true,
+  };
+  assert.equal(hasPortalAccess(authSession, false), true);
+});
+

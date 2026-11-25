@@ -21,7 +21,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
         <button
           type="button"
           onClick={onGoBack}
-          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-xs font-medium text-slate-700 transition-colors cursor-pointer mr-1"
+          className="inline-flex items-center gap-1 min-h-11 md:min-h-0 px-2.5 py-1 rounded-lg border border-[var(--border)] hover:border-slate-300 bg-[var(--surface)] hover:bg-[var(--surface-raised)] dark:bg-[#0f172a] dark:border-slate-700 dark:text-slate-200 dark:hover:bg-[#16223e] text-xs font-medium text-[var(--text)] transition-colors cursor-pointer mr-1"
           title="Go to parent folder"
         >
           <ArrowLeft className="w-3.5 h-3.5 text-slate-500" />
@@ -29,7 +29,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
         </button>
       )}
 
-      <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex items-center gap-2 md:gap-1.5 flex-wrap">
         {breadcrumbs.map((item, index) => {
           const isLast = index === breadcrumbs.length - 1;
           return (
@@ -41,7 +41,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
                 type="button"
                 onClick={() => onNavigate(index)}
                 disabled={isLast}
-                className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`inline-flex items-center gap-1.5 min-h-11 md:min-h-0 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                   isLast
                     ? 'text-slate-900 font-semibold bg-slate-100/90 cursor-default'
                     : 'text-slate-600 hover:text-blue-600 hover:bg-blue-50/70 cursor-pointer'

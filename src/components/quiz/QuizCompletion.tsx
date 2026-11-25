@@ -3,28 +3,21 @@ import { Card } from '../shared/Card';
 import { Button } from '../shared/Button';
 import { LuniCharacter } from '../luni/LuniCharacter';
 import { QuizScoreResult } from '../../types/quiz';
-import { GEMSTONE_ASSETS } from '../../assets/manifest';
 import { TRACKS_DATA } from '../../data/tracks';
+import { NtTrackBadge, BaTrackBadge, SmTrackBadge } from '../shared/PixelArt';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, ArrowRight, RotateCcw, CheckCircle2 } from 'lucide-react';
 
 export interface QuizCompletionProps {
   scoreResult: QuizScoreResult;
-  firstSparkUnlocked?: boolean;
   onRetake: () => void;
 }
 
 export const QuizCompletion: React.FC<QuizCompletionProps> = ({
   scoreResult,
-  firstSparkUnlocked = false,
   onRetake,
 }) => {
   const navigate = useNavigate();
-
-  const ntGem = GEMSTONE_ASSETS.find((g) => g.id === 1);
-  const baGem = GEMSTONE_ASSETS.find((g) => g.id === 6);
-  const smGem = GEMSTONE_ASSETS.find((g) => g.id === 11);
-  const firstSparkGem = GEMSTONE_ASSETS.find((g) => g.id === 16);
 
   const highestTrackInfo = TRACKS_DATA[scoreResult.highestTrack];
   const maxPercentage = Math.max(
@@ -38,48 +31,30 @@ export const QuizCompletion: React.FC<QuizCompletionProps> = ({
 
   return (
     <div className="max-w-2xl mx-auto w-full space-y-6 animate-in zoom-in-95 duration-200">
-      <Card padding="lg" className="border-indigo-100 shadow-xl text-center relative overflow-hidden">
+      <Card padding="lg" className="border-indigo-100 dark:border-indigo-950/80 shadow-xl text-center relative overflow-hidden">
         {/* Soft Background Accent */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-linear-to-b from-blue-300/15 via-purple-300/10 to-transparent rounded-full blur-3xl pointer-events-none" />
 
         {/* Luni Celebration */}
         <div className="relative z-10 flex justify-center mb-3">
-          <LuniCharacter state="celebrating" size={104} animate glow motionOverride="slow-jump" />
+          <LuniCharacter state="celebrating" pose="quiz_celebration" size={104} animate glow motionOverride="slow-jump" />
         </div>
 
-        {/* First Spark Achievement Toast if newly unlocked */}
-        {firstSparkUnlocked && firstSparkGem && (
-          <div className="relative z-10 mb-4 -mx-6 sm:-mx-8 px-6 sm:px-8 py-3.5 bg-amber-50/90 border-y border-amber-200 flex items-center justify-center gap-3">
-            <img
-              src={firstSparkGem.url}
-              alt={firstSparkGem.name}
-              className="w-10 h-10 object-contain pixelated drop-shadow-sm"
-            />
-            <div className="text-left">
-              <div className="text-[10px] font-black uppercase text-amber-700 tracking-wider">
-                Achievement Unlocked!
-              </div>
-              <div className="text-xs font-black text-[#0f172a] dark:text-black">{firstSparkGem.name}</div>
-              <div className="text-[11px] text-slate-500">First completed assessment journey</div>
-            </div>
-          </div>
-        )}
-
-        <div className="relative z-10 inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black uppercase tracking-wider mb-2">
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+        <div className="relative z-10 inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/70 text-emerald-800 dark:text-emerald-300 text-xs font-black uppercase tracking-wider mb-2">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           <span>Assessment Completed!</span>
         </div>
 
-        <h2 className="relative z-10 text-2xl sm:text-3xl font-black text-slate-900 mb-2 tracking-tight">
+        <h2 className="relative z-10 text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 mb-2 tracking-tight">
           Bravo, Luminary!
         </h2>
 
-        <p className="relative z-10 text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed mb-6">
+        <p className="relative z-10 text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto leading-relaxed mb-6">
           You've completed all 5 Chapters of the CTRL Quiz. Your answers have been objectively scored across
           Networking Technology, Business Analytics, and Service Management.
         </p>
 
-        {/* Three Gemstone Score Displays */}
+        {/* Three Track Logo Score Displays */}
         <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6 text-center">
           {/* NT Track */}
           <div
@@ -89,15 +64,12 @@ export const QuizCompletion: React.FC<QuizCompletionProps> = ({
                 : 'bg-[#f8fafc] border border-slate-200 dark:bg-[#0b1222] dark:border-slate-700/80'
             }`}
           >
-            {ntGem && (
-              <img
-                src={ntGem.url}
-                alt="NT Gemstone"
-                className={`w-12 h-12 object-contain pixelated mb-1 transition-transform ${
-                  isNtTop ? 'drop-shadow-md scale-105' : 'drop-shadow-xs opacity-75'
-                }`}
-              />
-            )}
+            <NtTrackBadge
+              size={48}
+              className={`rounded-xl mb-2 shrink-0 transition-transform ${
+                isNtTop ? 'drop-shadow-md scale-105' : 'drop-shadow-xs opacity-80'
+              }`}
+            />
             <div
               className={`text-xs font-bold ${
                 isNtTop
@@ -135,15 +107,12 @@ export const QuizCompletion: React.FC<QuizCompletionProps> = ({
                 : 'bg-[#f8fafc] border border-slate-200 dark:bg-[#0b1222] dark:border-slate-700/80'
             }`}
           >
-            {baGem && (
-              <img
-                src={baGem.url}
-                alt="BA Gemstone"
-                className={`w-12 h-12 object-contain pixelated mb-1 transition-transform ${
-                  isBaTop ? 'drop-shadow-md scale-105' : 'drop-shadow-xs opacity-75'
-                }`}
-              />
-            )}
+            <BaTrackBadge
+              size={48}
+              className={`rounded-xl mb-2 shrink-0 transition-transform ${
+                isBaTop ? 'drop-shadow-md scale-105' : 'drop-shadow-xs opacity-80'
+              }`}
+            />
             <div
               className={`text-xs font-bold ${
                 isBaTop
@@ -181,15 +150,12 @@ export const QuizCompletion: React.FC<QuizCompletionProps> = ({
                 : 'bg-[#f8fafc] border border-slate-200 dark:bg-[#0b1222] dark:border-slate-700/80'
             }`}
           >
-            {smGem && (
-              <img
-                src={smGem.url}
-                alt="SM Gemstone"
-                className={`w-12 h-12 object-contain pixelated mb-1 transition-transform ${
-                  isSmTop ? 'drop-shadow-md scale-105' : 'drop-shadow-xs opacity-75'
-                }`}
-              />
-            )}
+            <SmTrackBadge
+              size={48}
+              className={`rounded-xl mb-2 shrink-0 transition-transform ${
+                isSmTop ? 'drop-shadow-md scale-105' : 'drop-shadow-xs opacity-80'
+              }`}
+            />
             <div
               className={`text-xs font-bold ${
                 isSmTop
@@ -221,15 +187,15 @@ export const QuizCompletion: React.FC<QuizCompletionProps> = ({
         </div>
 
         {/* Highest Demonstrated Performance Highlight */}
-        <div className="relative z-10 p-4 rounded-2xl bg-slate-50 border border-slate-200/90 text-left mb-6">
+        <div className="relative z-10 p-4 rounded-2xl bg-slate-50 dark:bg-[#0b1222]/85 border border-slate-200/90 dark:border-slate-800 text-left mb-6">
           <div className="flex items-center gap-2 mb-1">
             <Trophy className="w-4 h-4 text-amber-500" />
-            <span className="text-xs font-black uppercase tracking-wider text-slate-700">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">
               {scoreResult.isTie ? 'Balanced Multi-Track Aptitude' : 'Highest Demonstrated Knowledge'}
             </span>
           </div>
 
-          <p className="text-xs text-slate-700 leading-relaxed">
+          <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
             {scoreResult.isTie ? (
               <span>
                 Your responses showed an equal tie between{' '}
@@ -257,7 +223,7 @@ export const QuizCompletion: React.FC<QuizCompletionProps> = ({
             )}
           </p>
 
-          <p className="text-[11px] text-slate-400 mt-2 border-t border-slate-200/60 pt-2 leading-relaxed">
+          <p className="text-[11px] text-slate-400 mt-2 border-t border-slate-200/60 dark:border-slate-800 pt-2 leading-relaxed">
             Remember: This score is an exploration insight, not an assignment. You retain full freedom to select
             whichever BSIT track inspires your future!
           </p>

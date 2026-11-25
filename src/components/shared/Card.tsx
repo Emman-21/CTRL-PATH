@@ -23,15 +23,15 @@ export const Card: React.FC<CardProps> = ({
   };
 
   const accentStyles = {
-    none: 'border-slate-100/90',
-    nt: 'border-blue-200 hover:border-blue-400',
-    ba: 'border-purple-200 hover:border-purple-400',
-    sm: 'border-emerald-200 hover:border-emerald-400',
+    none: 'border-[var(--border)] dark:border-slate-800',
+    nt: 'border-blue-200 dark:border-blue-900/70 hover:border-blue-400 dark:hover:border-blue-700',
+    ba: 'border-purple-200 dark:border-purple-900/70 hover:border-purple-400 dark:hover:border-purple-700',
+    sm: 'border-emerald-200 dark:border-emerald-900/70 hover:border-emerald-400 dark:hover:border-emerald-700',
   };
 
   return (
     <div
-      className={`bg-white rounded-2xl border shadow-xs transition-all duration-200 ${accentStyles[borderAccent]} ${paddingStyles[padding]} ${
+      className={`bg-[var(--surface)] dark:bg-[#0f172a] rounded-2xl border shadow-xs transition-all duration-200 ${accentStyles[borderAccent]} ${paddingStyles[padding]} ${
         hoverable ? 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer' : ''
       } ${className}`}
       {...props}
