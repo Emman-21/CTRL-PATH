@@ -421,7 +421,7 @@ export const DashboardPage: React.FC = () => {
           {/* Mascot Section: Luni appears once here with shortened 1-sentence guidance */}
           <div className="shrink-0 flex flex-col sm:flex-row items-center lg:items-end justify-center lg:justify-end gap-4 self-center lg:self-auto">
             <div className="bg-[var(--hero-progress-bg)] dark:bg-[#0f172a]/95 backdrop-blur-md border border-[var(--border)] dark:border-indigo-900/60 rounded-2xl p-4 shadow-[var(--card-shadow)] max-w-[260px] relative text-left">
-              <div className="text-xs font-black text-[var(--accent-ba-text)] dark:text-indigo-300 flex items-center gap-1.5 mb-1">
+              <div className="text-xs font-black text-blue-700 dark:text-blue-300 flex items-center gap-1.5 mb-1">
                 <span>Luni's Celestial Guide</span>
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               </div>

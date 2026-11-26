@@ -1,24 +1,54 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Mail, Moon, Sun } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Lock, Mail, Moon, ShieldCheck, Sun, X } from 'lucide-react';
 import { useStudent } from '../context/StudentContext';
 import { NtTrackBadge, BaTrackBadge, SmTrackBadge } from '../components/shared/PixelArt';
 import {
-  authenticateLocalAccount,
   fallbackNameFromEmail,
-  firstNameFrom,
   isValidEmail,
-  registerLocalAccount,
-  validateFullName,
-  validateSignUpFields,
 } from '../utils/authSession';
-import { signInWithGoogleAccount } from '../services/firebase';
+import {
+  signInWithSupabaseGoogle,
+  signInWithSupabaseEmail,
+  signUpWithSupabaseEmail,
+  sendSupabasePasswordReset,
+  verifyAdminAndFetchAnalytics,
+} from '../lib/supabase';
+import { ADMIN_PASS_SESSION_KEY } from './AdminAnalyticsPage';
 import { scrollViewportToTop } from '../utils/scrollTop';
 
-type LoginView = 'signin' | 'forgot' | 'sent' | 'signup' | 'name' | 'profile';
+type LoginView = 'signin' | 'forgot' | 'sent' | 'signup';
+
+const BSU_DOMAIN = '@g.batstate-u.edu.ph';
+
+function sanitizeSrCode(raw: string): string {
+  const trimmed = raw.trim().toLowerCase();
+  if (trimmed.endsWith(BSU_DOMAIN)) {
+    return trimmed.slice(0, -BSU_DOMAIN.length);
+  }
+  return trimmed.replace(/@.*$/, '');
+}
+
+function buildBsuEmail(srCodeInput: string): string {
+  const cleanCode = sanitizeSrCode(srCodeInput);
+  return cleanCode ? `${cleanCode}${BSU_DOMAIN}` : '';
+}
+
+function isValidSrCode(srCodeInput: string): boolean {
+  const cleanCode = sanitizeSrCode(srCodeInput);
+  return /^[a-z0-9._-]{3,32}$/i.test(cleanCode);
+}
 
 export function LoginPage() {
-  const { state, updatePreferences, completeAuthLogin, enterGuestSession, authSession, isGuest } = useStudent();
+  const {
+    state,
+    updatePreferences,
+    completeAuthLogin,
+    enterGuestSession,
+    signOutSession,
+    authSession,
+    isGuest,
+  } = useStudent();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -28,11 +58,18 @@ export function LoginPage() {
   const initialView: LoginView = searchParams.get('mode') === 'signup' ? 'signup' : 'signin';
   const [view, setView] = useState<LoginView>(initialView);
 
+  const isSigningUpRef = useRef(false);
+
+  useEffect(() => {
+    if (authSession && !isSigningUpRef.current) {
+      navigate(redirectTarget, { replace: true });
+    }
+  }, [authSession, navigate, redirectTarget]);
+
   useEffect(() => {
     scrollViewportToTop();
   }, [view]);
 
-  // Sync <html> theme attributes when rendering outside AppShell
   const theme = state.preferences.theme || 'dark';
   const isLight = theme === 'light';
 
@@ -53,7 +90,7 @@ export function LoginPage() {
   }, [theme, state.preferences.reducedMotion]);
 
   // Sign in state
-  const [liEmail, setLiEmail] = useState('');
+  const [liSrCode, setLiSrCode] = useState('');
   const [liPw, setLiPw] = useState('');
   const [showLiPw, setShowLiPw] = useState(false);
   const [keepSignedIn, setKeepSignedIn] = useState(true);
@@ -62,24 +99,31 @@ export function LoginPage() {
   const [googleBusy, setGoogleBusy] = useState(false);
 
   // Forgot password state
-  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSrCode, setForgotSrCode] = useState('');
   const [forgotErr, setForgotErr] = useState('');
   const [resent, setResent] = useState(false);
 
-  // Sign up & onboarding state
-  const [suEmail, setSuEmail] = useState('');
+  // Sign up state
+  const [suSrCode, setSuSrCode] = useState('');
   const [suPw, setSuPw] = useState('');
   const [showSuPw, setShowSuPw] = useState(false);
   const [suEmailErr, setSuEmailErr] = useState('');
   const [suPwErr, setSuPwErr] = useState('');
-  const [suName, setSuName] = useState('');
-  const [fullErr, setFullErr] = useState('');
-  const [program, setProgram] = useState('');
-  const [yearLevel, setYearLevel] = useState('');
-  const [section, setSection] = useState('');
 
-  const isOnboarding = view === 'name' || view === 'profile';
-  const greetingFirstName = firstNameFrom(suName);
+  // Admin Access Modal state
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminPasscode, setAdminPasscode] = useState('');
+  const [showAdminPw, setShowAdminPw] = useState(false);
+  const [adminBusy, setAdminBusy] = useState(false);
+  const [adminErr, setAdminErr] = useState('');
+
+  useEffect(() => {
+    const domainErr = sessionStorage.getItem('ctrl_gsuite_error');
+    if (domainErr) {
+      setLiErr(domainErr);
+      sessionStorage.removeItem('ctrl_gsuite_error');
+    }
+  }, []);
 
   const toggleTheme = () => {
     updatePreferences({ theme: isLight ? 'dark' : 'light' });
@@ -94,7 +138,7 @@ export function LoginPage() {
   };
 
   const goForgot = () => {
-    setForgotEmail(liEmail);
+    setForgotSrCode(liSrCode);
     setForgotErr('');
     setResent(false);
     setView('forgot');
@@ -106,31 +150,40 @@ export function LoginPage() {
     setView('signup');
   };
 
-  const handleSignInSubmit = (e: React.FormEvent) => {
+  const handleSignInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy || googleBusy) return;
-    const storage = typeof window !== 'undefined' ? window.localStorage : undefined;
-    const result = authenticateLocalAccount(storage, liEmail, liPw);
-    if (!result.ok) {
-      setLiErr(result.error);
+
+    const fullEmail = buildBsuEmail(liSrCode);
+    if (!isValidSrCode(liSrCode) || !isValidEmail(fullEmail) || !liPw) {
+      setLiErr('Enter your BatStateU SR-Code (e.g. 24-12345) and password.');
       return;
     }
+
     setLiErr('');
     setBusy(true);
-    window.setTimeout(() => {
-      completeAuthLogin({
-        email: liEmail,
-        displayName: result.account?.displayName || fallbackNameFromEmail(liEmail),
-        program: result.account?.program,
-        yearLevel: result.account?.yearLevel,
-        section: result.account?.section,
-        provider: 'email',
-        keepSignedIn,
-        applyProfile: Boolean(result.account),
-      });
+    try {
+      const { user } = await signInWithSupabaseEmail(fullEmail, liPw);
+      if (user) {
+        completeAuthLogin({
+          email: user.email || fullEmail,
+          displayName: user.user_metadata?.full_name || fallbackNameFromEmail(fullEmail),
+          provider: 'email',
+          keepSignedIn,
+          applyProfile: false,
+        });
+        navigate(redirectTarget, { replace: true });
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : '';
+      setLiErr(
+        msg.includes('Invalid login credentials')
+          ? 'Invalid SR-Code or password. If you signed in with Google before, click "Continue with BatStateU GSuite" or set a password in Settings.'
+          : msg || 'Invalid SR-Code or password.'
+      );
+    } finally {
       setBusy(false);
-      navigate(redirectTarget, { replace: true });
-    }, 350);
+    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -138,86 +191,74 @@ export function LoginPage() {
     setLiErr('');
     setGoogleBusy(true);
     try {
-      const user = await signInWithGoogleAccount();
-      completeAuthLogin({
-        email: user.email || 'student@g.batstate-u.edu.ph',
-        displayName: user.displayName || fallbackNameFromEmail(user.email || 'Luminary'),
-        provider: 'google',
-        keepSignedIn,
-      });
-      navigate(redirectTarget, { replace: true });
+      await signInWithSupabaseGoogle(`${window.location.origin}/login`);
     } catch (error: unknown) {
-      const code =
-        error && typeof error === 'object' && 'code' in error
-          ? String((error as { code?: unknown }).code)
-          : '';
-      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-        setLiErr('Google sign-in was canceled.');
-      } else if (code === 'auth/popup-blocked') {
-        setLiErr('Popup was blocked by your browser. Allow popups or sign in with email and password.');
-      } else {
-        setLiErr('Google sign-in is unavailable right now. Please sign in with your email and password.');
-      }
-    } finally {
+      const msg = error instanceof Error ? error.message : '';
+      setLiErr(msg || 'Google sign-in is unavailable right now. Please sign in with your SR-Code and password.');
       setGoogleBusy(false);
     }
   };
 
-  const handleForgotSubmit = (e: React.FormEvent) => {
+  const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidEmail(forgotEmail)) {
-      setForgotErr('Enter a valid email address.');
+    const fullEmail = buildBsuEmail(forgotSrCode);
+    if (!isValidSrCode(forgotSrCode) || !isValidEmail(fullEmail)) {
+      setForgotErr('Enter a valid BatStateU SR-Code (e.g. 24-12345).');
       return;
     }
     setForgotErr('');
-    setResent(false);
-    setView('sent');
+    try {
+      await sendSupabasePasswordReset(fullEmail);
+      setResent(false);
+      setView('sent');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Failed to send reset link.';
+      setForgotErr(msg);
+    }
   };
 
-  const handleSignUpSubmit = (e: React.FormEvent) => {
+  const handleSignUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { emailErr, pwErr } = validateSignUpFields(suEmail, suPw);
+    const fullEmail = buildBsuEmail(suSrCode);
+
+    let emailErr = '';
+    let pwErr = '';
+    if (!isValidSrCode(suSrCode) || !isValidEmail(fullEmail)) {
+      emailErr = 'Enter a valid BatStateU SR-Code (e.g. 24-12345).';
+    }
+    if (!suPw || suPw.length < 8) {
+      pwErr = 'Password must be at least 8 characters.';
+    }
+
     setSuEmailErr(emailErr);
     setSuPwErr(pwErr);
     if (emailErr || pwErr) return;
-    setFullErr('');
-    setView('name');
-  };
+    if (busy) return;
 
-  const handleNameSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const err = validateFullName(suName);
-    setFullErr(err);
-    if (err) return;
-    setView('profile');
-  };
+    setBusy(true);
+    isSigningUpRef.current = true;
+    try {
+      await signUpWithSupabaseEmail({
+        email: fullEmail,
+        password: suPw,
+        displayName: '',
+      });
 
-  const finishOnboarding = (skipStudyDetails: boolean) => {
-    const cleanProgram = skipStudyDetails ? '' : program;
-    const cleanYear = skipStudyDetails ? '' : yearLevel;
-    const cleanSection = skipStudyDetails ? '' : section;
-    const storage = typeof window !== 'undefined' ? window.localStorage : undefined;
+      await signOutSession();
 
-    registerLocalAccount(storage, {
-      email: suEmail,
-      password: suPw,
-      displayName: suName.trim(),
-      program: cleanProgram,
-      yearLevel: cleanYear,
-      section: cleanSection,
-    });
-
-    completeAuthLogin({
-      email: suEmail,
-      displayName: suName.trim(),
-      program: cleanProgram,
-      yearLevel: cleanYear,
-      section: cleanSection,
-      provider: 'email',
-      keepSignedIn: true,
-      applyProfile: true,
-    });
-    navigate(redirectTarget, { replace: true });
+      setLiSrCode(sanitizeSrCode(suSrCode));
+      setLiPw('');
+      setLiErr('');
+      setSuEmailErr('');
+      setSuPwErr('');
+      setView('signin');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Could not create account.';
+      setSuEmailErr(msg);
+    } finally {
+      isSigningUpRef.current = false;
+      setBusy(false);
+    }
   };
 
   const handleContinueAsGuest = () => {
@@ -225,9 +266,85 @@ export function LoginPage() {
     navigate(redirectTarget, { replace: true });
   };
 
+  const handleAdminSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminBusy) return;
+    if (!adminPasscode.trim()) {
+      setAdminErr('Enter the administrator passcode.');
+      return;
+    }
+
+    setAdminBusy(true);
+    setAdminErr('');
+    try {
+      await verifyAdminAndFetchAnalytics(adminPasscode);
+      sessionStorage.setItem(ADMIN_PASS_SESSION_KEY, adminPasscode.trim());
+      setAdminOpen(false);
+      setAdminPasscode('');
+      navigate('/admin/analytics');
+    } catch (err) {
+      setAdminErr(err instanceof Error ? err.message : 'Invalid administrator passcode.');
+    } finally {
+      setAdminBusy(false);
+    }
+  };
+
+  const renderGsuiteInput = (
+    id: string,
+    value: string,
+    onChangeVal: (cleanSr: string) => void,
+  ) => (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        borderRadius: '12px',
+        border: '1px solid rgba(148, 163, 184, 0.28)',
+        background: isLight ? 'rgba(255, 255, 255, 0.85)' : 'rgba(15, 23, 42, 0.55)',
+        overflow: 'hidden',
+      }}
+    >
+      <input
+        id={id}
+        type="text"
+        inputMode="text"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        placeholder="24-12345"
+        autoComplete="username"
+        value={value}
+        onChange={(e) => onChangeVal(sanitizeSrCode(e.target.value))}
+        style={{
+          flex: 1,
+          minWidth: 0,
+          border: 'none',
+          background: 'transparent',
+          outline: 'none',
+          boxShadow: 'none',
+          paddingRight: '6px',
+        }}
+      />
+      <span
+        aria-hidden="true"
+        style={{
+          padding: '0 12px 0 6px',
+          fontSize: '0.84rem',
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+          userSelect: 'none',
+          color: isLight ? '#475569' : '#94a3b8',
+          borderLeft: '1px solid rgba(148, 163, 184, 0.2)',
+        }}
+      >
+        {BSU_DOMAIN}
+      </span>
+    </div>
+  );
+
   return (
     <div
-      className={`login-page${isLight ? ' light' : ''}${isOnboarding ? ' is-onb' : ''}`}
+      className={`login-page${isLight ? ' light' : ''}`}
       data-reduced-motion={state.preferences.reducedMotion}
     >
       <button
@@ -270,6 +387,20 @@ export function LoginPage() {
         </Link>
 
         <div className="login-hero">
+          <Link
+            to={authSession || isGuest ? '/' : '/login'}
+            onClick={() => {
+              if (!authSession && !isGuest) goSignin();
+            }}
+            className="login-mobbrand"
+            aria-label="CTRL+PATH Home"
+          >
+            <img src="/assets/login/ctrl-path-logo.png" alt="CTRL+PATH logo" />
+            <div className="login-mobbrand-title">
+              CTRL <span>+</span> PATH
+            </div>
+          </Link>
+
           <div className="login-eyebrow">✨ BSIT ACADEMIC PATHWAYS</div>
           <h1>
             Different Paths,
@@ -329,20 +460,6 @@ export function LoginPage() {
       {/* FORM SIDE */}
       <div className="login-formside">
         <div className="login-formcol">
-          <Link
-            to={authSession || isGuest ? '/' : '/login'}
-            onClick={() => {
-              if (!authSession && !isGuest) goSignin();
-            }}
-            className="login-mobbrand"
-            aria-label="CTRL+PATH Home"
-          >
-            <img src="/assets/login/ctrl-path-logo.png" alt="CTRL+PATH logo" />
-            <div className="login-mobbrand-title">
-              CTRL <span>+</span> PATH
-            </div>
-          </Link>
-
           <div className="login-card">
             <div className="login-cardav">
               <img src="/assets/login/luni-star.png" alt="Luni holding a star" />
@@ -352,27 +469,16 @@ export function LoginPage() {
               <form noValidate onSubmit={handleSignInSubmit}>
                 <div className="login-card-head">
                   <h2>Sign in</h2>
-                  <p>to continue your journey.</p>
+                  <p>Enter your BatStateU SR-Code to continue.</p>
                 </div>
 
                 <div className="login-stack">
                   <div className="login-field">
-                    <label htmlFor="login-email">Email address</label>
-                    <input
-                      id="login-email"
-                      type="email"
-                      inputMode="email"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      spellCheck={false}
-                      placeholder="you@g.batstate-u.edu.ph"
-                      autoComplete="email"
-                      value={liEmail}
-                      onChange={(e) => {
-                        setLiEmail(e.target.value);
-                        if (liErr) setLiErr('');
-                      }}
-                    />
+                    <label htmlFor="login-email">SR-Code (GSuite Account)</label>
+                    {renderGsuiteInput('login-email', liSrCode, (val) => {
+                      setLiSrCode(val);
+                      if (liErr) setLiErr('');
+                    })}
                   </div>
 
                   <div className="login-field">
@@ -465,7 +571,7 @@ export function LoginPage() {
                       d="M12 5.4c1.6 0 3 .6 4.1 1.6l3.1-3.1A11 11 0 0 0 2.4 7.1L6 9.9c.8-2.6 3.2-4.5 6-4.5z"
                     />
                   </svg>
-                  <span>{googleBusy ? 'Connecting to Google…' : 'Continue with Google'}</span>
+                  <span>{googleBusy ? 'Connecting to Google…' : 'Continue with BatStateU GSuite'}</span>
                 </button>
 
                 <p className="login-switch">
@@ -481,27 +587,16 @@ export function LoginPage() {
               <form noValidate onSubmit={handleForgotSubmit}>
                 <div className="login-card-head">
                   <h2>Reset your password</h2>
-                  <p>Enter your school email and we&apos;ll send you a reset link.</p>
+                  <p>Enter your BatStateU SR-Code and we&apos;ll send a reset link to your GSuite email.</p>
                 </div>
 
                 <div className="login-stack">
                   <div className="login-field">
-                    <label htmlFor="forgot-email">Email address</label>
-                    <input
-                      id="forgot-email"
-                      type="email"
-                      inputMode="email"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      spellCheck={false}
-                      placeholder="you@g.batstate-u.edu.ph"
-                      autoComplete="email"
-                      value={forgotEmail}
-                      onChange={(e) => {
-                        setForgotEmail(e.target.value);
-                        if (forgotErr) setForgotErr('');
-                      }}
-                    />
+                    <label htmlFor="forgot-email">SR-Code (GSuite Account)</label>
+                    {renderGsuiteInput('forgot-email', forgotSrCode, (val) => {
+                      setForgotSrCode(val);
+                      if (forgotErr) setForgotErr('');
+                    })}
                     {forgotErr && (
                       <div role="alert" className="login-err">
                         {forgotErr}
@@ -528,8 +623,8 @@ export function LoginPage() {
                   <Mail size={28} strokeWidth={2} aria-hidden="true" />
                 </div>
                 <div className="login-card-head login-card-head--compact">
-                  <h2>Check your inbox</h2>
-                  <p>We sent a reset link to your email. It can take a minute to arrive.</p>
+                  <h2>Check your GSuite inbox</h2>
+                  <p>We sent a reset link to {buildBsuEmail(forgotSrCode)}. It can take a minute to arrive.</p>
                 </div>
 
                 <div className="login-sent-actions">
@@ -557,27 +652,16 @@ export function LoginPage() {
               <form noValidate onSubmit={handleSignUpSubmit}>
                 <div className="login-card-head login-card-head--signup">
                   <h2>Create your account</h2>
-                  <p>Save your progress and collect gemstones.</p>
+                  <p>Enter your BatStateU SR-Code to register your GSuite account.</p>
                 </div>
 
                 <div className="login-stack login-stack--signup">
                   <div className="login-field">
-                    <label htmlFor="signup-email">School email</label>
-                    <input
-                      id="signup-email"
-                      type="email"
-                      inputMode="email"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      spellCheck={false}
-                      placeholder="you@g.batstate-u.edu.ph"
-                      autoComplete="email"
-                      value={suEmail}
-                      onChange={(e) => {
-                        setSuEmail(e.target.value);
-                        if (suEmailErr) setSuEmailErr('');
-                      }}
-                    />
+                    <label htmlFor="signup-email">SR-Code (GSuite Account)</label>
+                    {renderGsuiteInput('signup-email', suSrCode, (val) => {
+                      setSuSrCode(val);
+                      if (suEmailErr) setSuEmailErr('');
+                    })}
                     {suEmailErr && (
                       <div role="alert" className="login-err">
                         {suEmailErr}
@@ -620,8 +704,8 @@ export function LoginPage() {
                     )}
                   </div>
 
-                  <button type="submit" className="login-primary-btn">
-                    <span>Create account</span>
+                  <button type="submit" className="login-primary-btn" disabled={busy || googleBusy}>
+                    <span>{busy ? 'Creating account…' : 'Create account'}</span>
                     <ArrowRight size={18} strokeWidth={2.4} aria-hidden="true" />
                   </button>
                 </div>
@@ -634,144 +718,6 @@ export function LoginPage() {
                 </p>
               </form>
             )}
-
-            {view === 'name' && (
-              <form noValidate onSubmit={handleNameSubmit}>
-                <div className="login-onb-segs">
-                  <span className="seg on" />
-                  <span className="seg" />
-                </div>
-                <div className="login-onb-step">Step 1 of 2</div>
-
-                <div className="login-onbluni">
-                  <div className="login-luni">
-                    <img
-                      src="/assets/login/luni-wink.png"
-                      alt="Luni, the CTRL+PATH guide, winking"
-                    />
-                  </div>
-                  <div className="login-onb-bubble">
-                    Hi, I&apos;m Luni! Tell me your name so I know who I&apos;m guiding.
-                  </div>
-                </div>
-
-                <h2 className="login-onb-title">What&apos;s your full name?</h2>
-
-                <div className="login-field login-onb-field">
-                  <label htmlFor="onboarding-fullname">Full name</label>
-                  <input
-                    id="onboarding-fullname"
-                    type="text"
-                    placeholder="Juan Dela Cruz"
-                    autoComplete="name"
-                    required
-                    value={suName}
-                    onChange={(e) => {
-                      setSuName(e.target.value);
-                      if (fullErr) setFullErr('');
-                    }}
-                  />
-                  {fullErr && (
-                    <div role="alert" className="login-err">
-                      {fullErr}
-                    </div>
-                  )}
-                </div>
-
-                <button type="submit" className="login-primary-btn">
-                  <span>Continue</span>
-                  <ArrowRight size={18} strokeWidth={2.4} aria-hidden="true" />
-                </button>
-              </form>
-            )}
-
-            {view === 'profile' && (
-              <form
-                noValidate
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  finishOnboarding(false);
-                }}
-              >
-                <div className="login-onb-segs">
-                  <span className="seg on" />
-                  <span className="seg on" />
-                </div>
-                <div className="login-onb-step">Step 2 of 2</div>
-
-                <div className="login-onbluni">
-                  <div className="login-luni">
-                    <img
-                      src="/assets/login/luni-wink.png"
-                      alt="Luni, the CTRL+PATH guide, winking"
-                    />
-                  </div>
-                  <div className="login-onb-bubble">
-                    Nice to meet you, {greetingFirstName}! Almost there. You can skip this for now.
-                  </div>
-                </div>
-
-                <h2 className="login-onb-title">Tell us about your studies</h2>
-
-                <div className="login-onb-study">
-                  <div className="login-field">
-                    <label htmlFor="onboarding-prog">Program</label>
-                    <select
-                      id="onboarding-prog"
-                      value={program}
-                      onChange={(e) => setProgram(e.target.value)}
-                    >
-                      <option value="">Select your program</option>
-                      <option value="BS Information Technology">BS Information Technology</option>
-                      <option value="BS Computer Science">BS Computer Science</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-
-                  <div className="login-onb-row">
-                    <div className="login-field">
-                      <label htmlFor="onboarding-ay">Academic year</label>
-                      <select
-                        id="onboarding-ay"
-                        value={yearLevel}
-                        onChange={(e) => setYearLevel(e.target.value)}
-                      >
-                        <option value="">Select</option>
-                        <option value="1st year">1st year</option>
-                        <option value="2nd year">2nd year</option>
-                        <option value="3rd year">3rd year</option>
-                        <option value="4th year">4th year</option>
-                      </select>
-                    </div>
-                    <div className="login-field">
-                      <label htmlFor="onboarding-sec">Section</label>
-                      <input
-                        id="onboarding-sec"
-                        type="text"
-                        autoComplete="off"
-                        placeholder="e.g. 3101"
-                        value={section}
-                        onChange={(e) => setSection(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="login-onb-actions">
-                  <button
-                    type="button"
-                    className="login-skip-btn"
-                    onClick={() => finishOnboarding(true)}
-                  >
-                    Skip
-                  </button>
-                  <button type="submit" className="login-primary-btn login-primary-btn--compact">
-                    <span>Continue</span>
-                    <ArrowRight size={18} strokeWidth={2.4} aria-hidden="true" />
-                  </button>
-                </div>
-              </form>
-            )}
           </div>
 
           <p className="login-note">
@@ -780,6 +726,34 @@ export function LoginPage() {
               Continue as guest
             </button>
           </p>
+
+          {/* Admin Access Button (Track Analytics Only) */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.25rem' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setAdminPasscode('');
+                setAdminErr('');
+                setAdminOpen(true);
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.45rem 0.9rem',
+                borderRadius: '9999px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                border: '1px solid rgba(148, 163, 184, 0.28)',
+                background: isLight ? 'rgba(255, 255, 255, 0.7)' : 'rgba(15, 23, 42, 0.55)',
+                color: isLight ? '#334155' : '#cbd5e1',
+                cursor: 'pointer',
+              }}
+            >
+              <ShieldCheck size={14} aria-hidden="true" />
+              <span>Admin Access · Track Analytics</span>
+            </button>
+          </div>
 
           <div className="login-foot2">
             <img src="/assets/login/bsu-seal.png" alt="Batangas State University seal" />
@@ -791,6 +765,114 @@ export function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Admin Passcode Modal */}
+      {adminOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-modal-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !adminBusy) setAdminOpen(false);
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 60,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            background: 'rgba(2, 6, 23, 0.72)',
+            backdropFilter: 'blur(6px)',
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '400px',
+              borderRadius: '24px',
+              padding: '1.5rem',
+              background: isLight ? '#ffffff' : '#0f172a',
+              border: '1px solid rgba(99, 102, 241, 0.35)',
+              color: isLight ? '#0f172a' : '#f8fafc',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Lock size={18} className="text-indigo-400" />
+                <h3 id="admin-modal-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>
+                  Admin Track Analytics
+                </h3>
+              </div>
+              <button
+                type="button"
+                aria-label="Close admin modal"
+                onClick={() => setAdminOpen(false)}
+                disabled={adminBusy}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  padding: '4px',
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.8rem', opacity: 0.8, marginBottom: '1rem', lineHeight: 1.5 }}>
+              Restricted to CICS faculty and system administrators. Enter the admin passcode to view
+              aggregated BSIT track analytics.
+            </p>
+
+            <form onSubmit={handleAdminSubmit} noValidate>
+              <div className="login-field" style={{ marginBottom: '0.85rem' }}>
+                <label htmlFor="admin-passcode-input">Administrator Passcode</label>
+                <div className="login-pw-wrap">
+                  <input
+                    id="admin-passcode-input"
+                    type={showAdminPw ? 'text' : 'password'}
+                    placeholder="Enter admin passcode"
+                    autoFocus
+                    value={adminPasscode}
+                    onChange={(e) => {
+                      setAdminPasscode(e.target.value);
+                      if (adminErr) setAdminErr('');
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="login-eye-btn"
+                    aria-label={showAdminPw ? 'Hide passcode' : 'Show passcode'}
+                    onClick={() => setShowAdminPw((prev) => !prev)}
+                  >
+                    {showAdminPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              {adminErr && (
+                <div role="alert" className="login-err" style={{ marginBottom: '0.85rem' }}>
+                  {adminErr}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="login-primary-btn"
+                disabled={adminBusy}
+                style={{ width: '100%' }}
+              >
+                <span>{adminBusy ? 'Verifying passcode…' : 'Open Track Analytics'}</span>
+                <ArrowRight size={18} strokeWidth={2.4} aria-hidden="true" />
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -87,7 +87,7 @@ export const DashboardHero: React.FC<DashboardHeroProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                <Trophy className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                 <span>
                   <strong className="text-slate-900 dark:text-slate-100 font-extrabold">{achievementsCount}</strong> Achievements
                 </span>

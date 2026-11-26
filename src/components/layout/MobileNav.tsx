@@ -123,7 +123,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
                 <span className="text-blue-600 dark:text-blue-400">+</span>
                 <span>PATH</span>
               </div>
-              <div className="text-xs text-slate-400 dark:text-slate-500">BatStateU Alangilan</div>
+              <div className="text-xs text-slate-400 dark:text-slate-500">Choose Your Own Path</div>
             </div>
           </div>
           <button

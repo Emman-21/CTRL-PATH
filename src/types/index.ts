@@ -205,4 +205,5 @@ export interface StudentState {
   comparisonSelection: TrackCode[];
   reflections: Record<TrackCode, TrackReflection>;
   preferences: StudentPreferences;
+  avatarUrl?: string;
 }

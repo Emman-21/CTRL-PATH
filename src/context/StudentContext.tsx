@@ -2,9 +2,8 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { StudentState, TrackCode, QuizAttempt, SavedComparison, StudentPreferences } from '../types';
 import type { CompareTopicId } from '../data/compareTopics';
 
-import { validateProfile, studentProgress, completeLearningModule, areAllTrackSubjectsCompleted, clearStudentData, type ProfileValues, type SaveResult } from '../utils/studentControls';
+import { validateProfile, studentProgress, completeLearningModule, areAllTrackSubjectsCompleted, type ProfileValues, type SaveResult } from '../utils/studentControls';
 import { evaluateAchievements, eligibleAttemptPair, withAchievementRecords } from '../utils/achievementRules';
-import { loadStudentData, serializeStudent, STUDENT_STORAGE_KEY as STORAGE_KEY } from '../utils/achievementStorage';
 import { recordActivity as recordStreakActivity } from '../utils/streakManager';
 import { DEFAULT_AVATAR_STYLE } from '../utils/avatarOptions';
 import {
@@ -19,13 +18,27 @@ import {
 } from '../utils/authSession';
 import { markLuniLoginGreetPending } from '../utils/luniLoginGreet';
 import { dispatchLuniWinkMilestone } from '../utils/luniWaveSprite';
-import { firebaseSignOut } from '../services/firebase';
+import {
+  supabase,
+  isSupabaseConfigured,
+  signOutFromSupabase,
+  removeStudentAvatar,
+  upsertStudentAnalytics,
+} from '../lib/supabase';
+import {
+  loadStudentData,
+  loadStudentDataFromSupabase,
+  serializeStudent,
+  STUDENT_STORAGE_KEY as STORAGE_KEY,
+  syncStudentDataToSupabase,
+} from '../utils/achievementStorage';
 
 export const INITIAL_STATE: StudentState = {
   profileSchemaVersion: 1,
   section: '',
   biography: '',
   avatarStyle: DEFAULT_AVATAR_STYLE,
+  avatarUrl: '',
   explorationDates: {},
   moduleCompletions: [],
   readAlumniStories: [],
@@ -94,6 +107,7 @@ interface StudentContextType {
   removeComparison: (id: string) => void;
   updatePreferences: (prefs: Partial<StudentPreferences>) => SaveResult;
   updateProfile: (values: ProfileValues) => SaveResult;
+  updateAvatarUrl: (avatarUrl: string) => SaveResult;
   completeModule: (track: TrackCode, moduleId: string) => void;
   markAlumniStoryRead: (storyId: string) => void;
   recordActivity: (actionDescription?: string) => void;
@@ -115,6 +129,62 @@ interface StudentContextType {
 }
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
+
+function syncAnalyticsSnapshot(targetState: StudentState) {
+  const latestQuiz = targetState.quizAttempts[0];
+  const tracks: Array<'NT' | 'BA' | 'SM'> = ['NT', 'BA', 'SM'];
+
+  // Kunin ang recommended track mula sa pinakamataas na score sa latest quiz (ntScore, baScore, smScore)
+  let recommendedTrack: 'NT' | 'BA' | 'SM' | null = null;
+  if (latestQuiz) {
+    const scoreMap: Record<'NT' | 'BA' | 'SM', number> = {
+      NT: latestQuiz.ntScore ?? latestQuiz.ntRaw ?? 0,
+      BA: latestQuiz.baScore ?? latestQuiz.baRaw ?? 0,
+      SM: latestQuiz.smScore ?? latestQuiz.smRaw ?? 0,
+    };
+    const bestTrack = tracks.reduce((best, cur) =>
+      scoreMap[cur] > scoreMap[best] ? cur : best,
+    );
+    if (scoreMap[bestTrack] > 0) {
+      recommendedTrack = bestTrack;
+    }
+  }
+
+  // Kunin ang completion percentage per track mula sa studentProgress + moduleCompletions
+  const computed = studentProgress(targetState) as unknown as {
+    byTrack?: Partial<Record<'NT' | 'BA' | 'SM', number>>;
+    trackPercentages?: Partial<Record<'NT' | 'BA' | 'SM', number>>;
+  };
+
+  const getTrackPct = (code: 'NT' | 'BA' | 'SM') => {
+    const rawPct = targetState.trackProgress[code] || 0;
+    const byTrackPct = computed.byTrack?.[code] || computed.trackPercentages?.[code] || 0;
+    const completedInTrack = (targetState.moduleCompletions || []).filter(
+      (m) => m.track === code,
+    ).length;
+    const fallbackPct = completedInTrack > 0 ? Math.min(100, completedInTrack * 20) : 0;
+    return Math.max(rawPct, byTrackPct, fallbackPct);
+  };
+
+  const ntProgress = getTrackPct('NT');
+  const baProgress = getTrackPct('BA');
+  const smProgress = getTrackPct('SM');
+
+  const progressMap = { NT: ntProgress, BA: baProgress, SM: smProgress };
+  const topTrack = tracks.reduce((best, cur) =>
+    progressMap[cur] > progressMap[best] ? cur : best,
+  );
+  const chosenTrack = progressMap[topTrack] > 0 ? topTrack : recommendedTrack;
+
+  void upsertStudentAnalytics({
+    recommendedTrack,
+    chosenTrack,
+    ntProgress,
+    baProgress,
+    smProgress,
+    quizAttemptsCount: targetState.quizAttempts.length,
+  });
+}
 
 export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [loaded] = useState(() => loadStudentData(localStorage, INITIAL_STATE));
@@ -153,6 +223,121 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       dispatchLuniWinkMilestone();
     }
   }, [state.achievementRecords.length, state.quizAttempts.length]);
+
+  // 1. Auto-sync sa Supabase PostgreSQL + Track Analytics tuwing nagbabago ang state
+  const syncTimeoutRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!isSupabaseConfigured || !authSession) return;
+
+    if (syncTimeoutRef.current) window.clearTimeout(syncTimeoutRef.current);
+    syncTimeoutRef.current = window.setTimeout(() => {
+      syncStudentDataToSupabase(state);
+      syncAnalyticsSnapshot(state);
+    }, 600);
+
+    return () => {
+      if (syncTimeoutRef.current) window.clearTimeout(syncTimeoutRef.current);
+    };
+  }, [state, authSession]);
+
+  // 2. Saluhin ang Supabase Google Sign-In session pagkabalik mula sa Google OAuth redirect
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    const handleSupabaseUser = async (user: import('@supabase/supabase-js').User) => {
+      const email = (user.email || '').toLowerCase();
+      if (!email.endsWith('@g.batstate-u.edu.ph')) {
+        sessionStorage.setItem(
+          'ctrl_gsuite_error',
+          'Only BatStateU GSuite accounts (@g.batstate-u.edu.ph) are allowed.'
+        );
+        await signOutFromSupabase();
+        setAuthSession(null);
+        clearAuthSession(window.localStorage, window.sessionStorage);
+        return;
+      }
+
+      const isGoogleProvider =
+        user.app_metadata?.provider === 'google' ||
+        Boolean(user.identities?.some((id) => id.provider === 'google'));
+
+      const googleFullName =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        '';
+
+      // I-load muna ang cloud data mula sa student_profiles bago i-set ang auth session
+      const cloudState = await loadStudentDataFromSupabase(INITIAL_STATE);
+
+      const resolvedName =
+        (cloudState?.name && cloudState.name !== INITIAL_STATE.name ? cloudState.name : '') ||
+        (isGoogleProvider && googleFullName ? googleFullName : '') ||
+        (state.name && state.name !== INITIAL_STATE.name ? state.name : '') ||
+        fallbackNameFromEmail(email);
+
+      const provider: AuthProvider =
+        user.app_metadata?.provider === 'google' ? 'google' : 'email';
+
+      completeAuthLogin({
+        email,
+        displayName: resolvedName,
+        provider,
+        keepSignedIn: true,
+        applyProfile: false,
+      });
+
+      if (cloudState) {
+        const mergedState: StudentState = {
+          ...cloudState,
+          name:
+            (!cloudState.name || cloudState.name === INITIAL_STATE.name) &&
+            isGoogleProvider &&
+            googleFullName
+              ? googleFullName.slice(0, 60)
+              : cloudState.name,
+        };
+
+        setState(mergedState);
+        syncAnalyticsSnapshot(mergedState);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(serializeStudent(mergedState)));
+        } catch {}
+      } else {
+        const initialWithGoogleName: StudentState =
+          isGoogleProvider && googleFullName
+            ? { ...state, name: googleFullName.slice(0, 60) }
+            : state;
+        if (isGoogleProvider && googleFullName) {
+          setState(initialWithGoogleName);
+        }
+        await syncStudentDataToSupabase(initialWithGoogleName);
+        syncAnalyticsSnapshot(initialWithGoogleName);
+      }
+    };
+
+    // I-check kung may active session na pagka-mount (huwag mag-auto-login kung nasa /login at walang OAuth callback)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const isLoginPage = window.location.pathname === '/login';
+      const hasOAuthCallback =
+        window.location.hash.includes('access_token') ||
+        window.location.search.includes('code=');
+
+      if (session?.user && !authSession && (!isLoginPage || hasOAuthCallback)) {
+        handleSupabaseUser(session.user);
+      }
+    });
+
+    // Pakinggan ang SIGNED_IN event mula sa Supabase Auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          await handleSupabaseUser(session.user);
+        }
+      },
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const progress = studentProgress(state);
   const overallJourneyProgress = progress.journeyPercent;
@@ -208,6 +393,16 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return () => window.removeEventListener('ctrl_streak_updated', handleStreakUpdated);
   }, []);
 
+  useEffect(() => {
+    const handleStreakSynced = () => {
+      if (isSupabaseConfigured && authSession) {
+        syncStudentDataToSupabase(state);
+      }
+    };
+    window.addEventListener('ctrl_streak_synced', handleStreakSynced);
+    return () => window.removeEventListener('ctrl_streak_synced', handleStreakSynced);
+  }, [state, authSession]);
+
   const markAlumniStoryRead = useCallback((storyId: string) => {
     if (!storyId) return;
     setState((prev) => {
@@ -225,11 +420,36 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const updateProfile = (values: ProfileValues): SaveResult => {
-    if(Object.keys(validateProfile(values)).length) return {ok:false,message:'Please correct the profile fields.'};
-    const clean=Object.fromEntries(Object.entries(values).map(([key,value])=>[key,value.trim()])) as ProfileValues;
-    const nextState=evaluateAchievements({...state,...clean,profileSchemaVersion:1},{type:'profile-updated'});
-    return persistChange(nextState);
+    if (Object.keys(validateProfile(values)).length) {
+      return { ok: false, message: 'Please correct the profile fields.' };
+    }
+    const clean = Object.fromEntries(
+      Object.entries(values).map(([key, value]) => [key, value.trim()])
+    ) as ProfileValues;
+    const nextState = evaluateAchievements(
+      { ...state, ...clean, profileSchemaVersion: 1 },
+      { type: 'profile-updated' }
+    );
+    const res = persistChange(nextState);
+    if (res.ok && isSupabaseConfigured && authSession) {
+      void syncStudentDataToSupabase(nextState);
+    }
+    return res;
   };
+
+  const updateAvatarUrl = (avatarUrl: string): SaveResult => {
+    const nextState: StudentState = {
+      ...state,
+      avatarUrl: avatarUrl.trim(),
+      profileSchemaVersion: 1,
+    };
+    const res = persistChange(nextState);
+    if (res.ok && isSupabaseConfigured && authSession) {
+      void syncStudentDataToSupabase(nextState);
+    }
+    return res;
+  };
+
   const completeModule = (track: TrackCode, moduleId: string) => {
     recordActivity('module-completed');
     setState((prev) => completeLearningModule(prev, track, moduleId));
@@ -537,6 +757,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const signOutSession = async () => {
+    await signOutFromSupabase();
     clearAuthSession(
       typeof window !== 'undefined' ? localStorage : undefined,
       typeof window !== 'undefined' ? sessionStorage : undefined,
@@ -544,12 +765,25 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     saveGuestSession(false, typeof window !== 'undefined' ? sessionStorage : undefined);
     setAuthSession(null);
     setIsGuest(false);
-    await firebaseSignOut();
   };
 
-  const resetAllData = (): SaveResult => {
-    const result=clearStudentData(localStorage,sessionStorage);
-    if(result.ok) {setState(structuredClone(INITIAL_STATE));setStorageWarning('');window.dispatchEvent(new Event('ctrl_focus_mode_changed'));}
+  const resetAllData = () => {
+    const freshState: StudentState = {
+      ...INITIAL_STATE,
+      avatarUrl: '',
+      name: authSession?.displayName || INITIAL_STATE.name,
+      preferences: state.preferences, // panatilihin ang theme preference
+    };
+
+    const result = persistChange(freshState);
+    if (!result.ok) return result;
+
+    // I-reset din ang cloud record, analytics, at uploaded avatar sa Supabase
+    if (isSupabaseConfigured && authSession) {
+      void removeStudentAvatar();
+      void syncStudentDataToSupabase(freshState);
+      syncAnalyticsSnapshot(freshState);
+    }
     return result;
   };
 
@@ -573,6 +807,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         removeComparison,
         updatePreferences,
         updateProfile,
+        updateAvatarUrl,
         completeModule,
         markAlumniStoryRead,
         recordActivity,

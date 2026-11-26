@@ -19,7 +19,7 @@ export const DashboardRecentAchievements: React.FC<DashboardRecentAchievementsPr
     <div>
       <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100 font-black text-sm">
-          <Trophy className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <Trophy className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           <span>Recent Achievements</span>
         </div>
         <Link to="/achievements" className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1">
@@ -38,7 +38,7 @@ export const DashboardRecentAchievements: React.FC<DashboardRecentAchievementsPr
           <Link
             key={gem.id}
             to="/achievements"
-            className="p-2 rounded-xl border border-[var(--border)] dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500/70 bg-[var(--surface-raised)] dark:bg-[#111c33] hover:bg-[var(--surface)] dark:hover:bg-[#16223e] transition-all flex flex-col items-center group shadow-2xs"
+            className="p-2 rounded-xl border border-[var(--border)] dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-500/70 bg-[var(--surface-raised)] dark:bg-[#111c33] hover:bg-[var(--surface)] dark:hover:bg-[#16223e] transition-all flex flex-col items-center group shadow-2xs"
           >
             <img
               src={gem.url}

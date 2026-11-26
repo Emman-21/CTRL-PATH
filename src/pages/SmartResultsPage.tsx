@@ -190,7 +190,7 @@ export const SmartResultsPage: React.FC = () => {
                   onClick={() => setSelectedAttemptIndex(idx)}
                   className={`min-h-11 md:min-h-0 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all border cursor-pointer ${
                     selectedAttemptIndex === idx
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      ? 'bg-blue-900 text-white border-blue-900 shadow-xs dark:bg-blue-800 dark:text-white dark:border-blue-700'
                       : 'bg-slate-50 dark:bg-[#131d33] text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-[#1a2744]'
                   }`}
                 >

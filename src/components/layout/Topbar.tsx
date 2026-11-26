@@ -221,17 +221,22 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileNav }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <Link to="/" className="min-h-11 flex items-center gap-1.5 sm:gap-2 font-black text-slate-900 dark:text-slate-100 tracking-tight text-sm sm:text-base min-w-0">
+        <Link to="/" className="min-h-11 flex items-center gap-1.5 sm:gap-2 text-slate-900 dark:text-slate-100 min-w-0">
           <img
             src="/assets/aistudio/894455811_1534282605544392_6561933623517659718_n_7d027482.jpg"
             alt="Luni, the CTRL+PATH mascot"
             className="w-8 h-8 rounded-lg object-cover shrink-0 select-none shadow-xs"
             style={{ imageRendering: 'pixelated' }}
           />
-          <div className="flex items-center gap-0.5 font-brand truncate" style={{ fontFamily: "'Nunito', 'Inter', sans-serif" }}>
-            <span>CTRL</span>
-            <span className="text-blue-600 dark:text-blue-400">+</span>
-            <span>PATH</span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-0.5 font-brand font-black tracking-tight text-sm sm:text-base truncate" style={{ fontFamily: "'Nunito', 'Inter', sans-serif" }}>
+              <span>CTRL</span>
+              <span className="text-blue-600 dark:text-blue-400">+</span>
+              <span>PATH</span>
+            </div>
+            <div className="text-[9px] font-medium tracking-wide text-slate-500 dark:text-slate-400 leading-tight">
+              Choose Your Own Path
+            </div>
           </div>
         </Link>
       </div>

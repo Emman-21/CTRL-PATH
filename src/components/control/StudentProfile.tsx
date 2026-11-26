@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   BookOpen,
   Calendar,
+  Camera,
   CheckCircle2,
   Compass,
   Gem,
   GraduationCap,
   ShieldCheck,
+  Trash2,
   Users,
 } from 'lucide-react';
 import { useStudent } from '../../context/StudentContext';
@@ -17,6 +19,7 @@ import { TRACKS_DATA } from '../../data/tracks';
 import type { TrackCode } from '../../types';
 import { profileValues, validateProfile, PROFILE_LIMITS, studentProgress, type ProfileValues } from '../../utils/studentControls';
 import { AVATAR_OPTIONS } from '../../utils/avatarOptions';
+import { uploadStudentAvatar, removeStudentAvatar } from '../../lib/supabase';
 import { ControlCard, StudentAvatar, DiscardDialog } from './ControlShared';
 import { AchievementCollectionBoard } from './AchievementCollectionPanel';
 import { ProgressBar } from '../shared/ProgressBar';
@@ -32,7 +35,7 @@ import {
 } from '../streak/ProfileStreakWidget';
 
 export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void }) {
-  const { state, updateProfile, authSession, signOutSession } = useStudent();
+  const { state, updateProfile, updateAvatarUrl, authSession, signOutSession } = useStudent();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(() => profileValues(state));
@@ -40,6 +43,10 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
   const [message, setMessage] = useState('');
   const [discard, setDiscard] = useState(false);
   const [showStreakBox, setShowStreakBox] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const [streakSnapshot, setStreakSnapshot] = useState(() => ({
     ...getEffectiveStreak(),
     activeDates: loadStreakState().activeDates,
@@ -72,7 +79,78 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
   const cancel = () => {
     setEditing(false);
     setDiscard(false);
+    setPhotoError('');
     setMessage('Edits canceled. Your saved profile is unchanged.');
+  };
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || photoBusy) return;
+
+    setPhotoError('');
+    setMessage('');
+    setPhotoBusy(true);
+    try {
+      const publicUrl = await uploadStudentAvatar(file);
+      const res = updateAvatarUrl(publicUrl);
+      if (res.ok) {
+        setMessage('Profile picture updated!');
+      } else {
+        setPhotoError(res.message);
+      }
+    } catch (err: unknown) {
+      setPhotoError(err instanceof Error ? err.message : 'Could not upload profile picture.');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    if (photoBusy) return;
+    setPhotoError('');
+    setMessage('');
+    setPhotoBusy(true);
+    try {
+      await removeStudentAvatar();
+      updateAvatarUrl('');
+      setMessage('Profile picture removed. Using character avatar.');
+    } catch (err: unknown) {
+      setPhotoError(err instanceof Error ? err.message : 'Could not remove profile picture.');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const renderAvatarDisplay = (name: string, style: typeof state.avatarStyle, avatarUrl?: string, size = 68) => {
+    if (avatarUrl) {
+      return (
+        <span
+          className="student-avatar"
+          role="img"
+          aria-label={`${name || 'Student'} profile photo`}
+          style={{
+            width: `${size}px`,
+            height: `${size}px`,
+            overflow: 'hidden',
+            flexShrink: 0,
+          }}
+        >
+          <img
+            src={avatarUrl}
+            alt=""
+            className="student-avatar-img"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              borderRadius: 'inherit',
+            }}
+          />
+        </span>
+      );
+    }
+    return <StudentAvatar name={name} style={style} ignoreUploadedPhoto />;
   };
 
   const labels = {
@@ -96,7 +174,7 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
           <div className="control-profile-banner">
             <div className="control-profile-banner-top">
               <div className="control-profile">
-                <StudentAvatar name={state.name} style={state.avatarStyle} />
+                {renderAvatarDisplay(state.name, state.avatarStyle, state.avatarUrl, 68)}
                 <div className="control-profile-meta">
                   <h3 className="control-profile-name">{state.name || 'Set up your profile'}</h3>
                   {(state.program || state.yearLevel || formattedSection) && (
@@ -166,6 +244,7 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
                 onClick={() => {
                   setDraft(profileValues(state));
                   setErrors({});
+                  setPhotoError('');
                   setMessage('');
                   setEditing(true);
                 }}
@@ -222,7 +301,7 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
             <AchievementCollectionBoard />
           </div>
 
-          {/* Subsection 2: Track Exploration Progress (Styled like Track Explorer UI) */}
+          {/* Subsection 2: Track Exploration Progress */}
           <div className="control-profile-subsection">
             <div className="control-profile-subhead">
               <div className="control-profile-subhead-title">
@@ -322,6 +401,57 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
             if (result.ok) setEditing(false);
           }}
         >
+          {/* Profile Photo Upload Section */}
+          <fieldset className="control-avatar-options" style={{ marginBottom: '1.25rem' }}>
+            <legend>Profile photo</legend>
+            <p>
+              {authSession
+                ? 'Upload your own picture (JPG, PNG, or WebP, max 2MB) or use a character avatar below.'
+                : 'Sign in with your BatStateU GSuite account to upload a profile photo, or choose a character avatar below.'}
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+              {renderAvatarDisplay(draft.name, draft.avatarStyle, state.avatarUrl, 72)}
+
+              {authSession && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handlePhotoChange}
+                    style={{ display: 'none' }}
+                  />
+                  <button
+                    type="button"
+                    className="vault-primary-button"
+                    disabled={photoBusy}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Camera size={16} aria-hidden="true" />
+                    <span>{photoBusy ? 'Uploading…' : state.avatarUrl ? 'Change photo' : 'Upload photo'}</span>
+                  </button>
+
+                  {state.avatarUrl && (
+                    <button
+                      type="button"
+                      className="control-danger-button"
+                      disabled={photoBusy}
+                      onClick={handleRemovePhoto}
+                    >
+                      <Trash2 size={16} aria-hidden="true" />
+                      <span>Remove photo</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            {photoError && (
+              <p role="alert" className="control-field-error" style={{ marginTop: '0.5rem' }}>
+                {photoError}
+              </p>
+            )}
+          </fieldset>
+
           <div className="control-form-grid">
             {(Object.keys(labels) as (keyof typeof labels)[]).map((key) => (
               <label
@@ -364,9 +494,10 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
               </label>
             ))}
           </div>
+
           <fieldset className="control-avatar-options">
-            <legend>Profile avatar</legend>
-            <p>Choose a character avatar for your profile and top bar.</p>
+            <legend>Fallback character avatar</legend>
+            <p>Used whenever no custom profile photo is uploaded.</p>
             <div className="control-avatar-grid">
               {AVATAR_OPTIONS.map((option) => (
                 <label
@@ -380,12 +511,13 @@ export function StudentProfile({ onDirty }: { onDirty: (dirty: boolean) => void 
                     checked={draft.avatarStyle === option.id}
                     onChange={() => setDraft({ ...draft, avatarStyle: option.id })}
                   />
-                  <StudentAvatar name={draft.name} style={option.id} />
+                  <StudentAvatar name={draft.name} style={option.id} ignoreUploadedPhoto />
                   <span>{option.label}</span>
                 </label>
               ))}
             </div>
           </fieldset>
+
           <div className="control-actions">
             <button type="submit" className="vault-primary-button">
               Save profile

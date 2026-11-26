@@ -229,6 +229,10 @@ export const recordActivity = (actionDescription?: string): {
 
   saveStreakState(nextState);
 
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('ctrl_streak_synced'));
+  }
+
   const copy = getCelebrationCopy(newCount, isFreshStart);
 
   const detail: StreakCelebrationDetail = {

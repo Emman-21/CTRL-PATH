@@ -11,6 +11,12 @@ import { getLuniPoseById, getPoseDurationMs } from '../../data/luniSpritePoses';
 import { askLuniAi } from '../../services/geminiService';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { useVisualViewportHeight } from '../../hooks/useVisualViewportHeight';
+import { useLuniChatHistory } from '../../hooks/useLuniChatHistory';
+import {
+  playUiSound,
+  isUiSoundEnabled,
+  setUiSoundEnabled,
+} from '../../utils/soundEffects';
 import {
   X,
   Compass,
@@ -26,7 +32,9 @@ import {
   Send,
   Loader2,
   Bot,
-  MessageCircle,
+  Trash2,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 
 export interface LuniAssistantPanelProps {
@@ -35,17 +43,21 @@ export interface LuniAssistantPanelProps {
   currentState?: LuniState;
 }
 
-interface ChatMessage {
-  sender: 'user' | 'luni';
-  text: string;
-}
-
 const LUNI_TABS: Array<'live' | 'topics' | 'actions' | 'settings'> = [
   'live',
   'topics',
   'actions',
   'settings',
 ];
+
+function formatCleanBubbleText(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/(^|\s)\*([^\s*][^*]*?)\*(?=\s|$|[.,!?])/g, '$1$2')
+    .replace(/^\s*#{1,6}\s+/gm, '')
+    .replace(/`([^`]+)`/g, '$1');
+}
 
 export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
   isOpen,
@@ -56,6 +68,8 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
   const luniState = useLuniState();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [soundEnabled, setSoundEnabledState] = useState<boolean>(() => isUiSoundEnabled());
 
   const [isQuizFocusMode, setIsQuizFocusMode] = useState<boolean>(() => {
     return (
@@ -97,15 +111,14 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>('nt-overview');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Live AI Chat state
   const [customQuestion, setCustomQuestion] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      sender: 'luni',
-      text: 'Kumusta, Luminary! 🌙✨ I am Luni, your celestial guide for BSIT at BatStateU Alangilan. Ask me anything about Networking Technology, Business Analytics, Service Management, or the CTRL Quiz!',
-    },
-  ]);
+  const {
+    messages: chatMessages,
+    loadingHistory,
+    appendMessage,
+    clearHistory,
+  } = useLuniChatHistory();
 
   const panelRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -146,6 +159,7 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
     if (!isOpen) return;
 
     notifyChatOpenedRef.current();
+    playUiSound('pop');
     previousFocusRef.current = document.activeElement as HTMLElement | null;
 
     const timer = window.setTimeout(() => {
@@ -219,7 +233,6 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
   const panelOverlayState = isPanelSuppressed ? null : luniState.overlayState;
   const panelPlaying = luniState.isPlaying && !isPanelSuppressed;
 
-  // Filter topics based on search query
   const filteredTopics = SCRIPTED_TOPICS.filter((t) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
@@ -237,35 +250,81 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
     navigate(route);
   };
 
+  const getActiveTrackContext = (): string | undefined => {
+    const params = new URLSearchParams(location.search);
+    const trackParam = params.get('track')?.toUpperCase();
+    if (trackParam === 'NT' || trackParam === 'BA' || trackParam === 'SM') {
+      return trackParam;
+    }
+    return undefined;
+  };
+
   const handleSendAiQuestion = async (queryToSend?: string) => {
     const question = (queryToSend || customQuestion).trim();
     if (!question || isAiLoading) return;
 
     const requestId = activeRequestIdRef.current + 1;
     activeRequestIdRef.current = requestId;
+    const trackContext = getActiveTrackContext();
+
+    const latestQuiz = state.quizAttempts?.[0];
+    let recommendedTrack: string | undefined;
+    if (latestQuiz) {
+      const scores: Array<['NT' | 'BA' | 'SM', number]> = [
+        ['NT', latestQuiz.ntScore ?? 0],
+        ['BA', latestQuiz.baScore ?? 0],
+        ['SM', latestQuiz.smScore ?? 0],
+      ];
+      scores.sort((a, b) => b[1] - a[1]);
+      if (scores[0][1] > 0) recommendedTrack = scores[0][0];
+    }
+
+    const recentHistory = chatMessages
+      .filter((m) => m.id !== 'luni-welcome')
+      .slice(-8)
+      .map((m) => ({ role: m.role, content: m.content }));
 
     setCustomQuestion('');
-    setChatMessages((prev) => [...prev, { sender: 'user', text: question }]);
+    playUiSound('send');
+    void appendMessage({
+      role: 'user',
+      content: question,
+      trackContext,
+    });
     setIsAiLoading(true);
     luniState.notifyMessageSent();
 
     try {
-      const answer = await askLuniAi(question);
+      const answer = await askLuniAi(question, {
+        history: recentHistory,
+        studentContext: {
+          name: state.name,
+          trackFocus: trackContext,
+          recommendedTrack,
+          ntProgress: state.trackProgress?.NT ?? 0,
+          baProgress: state.trackProgress?.BA ?? 0,
+          smProgress: state.trackProgress?.SM ?? 0,
+        },
+      });
       if (activeRequestIdRef.current !== requestId) {
         luniState.notifyError();
         return;
       }
-      setChatMessages((prev) => [...prev, { sender: 'luni', text: answer }]);
+      await appendMessage({
+        role: 'assistant',
+        content: answer,
+        trackContext,
+      });
+      playUiSound('receive');
       luniState.notifyReplyDone(answer);
     } catch {
       luniState.notifyError();
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          sender: 'luni',
-          text: 'The starlight is fluctuating a bit, but every track has an incredible future! Try checking the Path Compare matrix or Curriculum Q&A! ✨',
-        },
-      ]);
+      await appendMessage({
+        role: 'assistant',
+        content:
+          'The starlight is fluctuating a bit, but every track has an incredible future! Try checking the Path Compare matrix or Curriculum Q&A! ✨',
+        trackContext,
+      });
     } finally {
       if (activeRequestIdRef.current === requestId) {
         setIsAiLoading(false);
@@ -279,6 +338,14 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
     'Is Business Analytics heavy in math?',
     'What is ITIL in Service Management?',
   ];
+
+  const handleToggleSound = (enabled: boolean) => {
+    setSoundEnabledState(enabled);
+    setUiSoundEnabled(enabled);
+    if (enabled) {
+      playUiSound('chime', true);
+    }
+  };
 
   return (
     <div
@@ -305,11 +372,17 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
           <div className="flex items-center gap-3">
             <button
               type="button"
+              data-sound="none"
               data-testid="luni-panel-avatar"
               data-luni-state={isPanelSuppressed ? 'idle' : luniState.state}
               data-luni-overlay={panelOverlayState ?? 'none'}
               data-sprite-pose={panelPoseId}
-              onClick={() => luniState.notifyTap()}
+              onClick={() => {
+                if (luniState.state === 'sleeping') {
+                  playUiSound('wake');
+                }
+                luniState.notifyTap();
+              }}
               aria-label="Luni Moonstone Guide. Click to interact."
               className="relative w-[58px] h-[58px] shrink-0 bg-transparent border-0 p-0 cursor-pointer rounded-2xl focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white/80 flex items-center justify-center"
             >
@@ -358,7 +431,23 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            {activeTab === 'live' && chatMessages.length > 1 && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isAiLoading) {
+                    void clearHistory();
+                  }
+                }}
+                disabled={isAiLoading}
+                title="Clear chat history"
+                aria-label="Clear chat history"
+                className="w-9 h-9 md:w-7 md:h-7 rounded-full bg-white/15 hover:bg-white/25 disabled:opacity-40 text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
             <button
               onClick={onClose}
               className="w-11 h-11 md:w-7 md:h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition-colors cursor-pointer"
@@ -464,6 +553,7 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
                   <button
                     key={idx}
                     type="button"
+                    data-sound="none"
                     onClick={() => handleSendAiQuestion(chip)}
                     className="min-h-11 md:min-h-0 shrink-0 whitespace-nowrap md:whitespace-normal text-xs md:text-[11px] px-3 py-1.5 md:px-2.5 md:py-1 rounded-full bg-indigo-50/70 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/70 dark:text-indigo-200! dark:border-indigo-700/50 font-medium transition-colors cursor-pointer text-left"
                   >
@@ -477,24 +567,33 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
                 ref={threadRef}
                 className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 dark:bg-[#090e1c]/70 dark:border dark:border-slate-800/80 dark:rounded-2xl dark:p-3"
               >
-                {chatMessages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex flex-col ${
-                      msg.sender === 'user' ? 'items-end' : 'items-start'
-                    }`}
-                  >
+                {loadingHistory ? (
+                  <div className="flex items-center gap-2 p-3 rounded-2xl bg-slate-100 dark:bg-[#131d33]! text-slate-500 dark:text-slate-300 border border-transparent dark:border-slate-700/80 text-xs w-fit">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600 dark:text-indigo-400" />
+                    <span>Loading your saved chat history...</span>
+                  </div>
+                ) : (
+                  chatMessages.map((msg) => (
                     <div
-                      className={`luni-chat-bubble max-w-[85%] sm:max-w-[88%] p-3 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap ${
-                        msg.sender === 'user'
-                          ? 'bg-blue-600 text-white rounded-br-xs shadow-xs'
-                          : 'bg-slate-100 dark:bg-[#131d33]! text-slate-800 dark:text-slate-100 rounded-bl-xs border border-slate-200/70 dark:border-slate-700/80!'
+                      key={msg.id}
+                      className={`flex flex-col ${
+                        msg.role === 'user' ? 'items-end' : 'items-start'
                       }`}
                     >
-                      {msg.text}
+                      <div
+                        className={`luni-chat-bubble max-w-[85%] sm:max-w-[88%] p-3 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap ${
+                          msg.role === 'user'
+                            ? 'bg-blue-600 text-white rounded-br-xs shadow-xs'
+                            : 'bg-slate-100 dark:bg-[#131d33]! text-slate-800 dark:text-slate-100 rounded-bl-xs border border-slate-200/70 dark:border-slate-700/80!'
+                        }`}
+                      >
+                        {msg.role === 'assistant'
+                          ? formatCleanBubbleText(msg.content)
+                          : msg.content}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
 
                 {isAiLoading && (
                   <div className="flex items-center gap-2 p-3 rounded-2xl bg-slate-100 dark:bg-[#131d33]! text-slate-500 dark:text-slate-300 border border-transparent dark:border-slate-700/80 text-xs w-fit">
@@ -534,6 +633,7 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
                 />
                 <button
                   type="submit"
+                  data-sound="none"
                   disabled={!customQuestion.trim() || isAiLoading}
                   className="w-11 h-11 md:w-auto md:h-auto md:p-2 flex items-center justify-center shrink-0 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white cursor-pointer transition-colors shadow-xs"
                   aria-label="Send question to Luni"
@@ -633,6 +733,7 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
               </div>
 
               <button
+                data-sound="nav"
                 onClick={() => handleActionClick('/tracks')}
                 className="w-full p-3 rounded-2xl border border-blue-100 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/35 hover:bg-blue-50 dark:hover:bg-blue-950/60 transition-all flex items-center gap-3 text-left group cursor-pointer"
               >
@@ -646,6 +747,7 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
               </button>
 
               <button
+                data-sound="nav"
                 onClick={() => handleActionClick('/quiz')}
                 className="w-full p-3 rounded-2xl border border-purple-100 dark:border-purple-900/60 bg-purple-50/50 dark:bg-purple-950/35 hover:bg-purple-50 dark:hover:bg-purple-950/60 transition-all flex items-center gap-3 text-left group cursor-pointer"
               >
@@ -659,6 +761,7 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
               </button>
 
               <button
+                data-sound="nav"
                 onClick={() => handleActionClick('/compare')}
                 className="w-full p-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/35 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 transition-all flex items-center gap-3 text-left group cursor-pointer"
               >
@@ -672,6 +775,7 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
               </button>
 
               <button
+                data-sound="gem"
                 onClick={() => handleActionClick('/achievements')}
                 className="w-full p-3 rounded-2xl border border-amber-100 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/35 hover:bg-amber-50 dark:hover:bg-amber-950/60 transition-all flex items-center gap-3 text-left group cursor-pointer"
               >
@@ -694,6 +798,28 @@ export const LuniAssistantPanel: React.FC<LuniAssistantPanelProps> = ({
               </div>
 
               <div className="space-y-3">
+                <label className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-[#131d33] cursor-pointer">
+                  <div className="flex items-center gap-2.5">
+                    {soundEnabled ? (
+                      <Volume2 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                    ) : (
+                      <VolumeX className="w-4 h-4 text-slate-400 shrink-0" />
+                    )}
+                    <div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-100">Sound Effects</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Celestial chimes, wand sparkles & UI taps
+                      </div>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={soundEnabled}
+                    onChange={(e) => handleToggleSound(e.target.checked)}
+                    className="w-4 h-4 rounded-sm text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                </label>
+
                 <label className="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-[#131d33] cursor-pointer">
                   <div>
                     <div className="text-xs font-bold text-slate-800 dark:text-slate-100">Floating Animations</div>

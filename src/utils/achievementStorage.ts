@@ -1,10 +1,12 @@
 import { GEMSTONE_ASSETS } from '../assets/manifest';
 import { isCompareTopicId } from '../data/compareTopics';
 import { TRACKS_DATA } from '../data/tracks';
+import { supabase } from '../lib/supabase';
 import type { StudentState } from '../types';
 import type { AchievementRecord } from '../types/achievements';
 import { evaluateAchievements, withAchievementRecords } from './achievementRules';
 import { normalizeAvatarStyle } from './avatarOptions';
+import { loadStreakState, saveStreakState, type StreakState } from './streakManager';
 
 export const STUDENT_STORAGE_KEY = 'ctrl_path_student_data_v1';
 const object = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -19,6 +21,7 @@ export function migrateStudentData(raw: unknown, defaults: StudentState): Studen
   state.section=typeof raw.section==='string'?raw.section:'';
   state.biography=typeof raw.biography==='string'?raw.biography:'';
   state.avatarStyle=normalizeAvatarStyle(raw.avatarStyle);
+  state.avatarUrl=typeof raw.avatarUrl==='string'?raw.avatarUrl:'';
   state.explorationDates=object(raw.explorationDates)?Object.fromEntries(Object.entries(raw.explorationDates).filter(([key,value])=>['NT','BA','SM'].includes(key)&&date(value))):{};
   state.moduleCompletions=Array.isArray(raw.moduleCompletions)?raw.moduleCompletions.filter((m:unknown)=>object(m)&&typeof m.moduleId==='string'&&['NT','BA','SM'].includes(m.track)&&date(m.completedAt)).filter((m: {moduleId:string},i:number,all:{moduleId:string}[])=>all.findIndex(x=>x.moduleId===m.moduleId)===i):[];
   state.moduleCompletions=state.moduleCompletions.filter(m=>TRACKS_DATA[m.track].modules.some(module=>module.id===m.moduleId&&module.status==='available'));
@@ -109,4 +112,85 @@ export function loadStudentData(storage: Storage, defaults: StudentState) {
 export function serializeStudent(state: StudentState) {
   const { unlockedGemstones: _compatibilityProjection, ...persisted } = state;
   return persisted;
+}
+export async function syncStudentDataToSupabase(state: StudentState): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { ok: false, error: 'Not authenticated' };
+
+    const persisted = serializeStudent(state);
+    const currentStreak = loadStreakState();
+
+    const { error } = await supabase
+      .from('student_profiles')
+      .upsert({
+        id: user.id,
+        email: user.email ?? null,
+        state_payload: persisted,
+        streak_data: currentStreak,
+        updated_at: new Date().toISOString(),
+      });
+
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err?.message ?? 'Unknown sync error' };
+  }
+}
+
+export async function loadStudentDataFromSupabase(defaults: StudentState): Promise<StudentState | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase
+      .from('student_profiles')
+      .select('state_payload, streak_data')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (error || !data?.state_payload) return null;
+
+    // Kung may saved streak_data sa Supabase, i-merge at i-restore sa localStorage
+    if (data.streak_data && typeof data.streak_data === 'object') {
+      const cloudStreak = data.streak_data as Partial<StreakState>;
+      const localStreak = loadStreakState();
+
+      // Pagsamahin ang activeDates mula sa local at cloud para walang mawawalang araw
+      const mergedDates = Array.from(
+        new Set([
+          ...(Array.isArray(localStreak.activeDates) ? localStreak.activeDates : []),
+          ...(Array.isArray(cloudStreak.activeDates) ? cloudStreak.activeDates : []),
+        ])
+      ).sort().slice(-365);
+
+      const useCloud =
+        (cloudStreak.lastActivityDate || '') >= (localStreak.lastActivityDate || '');
+
+      const mergedStreak: StreakState = {
+        streakCount: useCloud
+          ? (typeof cloudStreak.streakCount === 'number' ? cloudStreak.streakCount : localStreak.streakCount)
+          : localStreak.streakCount,
+        lastActivityDate: useCloud
+          ? (cloudStreak.lastActivityDate ?? localStreak.lastActivityDate)
+          : localStreak.lastActivityDate,
+        lastCelebratedDate: useCloud
+          ? (cloudStreak.lastCelebratedDate ?? localStreak.lastCelebratedDate)
+          : localStreak.lastCelebratedDate,
+        activeDates: mergedDates,
+      };
+
+      saveStreakState(mergedStreak);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('ctrl_streak_updated', { detail: { streakCount: mergedStreak.streakCount } })
+        );
+      }
+    }
+
+    return migrateStudentData(data.state_payload, defaults);
+  } catch {
+    return null;
+  }
 }

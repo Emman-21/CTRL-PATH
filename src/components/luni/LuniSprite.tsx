@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { playUiSound } from '../../utils/soundEffects';
 import { LUNI_POSES as STATIC_LUNI_POSES, LUNI_WAVE_V2_SHEET, LuniPoseKey } from '../../assets/manifest';
 import { LuniState } from '../../types/luni';
 import { LUNI_STATE_CONFIGS } from '../../data/luniDialogues';
@@ -242,6 +243,24 @@ export const LuniSprite: React.FC<LuniSpriteProps> = ({
 
   const animationsEnabled =
     animate && !prefersReducedMotion && (studentState.preferences?.luniFloatingAnimation ?? true);
+
+  const lastWandSoundAtRef = useRef(0);
+
+  useEffect(() => {
+    if (spriteHidden || isPaused) return;
+    const poseLower = String(resolvedPoseId || '').toLowerCase();
+    const isWandPose =
+      (activePlaying && poseLower.includes('wand')) ||
+      resolvedEffect?.effect === 'castSparkles';
+
+    if (!isWandPose) return;
+
+    const now = Date.now();
+    if (now - lastWandSoundAtRef.current < 350) return;
+    lastWandSoundAtRef.current = now;
+
+    playUiSound('wand');
+  }, [resolvedPoseId, activePlayCount, activePlaying, isPaused, spriteHidden, resolvedEffect]);
 
   if (mode === 'wave-sheet') {
     const cropW = activeSheet?.cropWidth ?? 175;
