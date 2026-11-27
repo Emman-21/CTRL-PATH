@@ -29,6 +29,20 @@ An interactive BSIT specialization discovery and academic guidance platform buil
 
 ---
 
+</div>
+
+---
+
+## 🌙 Meet Luni — Your Moonstone AI Companion
+
+<div align="center">
+
+*Luni provides real-time academic mentoring, BSIT track recommendations, curriculum Q&A, and interactive site navigation across CTRL+PATH.*
+
+</div>
+
+---
+
 ## ✨ Platform Features
 
 - **🧭 Track Explorer (`/tracks`):** Deep-dive into `NT`, `BA`, and `SM` curricula, core competencies, technical tools, and career trajectories.
